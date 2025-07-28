@@ -123,13 +123,13 @@ export const CoachListPage = ({ selectedGoal, responses, questions, onBack, onCo
   const getAvailabilityBadge = (status?: string) => {
     switch (status) {
       case 'available':
-        return { text: 'Available Now', color: 'bg-green-500' };
+        return { text: 'Available Now', color: 'bg-green-500', textColor: 'text-white' };
       case 'busy':
-        return { text: 'Available Tomorrow', color: 'bg-yellow-500' };
+        return { text: 'Available in an hour', color: 'bg-muted', textColor: 'text-muted-foreground' };
       case 'away':
-        return { text: 'Available This Week', color: 'bg-orange-500' };
+        return { text: 'Available tomorrow', color: 'bg-muted', textColor: 'text-muted-foreground' };
       default:
-        return { text: 'Available This Week', color: 'bg-blue-500' };
+        return { text: 'Available next week', color: 'bg-muted', textColor: 'text-muted-foreground' };
     }
   };
 
@@ -220,122 +220,113 @@ export const CoachListPage = ({ selectedGoal, responses, questions, onBack, onCo
           </Card>
         )}
 
-        {/* Coach Recommendations - Baseball Card Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        {/* Coach Recommendations - Compact Baseball Cards */}
+        <div className="space-y-4">
           {aiAnalysis?.recommendations?.map((recommendation, index) => {
             const availability = getAvailabilityBadge(recommendation.coach.availability_status);
             
             return (
-              <Card key={recommendation.coachId} className="group hover:shadow-xl transition-all duration-300 hover:-translate-y-1 bg-card border-border">
-                <div className="p-4 space-y-4">
-                  {/* Coach Avatar & Availability */}
-                  <div className="relative">
-                    <Avatar className="h-20 w-20 mx-auto ring-2 ring-primary/20">
-                      <AvatarImage src={recommendation.coach.avatar_url} alt={recommendation.coach.name} />
-                      <AvatarFallback className="text-lg bg-primary/10 text-primary">
-                        {recommendation.coach.name.split(' ').map(n => n[0]).join('')}
-                      </AvatarFallback>
-                    </Avatar>
-                    <Badge 
-                      className={`absolute -bottom-1 left-1/2 transform -translate-x-1/2 ${availability.color} text-white text-xs px-2 py-1`}
-                    >
-                      {availability.text}
-                    </Badge>
-                  </div>
+              <div key={recommendation.coachId} className="space-y-3">
+                {/* Baseball Card */}
+                <Card className="relative group hover:shadow-lg transition-all duration-300 bg-card border-border">
+                  {/* Match Score Badge - Top Left */}
+                  <Badge 
+                    className={`absolute top-3 left-3 z-10 ${getConfidenceColor(recommendation.confidenceScore)} text-white text-xs px-2 py-1`}
+                  >
+                    {getConfidenceLabel(recommendation.confidenceScore)}
+                  </Badge>
 
-                  {/* Coach Name & Title */}
-                  <div className="text-center space-y-1">
-                    <h3 className="font-bold text-lg text-foreground leading-tight">
-                      {recommendation.coach.name}
-                    </h3>
-                    <p className="text-sm text-muted-foreground font-medium">
-                      {recommendation.coach.title}
+                  {/* Availability Badge - Top Right */}
+                  <Badge 
+                    className={`absolute top-3 right-3 z-10 ${availability.color} ${availability.textColor} text-xs px-2 py-1`}
+                  >
+                    {availability.text}
+                  </Badge>
+
+                  <div className="p-4">
+                    {/* Coach Avatar */}
+                    <div className="flex justify-center mb-3">
+                      <Avatar className="h-16 w-16 ring-2 ring-primary/20">
+                        <AvatarImage src={recommendation.coach.avatar_url} alt={recommendation.coach.name} />
+                        <AvatarFallback className="text-lg bg-primary/10 text-primary">
+                          {recommendation.coach.name.split(' ').map(n => n[0]).join('')}
+                        </AvatarFallback>
+                      </Avatar>
+                    </div>
+
+                    {/* Coach Name & Title */}
+                    <div className="text-center mb-3">
+                      <h3 className="font-bold text-lg text-foreground leading-tight mb-1">
+                        {recommendation.coach.name}
+                      </h3>
+                      <p className="text-sm text-muted-foreground font-medium">
+                        {recommendation.coach.title}
+                      </p>
+                    </div>
+
+                    {/* Brief Bio */}
+                    <div className="text-center mb-3">
+                      <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
+                        {recommendation.coach.bio}
+                      </p>
+                    </div>
+
+                    {/* Star Rating, Price, Years - Inline */}
+                    <div className="flex items-center justify-center space-x-4 text-sm mb-4">
+                      <div className="flex items-center space-x-1">
+                        <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                        <span className="font-semibold">{recommendation.coach.rating}</span>
+                        <span className="text-muted-foreground">({recommendation.coach.total_reviews})</span>
+                      </div>
+                      <div className="flex items-center space-x-1">
+                        <DollarSign className="h-4 w-4 text-green-600" />
+                        <span className="font-semibold text-foreground">
+                          ${recommendation.coach.pricing?.min_price || 75}-${recommendation.coach.pricing?.max_price || 150}
+                        </span>
+                      </div>
+                      <div className="flex items-center space-x-1 text-muted-foreground">
+                        <Clock className="h-4 w-4" />
+                        <span>{recommendation.coach.years_experience}y</span>
+                      </div>
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="flex space-x-2">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="flex-1"
+                        onClick={() => {
+                          // TODO: Implement view profile functionality
+                          console.log('View profile for:', recommendation.coach.name);
+                        }}
+                      >
+                        <Eye className="h-4 w-4 mr-2" />
+                        View Profile
+                      </Button>
+                      
+                      <Button 
+                        variant={index === 0 ? "default" : "secondary"}
+                        size="sm" 
+                        className="flex-1"
+                        onClick={() => onCoachSelect(recommendation.coach)}
+                      >
+                        <Coins className="h-4 w-4 mr-2" />
+                        Connect Now (1 coin)
+                      </Button>
+                    </div>
+                  </div>
+                </Card>
+
+                {/* AI Justification Box */}
+                <Card className="border-blue-200 bg-blue-50/50 dark:border-blue-800 dark:bg-blue-950/20">
+                  <div className="p-3">
+                    <p className="text-sm text-blue-800 dark:text-blue-200 leading-relaxed">
+                      <strong>Why this coach?</strong> {recommendation.matchReason}
                     </p>
                   </div>
-
-                  {/* Rating & Experience */}
-                  <div className="flex items-center justify-between text-sm">
-                    <div className="flex items-center space-x-1">
-                      <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                      <span className="font-semibold">{recommendation.coach.rating}</span>
-                      <span className="text-muted-foreground">({recommendation.coach.total_reviews})</span>
-                    </div>
-                    <div className="flex items-center space-x-1 text-muted-foreground">
-                      <Clock className="h-4 w-4" />
-                      <span>{recommendation.coach.years_experience}y</span>
-                    </div>
-                  </div>
-
-                  {/* Match Score Badge */}
-                  <div className="flex justify-center">
-                    <Badge 
-                      className={`${getConfidenceColor(recommendation.confidenceScore)} text-white`}
-                    >
-                      {getConfidenceLabel(recommendation.confidenceScore)}
-                    </Badge>
-                  </div>
-
-                  {/* Pricing */}
-                  <div className="text-center">
-                    <div className="flex items-center justify-center space-x-1 text-sm">
-                      <DollarSign className="h-4 w-4 text-green-600" />
-                      <span className="font-semibold text-foreground">
-                        ${recommendation.coach.pricing?.min_price || 75}-${recommendation.coach.pricing?.max_price || 150}
-                      </span>
-                      <span className="text-muted-foreground">/ session</span>
-                    </div>
-                  </div>
-
-                  {/* Key Specialties */}
-                  <div className="space-y-2">
-                    <div className="flex flex-wrap gap-1 justify-center">
-                      {recommendation.coach.specialties.slice(0, 2).map((specialty, idx) => (
-                        <Badge key={idx} variant="secondary" className="text-xs px-2 py-1">
-                          {specialty}
-                        </Badge>
-                      ))}
-                      {recommendation.coach.specialties.length > 2 && (
-                        <Badge variant="secondary" className="text-xs px-2 py-1">
-                          +{recommendation.coach.specialties.length - 2}
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Match Reason (Truncated) */}
-                  <div className="text-center">
-                    <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
-                      {recommendation.matchReason}
-                    </p>
-                  </div>
-
-                  {/* Action Buttons */}
-                  <div className="space-y-2 pt-2">
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className="w-full"
-                      onClick={() => {
-                        // TODO: Implement view profile functionality
-                        console.log('View profile for:', recommendation.coach.name);
-                      }}
-                    >
-                      <Eye className="h-4 w-4 mr-2" />
-                      View Profile
-                    </Button>
-                    
-                    <Button 
-                      variant={index === 0 ? "default" : "secondary"}
-                      size="sm" 
-                      className="w-full"
-                      onClick={() => onCoachSelect(recommendation.coach)}
-                    >
-                      <Coins className="h-4 w-4 mr-2" />
-                      Connect Now (1 coin)
-                    </Button>
-                  </div>
-                </div>
-              </Card>
+                </Card>
+              </div>
             );
           })}
         </div>
