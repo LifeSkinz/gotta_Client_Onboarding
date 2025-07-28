@@ -63,6 +63,13 @@ export const GOALS: Goal[] = [
     description: 'Take control of your finances and secure your future',
     icon: '💰',
     color: 'from-yellow-500 to-green-500'
+  },
+  {
+    id: 'creativity-hobbies',
+    title: 'Creativity & Hobbies',
+    description: 'Creating time to explore value through creative pursuits',
+    icon: '🎨',
+    color: 'from-violet-500 to-purple-500'
   }
 ];
 
@@ -118,6 +125,32 @@ export const GOAL_QUESTIONS: GoalQuestions = {
       question: 'What challenges are you currently facing in your career?',
       placeholder: 'Share the obstacles you want to overcome...'
     }
+  ],
+  'creativity-hobbies': [
+    {
+      id: 'creative-interests',
+      type: 'multiple-choice',
+      question: 'What type of creative activities interest you most?',
+      options: ['Visual Arts (painting, drawing, photography)', 'Performing Arts (music, dance, theater)', 'Crafts & DIY (woodworking, pottery, sewing)', 'Writing & Literature (creative writing, poetry)']
+    },
+    {
+      id: 'time-availability',
+      type: 'open-ended',
+      question: 'How much time can you realistically dedicate to creative pursuits each week?',
+      placeholder: 'e.g., 2-3 hours on weekends, 30 minutes daily...'
+    },
+    {
+      id: 'creative-goals',
+      type: 'open-ended',
+      question: 'What would you like to create or accomplish through your hobby?',
+      placeholder: 'Describe your creative aspirations and what success looks like...'
+    },
+    {
+      id: 'current-barriers',
+      type: 'open-ended',
+      question: 'What currently prevents you from pursuing your creative interests?',
+      placeholder: 'Share the obstacles that keep you from being creative...'
+    }
   ]
 };
 
@@ -126,5 +159,6 @@ export const MOTIVATIONAL_QUOTES = {
   'career-development': "Success is where preparation and opportunity meet. - Bobby Unser",
   'personal-growth': "The journey of a thousand miles begins with a single step. - Lao Tzu",
   'relationships': "The quality of your life is the quality of your relationships. - Tony Robbins",
-  'financial-stability': "It's not how much money you make, but how much money you keep. - Robert Kiyosaki"
+  'financial-stability': "It's not how much money you make, but how much money you keep. - Robert Kiyosaki",
+  'creativity-hobbies': "Creativity takes courage. - Henri Matisse"
 };
