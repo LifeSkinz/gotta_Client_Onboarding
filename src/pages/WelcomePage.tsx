@@ -13,7 +13,7 @@ export const WelcomePage = ({
           <div className="flex items-center justify-center mb-6">
             <div className="text-6xl">🎯</div>
           </div>
-          <h1 className="text-4xl font-bold bg-gradient-primary bg-clip-text text-transparent">What have you GOTTA DO ?</h1>
+          <h1 className="text-4xl font-bold bg-gradient-primary bg-clip-text text-transparent">Connecting AI-power with people</h1>
           <p className="text-xl text-muted-foreground">AI-power whatever you GOTTA DO!</p>
         </div>
 
