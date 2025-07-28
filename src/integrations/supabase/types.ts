@@ -14,7 +14,272 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      coaches: {
+        Row: {
+          availability_hours: string | null
+          avatar_url: string | null
+          bio: string
+          created_at: string
+          id: string
+          is_active: boolean | null
+          name: string
+          rating: number | null
+          similar_experiences: string[]
+          social_links: Json | null
+          specialties: string[]
+          timezone: string | null
+          title: string
+          total_reviews: number | null
+          updated_at: string
+          years_experience: number
+        }
+        Insert: {
+          availability_hours?: string | null
+          avatar_url?: string | null
+          bio: string
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          name: string
+          rating?: number | null
+          similar_experiences: string[]
+          social_links?: Json | null
+          specialties: string[]
+          timezone?: string | null
+          title: string
+          total_reviews?: number | null
+          updated_at?: string
+          years_experience: number
+        }
+        Update: {
+          availability_hours?: string | null
+          avatar_url?: string | null
+          bio?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          rating?: number | null
+          similar_experiences?: string[]
+          social_links?: Json | null
+          specialties?: string[]
+          timezone?: string | null
+          title?: string
+          total_reviews?: number | null
+          updated_at?: string
+          years_experience?: number
+        }
+        Relationships: []
+      }
+      coaching_packages: {
+        Row: {
+          coach_id: string
+          coin_cost: number
+          created_at: string
+          description: string
+          duration_minutes: number
+          features: string[]
+          id: string
+          is_active: boolean | null
+          name: string
+          package_type: string
+          price_amount: number
+          price_currency: string
+          updated_at: string
+        }
+        Insert: {
+          coach_id: string
+          coin_cost: number
+          created_at?: string
+          description: string
+          duration_minutes: number
+          features: string[]
+          id?: string
+          is_active?: boolean | null
+          name: string
+          package_type: string
+          price_amount: number
+          price_currency?: string
+          updated_at?: string
+        }
+        Update: {
+          coach_id?: string
+          coin_cost?: number
+          created_at?: string
+          description?: string
+          duration_minutes?: number
+          features?: string[]
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          package_type?: string
+          price_amount?: number
+          price_currency?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coaching_packages_coach_id_fkey"
+            columns: ["coach_id"]
+            isOneToOne: false
+            referencedRelation: "coaches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      currency_settings: {
+        Row: {
+          coins_per_unit: number
+          created_at: string
+          currency_code: string
+          id: string
+          is_active: boolean | null
+          updated_at: string
+        }
+        Insert: {
+          coins_per_unit: number
+          created_at?: string
+          currency_code: string
+          id?: string
+          is_active?: boolean | null
+          updated_at?: string
+        }
+        Update: {
+          coins_per_unit?: number
+          created_at?: string
+          currency_code?: string
+          id?: string
+          is_active?: boolean | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      transactions: {
+        Row: {
+          amount_currency: string | null
+          amount_fiat: number | null
+          coach_id: string | null
+          coin_amount: number
+          created_at: string
+          id: string
+          package_id: string | null
+          status: string
+          stripe_session_id: string | null
+          transaction_type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount_currency?: string | null
+          amount_fiat?: number | null
+          coach_id?: string | null
+          coin_amount: number
+          created_at?: string
+          id?: string
+          package_id?: string | null
+          status?: string
+          stripe_session_id?: string | null
+          transaction_type: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount_currency?: string | null
+          amount_fiat?: number | null
+          coach_id?: string | null
+          coin_amount?: number
+          created_at?: string
+          id?: string
+          package_id?: string | null
+          status?: string
+          stripe_session_id?: string | null
+          transaction_type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transactions_coach_id_fkey"
+            columns: ["coach_id"]
+            isOneToOne: false
+            referencedRelation: "coaches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_package_id_fkey"
+            columns: ["package_id"]
+            isOneToOne: false
+            referencedRelation: "coaching_packages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_responses: {
+        Row: {
+          ai_analysis: Json | null
+          created_at: string
+          id: string
+          recommended_coaches: string[] | null
+          responses: Json
+          selected_goal: Json
+          session_id: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          ai_analysis?: Json | null
+          created_at?: string
+          id?: string
+          recommended_coaches?: string[] | null
+          responses: Json
+          selected_goal: Json
+          session_id?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          ai_analysis?: Json | null
+          created_at?: string
+          id?: string
+          recommended_coaches?: string[] | null
+          responses?: Json
+          selected_goal?: Json
+          session_id?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      user_wallets: {
+        Row: {
+          coin_balance: number | null
+          created_at: string
+          id: string
+          total_coins_purchased: number | null
+          total_coins_spent: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          coin_balance?: number | null
+          created_at?: string
+          id?: string
+          total_coins_purchased?: number | null
+          total_coins_spent?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          coin_balance?: number | null
+          created_at?: string
+          id?: string
+          total_coins_purchased?: number | null
+          total_coins_spent?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
