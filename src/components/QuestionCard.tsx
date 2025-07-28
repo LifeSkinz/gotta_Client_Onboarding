@@ -13,9 +13,22 @@ interface QuestionCardProps {
 
 export const QuestionCard = ({ question, response, onAnswer, motivationalQuote }: QuestionCardProps) => {
   const [openEndedAnswer, setOpenEndedAnswer] = useState(response?.answer || '');
+  const [hasStartedTyping, setHasStartedTyping] = useState(false);
 
   const handleMultipleChoiceSelect = (option: string) => {
     onAnswer(option);
+  };
+
+  const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const value = e.target.value;
+    
+    // Clear previous response when user starts typing
+    if (!hasStartedTyping && value.length > 0) {
+      setHasStartedTyping(true);
+      setOpenEndedAnswer(value);
+    } else {
+      setOpenEndedAnswer(value);
+    }
   };
 
   const handleOpenEndedSubmit = () => {
@@ -60,7 +73,7 @@ export const QuestionCard = ({ question, response, onAnswer, motivationalQuote }
               <Textarea
                 placeholder={question.placeholder}
                 value={openEndedAnswer}
-                onChange={(e) => setOpenEndedAnswer(e.target.value)}
+                onChange={handleTextareaChange}
                 className="min-h-32 bg-background/50 border-border focus:border-primary resize-none"
               />
               <Button
