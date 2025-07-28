@@ -2,7 +2,6 @@ import { Goal, UserResponse, Question } from "@/types/goals";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ProgressIndicator } from "@/components/ProgressIndicator";
-
 interface SummaryPageProps {
   selectedGoal: Goal;
   responses: UserResponse[];
@@ -11,10 +10,15 @@ interface SummaryPageProps {
   onSubmit: () => void;
   onBack: () => void;
 }
-
-export const SummaryPage = ({ selectedGoal, responses, questions, onEdit, onSubmit, onBack }: SummaryPageProps) => {
-  return (
-    <div className="min-h-screen bg-background p-4">
+export const SummaryPage = ({
+  selectedGoal,
+  responses,
+  questions,
+  onEdit,
+  onSubmit,
+  onBack
+}: SummaryPageProps) => {
+  return <div className="min-h-screen bg-background p-4">
       <div className="w-full max-w-3xl mx-auto space-y-8 py-8">
         {/* Header */}
         <div className="text-center space-y-4">
@@ -44,19 +48,14 @@ export const SummaryPage = ({ selectedGoal, responses, questions, onEdit, onSubm
         <div className="space-y-4">
           <h3 className="text-xl font-semibold text-foreground">Your Responses</h3>
           {questions.map((question, index) => {
-            const response = responses.find(r => r.questionId === question.id);
-            return (
-              <Card key={question.id} className="p-6 bg-card border-border">
+          const response = responses.find(r => r.questionId === question.id);
+          return <Card key={question.id} className="p-6 bg-card border-border">
                 <div className="space-y-3">
                   <div className="flex justify-between items-start">
                     <h4 className="font-medium text-foreground pr-4">
                       {question.question}
                     </h4>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => onEdit(index)}
-                    >
+                    <Button variant="outline" size="sm" onClick={() => onEdit(index)}>
                       Edit
                     </Button>
                   </div>
@@ -64,9 +63,8 @@ export const SummaryPage = ({ selectedGoal, responses, questions, onEdit, onSubm
                     {response?.answer || 'No response provided'}
                   </p>
                 </div>
-              </Card>
-            );
-          })}
+              </Card>;
+        })}
         </div>
 
         {/* Navigation */}
@@ -74,11 +72,8 @@ export const SummaryPage = ({ selectedGoal, responses, questions, onEdit, onSubm
           <Button variant="outline" onClick={onBack}>
             Back
           </Button>
-          <Button variant="gradient" size="lg" onClick={onSubmit}>
-            Submit Goals
-          </Button>
+          <Button variant="gradient" size="lg" onClick={onSubmit}>Submit Answers</Button>
         </div>
       </div>
-    </div>
-  );
+    </div>;
 };
