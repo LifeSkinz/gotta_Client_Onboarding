@@ -5,9 +5,10 @@ import { GoalSelectionPage } from "./GoalSelectionPage";
 import { QuestionPage } from "./QuestionPage";
 import { SummaryPage } from "./SummaryPage";
 import { ConfirmationPage } from "./ConfirmationPage";
+import { CoachListPage } from "./CoachListPage";
 import { useToast } from "@/hooks/use-toast";
 
-type PageType = 'welcome' | 'goal-selection' | 'questions' | 'summary' | 'confirmation';
+type PageType = 'welcome' | 'goal-selection' | 'questions' | 'summary' | 'coach-list' | 'confirmation';
 
 const Index = () => {
   const [currentPage, setCurrentPage] = useState<PageType>('welcome');
@@ -90,15 +91,15 @@ const Index = () => {
       title: "Goals Submitted Successfully!",
       description: "We're analyzing your responses to find the perfect coach match.",
     });
-    setCurrentPage('confirmation');
+    setCurrentPage('coach-list');
   };
 
-  const handleConnectCoach = () => {
+  const handleCoachSelect = (coach: any) => {
     toast({
-      title: "Connecting with Coaches",
-      description: "Redirecting you to browse our expert coaches...",
+      title: "Coach Selected!",
+      description: `You've selected ${coach.name}. Redirecting to booking...`,
     });
-    // In a real app, this would navigate to the coach browsing page
+    setCurrentPage('confirmation');
   };
 
   const handleExploreResources = () => {
@@ -172,12 +173,24 @@ const Index = () => {
         />
       );
       
+    case 'coach-list':
+      if (!selectedGoal) return <div>Loading...</div>;
+      return (
+        <CoachListPage
+          selectedGoal={selectedGoal}
+          responses={responses}
+          questions={currentQuestions}
+          onBack={() => setCurrentPage('summary')}
+          onCoachSelect={handleCoachSelect}
+        />
+      );
+      
     case 'confirmation':
       if (!selectedGoal) return <div>Loading...</div>;
       return (
         <ConfirmationPage
           selectedGoal={selectedGoal}
-          onConnectCoach={handleConnectCoach}
+          onConnectCoach={() => setCurrentPage('coach-list')}
           onExploreResources={handleExploreResources}
           onStartOver={handleStartOver}
         />
