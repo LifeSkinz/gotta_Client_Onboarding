@@ -123,7 +123,25 @@ Ensure exactly 5 recommendations, prioritizing quality of match over other facto
     }
 
     const openAIData = await openAIResponse.json();
-    const aiAnalysis = JSON.parse(openAIData.choices[0].message.content);
+    
+    // Helper function to strip markdown formatting from JSON
+    const cleanJsonResponse = (content: string): string => {
+      return content
+        .replace(/```json\n?/g, '')
+        .replace(/```\n?/g, '')
+        .trim();
+    };
+    
+    let aiAnalysis;
+    try {
+      const cleanedContent = cleanJsonResponse(openAIData.choices[0].message.content);
+      console.log('Cleaned OpenAI response:', cleanedContent);
+      aiAnalysis = JSON.parse(cleanedContent);
+    } catch (parseError) {
+      console.error('Failed to parse OpenAI response:', parseError);
+      console.error('Raw content:', openAIData.choices[0].message.content);
+      throw new Error(`Failed to parse AI response: ${parseError.message}`);
+    }
 
     console.log('AI Analysis completed:', aiAnalysis.analysis);
     console.log(`Generated ${aiAnalysis.recommendations?.length || 0} recommendations`);
