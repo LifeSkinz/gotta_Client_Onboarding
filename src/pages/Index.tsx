@@ -25,6 +25,12 @@ const Index = () => {
 
   const handleGoalSelect = (goal: Goal) => {
     setSelectedGoal(goal);
+    // Auto-advance to questions after brief delay
+    setTimeout(() => {
+      setCurrentPage('questions');
+      setCurrentQuestionIndex(0);
+      setResponses([]);
+    }, 500);
   };
 
   const handleGoalNext = () => {

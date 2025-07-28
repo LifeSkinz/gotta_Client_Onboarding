@@ -151,6 +151,32 @@ export const GOAL_QUESTIONS: GoalQuestions = {
       question: 'What currently prevents you from pursuing your creative interests?',
       placeholder: 'Share the obstacles that keep you from being creative...'
     }
+  ],
+  'custom': [
+    {
+      id: 'custom-timeline',
+      type: 'multiple-choice',
+      question: 'What timeframe do you have in mind for achieving this goal?',
+      options: ['1-3 months', '3-6 months', '6-12 months', 'More than a year']
+    },
+    {
+      id: 'custom-motivation',
+      type: 'open-ended',
+      question: 'What motivates you most to achieve this goal?',
+      placeholder: 'Describe what drives you and why this goal matters to you...'
+    },
+    {
+      id: 'custom-obstacles',
+      type: 'open-ended',
+      question: 'What challenges or obstacles do you anticipate?',
+      placeholder: 'Share any concerns or roadblocks you expect to face...'
+    },
+    {
+      id: 'custom-support',
+      type: 'multiple-choice',
+      question: 'What type of support would be most helpful?',
+      options: ['Regular check-ins and accountability', 'Strategic planning and goal setting', 'Skill development and learning', 'Emotional support and motivation']
+    }
   ]
 };
 
@@ -160,5 +186,6 @@ export const MOTIVATIONAL_QUOTES = {
   'personal-growth': "The journey of a thousand miles begins with a single step. - Lao Tzu",
   'relationships': "The quality of your life is the quality of your relationships. - Tony Robbins",
   'financial-stability': "It's not how much money you make, but how much money you keep. - Robert Kiyosaki",
-  'creativity-hobbies': "Creativity takes courage. - Henri Matisse"
+  'creativity-hobbies': "Creativity takes courage. - Henri Matisse",
+  'custom': "The future belongs to those who believe in the beauty of their dreams. - Eleanor Roosevelt"
 };
