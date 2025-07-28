@@ -295,35 +295,49 @@ export const CoachListPage = ({ selectedGoal, responses, questions, onBack, onCo
                       <Button 
                         variant="outline" 
                         size="sm" 
-                        className="flex-1"
+                        className="flex-1 text-xs sm:text-sm"
                         onClick={() => {
                           // TODO: Implement view profile functionality
                           console.log('View profile for:', recommendation.coach.name);
                         }}
                       >
-                        <Eye className="h-4 w-4 mr-2" />
-                        View Profile
+                        <Eye className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                        <span className="hidden sm:inline">View Profile</span>
+                        <span className="sm:hidden">View</span>
                       </Button>
                       
                       <Button 
                         variant={index === 0 ? "default" : "secondary"}
                         size="sm" 
-                        className="flex-1"
+                        className="flex-1 text-xs sm:text-sm bg-gradient-to-r from-purple-600 to-teal-500 hover:from-purple-700 hover:to-teal-600 text-white border-0"
                         onClick={() => onCoachSelect(recommendation.coach)}
                       >
-                        <Coins className="h-4 w-4 mr-2" />
-                        Connect Now (1 coin)
+                        <span className="font-bold mr-1">1</span>
+                        <Coins className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+                        <span className="hidden sm:inline">Connect Now</span>
+                        <span className="sm:hidden">Connect</span>
                       </Button>
                     </div>
                   </div>
                 </Card>
 
-                {/* AI Justification Box */}
-                <Card className="border-blue-200 bg-blue-50/50 dark:border-blue-800 dark:bg-blue-950/20">
-                  <div className="p-3">
-                    <p className="text-sm text-blue-800 dark:text-blue-200 leading-relaxed">
-                      <strong>Why this coach?</strong> {recommendation.matchReason}
-                    </p>
+                {/* AI Justification Box - Modern Design */}
+                <Card className="relative overflow-hidden bg-gradient-to-r from-purple-900/20 to-teal-900/20 border-purple-500/30 backdrop-blur-sm">
+                  <div className="absolute inset-0 bg-gradient-to-r from-purple-600/10 to-teal-600/10"></div>
+                  <div className="relative p-4">
+                    <div className="flex items-start space-x-3">
+                      <div className="flex-shrink-0">
+                        <div className="w-8 h-8 rounded-full bg-gradient-to-r from-purple-500 to-teal-500 flex items-center justify-center">
+                          <Star className="h-4 w-4 text-white" />
+                        </div>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h4 className="text-sm font-semibold text-purple-300 mb-1">Why this coach is perfect for you</h4>
+                        <p className="text-sm text-foreground/90 leading-relaxed">
+                          {recommendation.matchReason}
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 </Card>
               </div>
