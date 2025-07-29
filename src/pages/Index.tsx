@@ -1,11 +1,12 @@
 import { useState } from "react";
-import { Goal, UserResponse, Question, GOAL_QUESTIONS } from "@/types/goals";
+import { Goal, UserResponse, Question, GOAL_QUESTIONS, PersonalityResponse } from "@/types/goals";
 import { WelcomePage } from "./WelcomePage";
 import { GoalSelectionPage } from "./GoalSelectionPage";
 import { QuestionPage } from "./QuestionPage";
 import { SummaryPage } from "./SummaryPage";
 import { ConfirmationPage } from "./ConfirmationPage";
 import { CoachListPage } from "./CoachListPage";
+import { PersonalityScreeningDialog } from "@/components/PersonalityScreeningDialog";
 import { useToast } from "@/hooks/use-toast";
 
 type PageType = 'welcome' | 'goal-selection' | 'questions' | 'summary' | 'coach-list' | 'confirmation';
@@ -15,6 +16,9 @@ const Index = () => {
   const [selectedGoal, setSelectedGoal] = useState<Goal | null>(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [responses, setResponses] = useState<UserResponse[]>([]);
+  const [personalityResponses, setPersonalityResponses] = useState<PersonalityResponse[]>([]);
+  const [showPersonalityDialog, setShowPersonalityDialog] = useState(false);
+  const [hasCompletedPersonalityScreening, setHasCompletedPersonalityScreening] = useState(false);
   const { toast } = useToast();
 
   const currentQuestions = selectedGoal ? GOAL_QUESTIONS[selectedGoal.id] || [] : [];
@@ -93,8 +97,24 @@ const Index = () => {
   };
 
   const handleSubmit = () => {
+    // Check if personality screening is needed
+    if (!hasCompletedPersonalityScreening) {
+      setShowPersonalityDialog(true);
+    } else {
+      proceedToCoachList();
+    }
+  };
+
+  const handlePersonalityComplete = (responses: PersonalityResponse[]) => {
+    setPersonalityResponses(responses);
+    setHasCompletedPersonalityScreening(true);
+    setShowPersonalityDialog(false);
+    proceedToCoachList();
+  };
+
+  const proceedToCoachList = () => {
     toast({
-      title: "Goals Submitted Successfully!",
+      title: "Profile Complete!",
       description: "We're analyzing your responses to find the perfect coach match.",
     });
     setCurrentPage('coach-list');
@@ -121,6 +141,9 @@ const Index = () => {
     setSelectedGoal(null);
     setCurrentQuestionIndex(0);
     setResponses([]);
+    setPersonalityResponses([]);
+    setHasCompletedPersonalityScreening(false);
+    setShowPersonalityDialog(false);
   };
 
   const getCurrentResponse = () => {
@@ -134,77 +157,89 @@ const Index = () => {
   };
 
   // Render current page
-  switch (currentPage) {
-    case 'welcome':
-      return <WelcomePage onStart={handleStart} />;
-      
-    case 'goal-selection':
-      return (
-        <GoalSelectionPage
-          selectedGoal={selectedGoal}
-          onGoalSelect={handleGoalSelect}
-          onNext={handleGoalNext}
-          onBack={() => setCurrentPage('welcome')}
-        />
-      );
-      
-    case 'questions':
-      if (!selectedGoal || !currentQuestions[currentQuestionIndex]) {
-        return <div>Loading...</div>;
-      }
-      return (
-        <QuestionPage
-          question={currentQuestions[currentQuestionIndex]}
-          response={getCurrentResponse()}
-          currentQuestionIndex={currentQuestionIndex}
-          totalQuestions={currentQuestions.length}
-          goalId={selectedGoal.id}
-          onAnswer={handleAnswer}
-          onNext={handleQuestionNext}
-          onBack={handleQuestionBack}
-          canGoNext={canGoNext()}
-        />
-      );
-      
-    case 'summary':
-      if (!selectedGoal) return <div>Loading...</div>;
-      return (
-        <SummaryPage
-          selectedGoal={selectedGoal}
-          responses={responses}
-          questions={currentQuestions}
-          onEdit={handleEditResponse}
-          onSubmit={handleSubmit}
-          onBack={() => setCurrentPage('questions')}
-        />
-      );
-      
-    case 'coach-list':
-      if (!selectedGoal) return <div>Loading...</div>;
-      return (
-        <CoachListPage
-          selectedGoal={selectedGoal}
-          responses={responses}
-          questions={currentQuestions}
-          onBack={() => setCurrentPage('summary')}
-          onCoachSelect={handleCoachSelect}
-        />
-      );
-      
-    case 'confirmation':
-      if (!selectedGoal) return <div>Loading...</div>;
-      return (
-        <ConfirmationPage
-          selectedGoal={selectedGoal}
-          onConnectCoach={() => setCurrentPage('coach-list')}
-          onExploreResources={handleExploreResources}
-          onStartOver={handleStartOver}
-        />
-      );
-      
-    default:
-      return <WelcomePage onStart={handleStart} />;
-  }
+  const currentPageContent = (() => {
+    switch (currentPage) {
+      case 'welcome':
+        return <WelcomePage onStart={handleStart} />;
+        
+      case 'goal-selection':
+        return (
+          <GoalSelectionPage
+            selectedGoal={selectedGoal}
+            onGoalSelect={handleGoalSelect}
+            onNext={handleGoalNext}
+            onBack={() => setCurrentPage('welcome')}
+          />
+        );
+        
+      case 'questions':
+        if (!selectedGoal || !currentQuestions[currentQuestionIndex]) {
+          return <div>Loading...</div>;
+        }
+        return (
+          <QuestionPage
+            question={currentQuestions[currentQuestionIndex]}
+            response={getCurrentResponse()}
+            currentQuestionIndex={currentQuestionIndex}
+            totalQuestions={currentQuestions.length}
+            goalId={selectedGoal.id}
+            onAnswer={handleAnswer}
+            onNext={handleQuestionNext}
+            onBack={handleQuestionBack}
+            canGoNext={canGoNext()}
+          />
+        );
+        
+      case 'summary':
+        if (!selectedGoal) return <div>Loading...</div>;
+        return (
+          <SummaryPage
+            selectedGoal={selectedGoal}
+            responses={responses}
+            questions={currentQuestions}
+            onEdit={handleEditResponse}
+            onSubmit={handleSubmit}
+            onBack={() => setCurrentPage('questions')}
+          />
+        );
+        
+      case 'coach-list':
+        if (!selectedGoal) return <div>Loading...</div>;
+        return (
+          <CoachListPage
+            selectedGoal={selectedGoal}
+            responses={responses}
+            questions={currentQuestions}
+            onBack={() => setCurrentPage('summary')}
+            onCoachSelect={handleCoachSelect}
+          />
+        );
+        
+      case 'confirmation':
+        if (!selectedGoal) return <div>Loading...</div>;
+        return (
+          <ConfirmationPage
+            selectedGoal={selectedGoal}
+            onConnectCoach={() => setCurrentPage('coach-list')}
+            onExploreResources={handleExploreResources}
+            onStartOver={handleStartOver}
+          />
+        );
+        
+      default:
+        return <WelcomePage onStart={handleStart} />;
+    }
+  })();
+
+  return (
+    <>
+      {currentPageContent}
+      <PersonalityScreeningDialog
+        open={showPersonalityDialog}
+        onComplete={handlePersonalityComplete}
+      />
+    </>
+  );
 };
 
 export default Index;

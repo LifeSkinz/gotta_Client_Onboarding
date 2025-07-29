@@ -28,6 +28,22 @@ export interface UserGoalData {
   responses: UserResponse[];
 }
 
+export interface PersonalityQuestion {
+  id: string;
+  question: string;
+  description: string;
+}
+
+export interface PersonalityResponse {
+  questionId: string;
+  rating: number; // 1-5 scale
+}
+
+export interface PersonalityProfile {
+  responses: PersonalityResponse[];
+  completed: boolean;
+}
+
 export const GOALS: Goal[] = [
   {
     id: 'health-fitness',
@@ -257,6 +273,34 @@ export const GOAL_QUESTIONS: GoalQuestions = {
     }
   ]
 };
+
+export const PERSONALITY_QUESTIONS: PersonalityQuestion[] = [
+  {
+    id: 'visual-learning',
+    question: 'I learn best when I can see visual representations of concepts.',
+    description: 'Assesses preference for visual learning (e.g., diagrams, videos), helping match with coaches who use visual tools effectively.'
+  },
+  {
+    id: 'structured-approach',
+    question: 'I prefer a structured approach with clear goals and milestones.',
+    description: 'Gauges the need for structure versus flexibility, aligning with coaches who offer organized or adaptable styles.'
+  },
+  {
+    id: 'result-motivated',
+    question: 'I am motivated more by the end result than the learning process itself.',
+    description: 'Determines if the client is goal-driven or process-oriented, aiding in pairing with coaches who emphasize outcomes or journey.'
+  },
+  {
+    id: 'challenge-persistence',
+    question: 'When faced with challenges, I tend to persist and find solutions.',
+    description: 'Measures resilience and problem-solving attitude, connecting clients to coaches with relevant overcoming-experience.'
+  },
+  {
+    id: 'direct-feedback',
+    question: 'I appreciate direct and honest feedback, even if it\'s tough to hear.',
+    description: 'Reveals openness to constructive criticism, matching with coaches who provide direct or supportive feedback styles.'
+  }
+];
 
 export const MOTIVATIONAL_QUOTES = {
   'health-fitness': "The groundwork for all happiness is good health. - Leigh Hunt",
