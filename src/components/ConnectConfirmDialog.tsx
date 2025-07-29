@@ -252,4 +252,5 @@ const ConnectConfirmDialog: React.FC<ConnectConfirmDialogProps> = ({
   );
 };
 
+// Force module refresh
 export default ConnectConfirmDialog;
