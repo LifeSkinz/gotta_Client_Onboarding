@@ -1,12 +1,25 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { useNavigate } from "react-router-dom";
 interface WelcomePageProps {
   onStart: () => void;
 }
 export const WelcomePage = ({
   onStart
 }: WelcomePageProps) => {
+  const navigate = useNavigate();
+
   return <div className="min-h-screen bg-background flex items-center justify-center p-4">
+      {/* Header with Client Login */}
+      <div className="absolute top-4 right-4">
+        <Button 
+          variant="outline" 
+          onClick={() => navigate('/auth')}
+          className="bg-gradient-card border-primary/20 text-foreground hover:bg-primary/10"
+        >
+          Client Login
+        </Button>
+      </div>
       <div className="w-full max-w-2xl space-y-8">
         {/* Header */}
         <div className="text-center space-y-4">
@@ -41,9 +54,19 @@ export const WelcomePage = ({
               </div>
             </div>
 
-            <Button variant="gradient" size="lg" onClick={onStart} className="px-12">
-              Get Started
-            </Button>
+            <div className="flex flex-col sm:flex-row gap-4 items-center justify-center">
+              <Button variant="gradient" size="lg" onClick={onStart} className="px-12">
+                Get Started
+              </Button>
+              <Button 
+                variant="outline" 
+                size="lg" 
+                onClick={() => navigate('/preview')} 
+                className="px-8"
+              >
+                View Email Preview
+              </Button>
+            </div>
             
             <p className="text-sm text-muted-foreground">
               Takes only 3-5 minutes to complete
