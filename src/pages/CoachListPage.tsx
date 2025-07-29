@@ -8,6 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Star, Clock, DollarSign, Users, Eye, Coins } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import ConnectConfirmDialog from '@/components/ConnectConfirmDialog';
 
 interface Coach {
   id: string;
@@ -57,6 +58,8 @@ export const CoachListPage = ({ selectedGoal, responses, questions, onBack, onCo
   const [aiAnalysis, setAiAnalysis] = useState<AIAnalysis | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedCoach, setSelectedCoach] = useState<Coach | null>(null);
+  const [showConnectDialog, setShowConnectDialog] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -310,7 +313,10 @@ export const CoachListPage = ({ selectedGoal, responses, questions, onBack, onCo
                         variant={index === 0 ? "default" : "secondary"}
                         size="sm" 
                         className="flex-1 text-xs sm:text-sm bg-gradient-to-r from-purple-600 to-teal-500 hover:from-purple-700 hover:to-teal-600 text-white border-0"
-                        onClick={() => onCoachSelect(recommendation.coach)}
+                        onClick={() => {
+                          setSelectedCoach(recommendation.coach);
+                          setShowConnectDialog(true);
+                        }}
                       >
                         <span className="font-bold mr-1">1</span>
                         <Coins className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
@@ -368,6 +374,16 @@ export const CoachListPage = ({ selectedGoal, responses, questions, onBack, onCo
           </Button>
         </div>
       </div>
+
+      <ConnectConfirmDialog
+        isOpen={showConnectDialog}
+        onClose={() => {
+          setShowConnectDialog(false);
+          setSelectedCoach(null);
+        }}
+        coach={selectedCoach}
+        userGoal={selectedGoal}
+      />
     </div>
   );
 };

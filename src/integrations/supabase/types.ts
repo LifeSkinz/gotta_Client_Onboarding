@@ -14,15 +14,63 @@ export type Database = {
   }
   public: {
     Tables: {
+      coach_availability: {
+        Row: {
+          coach_id: string
+          created_at: string
+          day_of_week: number
+          end_time: string
+          id: string
+          is_active: boolean | null
+          start_time: string
+          timezone: string | null
+          updated_at: string
+        }
+        Insert: {
+          coach_id: string
+          created_at?: string
+          day_of_week: number
+          end_time: string
+          id?: string
+          is_active?: boolean | null
+          start_time: string
+          timezone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          coach_id?: string
+          created_at?: string
+          day_of_week?: number
+          end_time?: string
+          id?: string
+          is_active?: boolean | null
+          start_time?: string
+          timezone?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coach_availability_coach_id_fkey"
+            columns: ["coach_id"]
+            isOneToOne: false
+            referencedRelation: "coaches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       coaches: {
         Row: {
           availability_hours: string | null
+          available_now: boolean | null
           avatar_url: string | null
           bio: string
+          calendar_link: string | null
           created_at: string
           id: string
           is_active: boolean | null
           name: string
+          notification_email: string | null
+          notification_phone: string | null
           rating: number | null
           similar_experiences: string[]
           social_links: Json | null
@@ -35,12 +83,16 @@ export type Database = {
         }
         Insert: {
           availability_hours?: string | null
+          available_now?: boolean | null
           avatar_url?: string | null
           bio: string
+          calendar_link?: string | null
           created_at?: string
           id?: string
           is_active?: boolean | null
           name: string
+          notification_email?: string | null
+          notification_phone?: string | null
           rating?: number | null
           similar_experiences: string[]
           social_links?: Json | null
@@ -53,12 +105,16 @@ export type Database = {
         }
         Update: {
           availability_hours?: string | null
+          available_now?: boolean | null
           avatar_url?: string | null
           bio?: string
+          calendar_link?: string | null
           created_at?: string
           id?: string
           is_active?: boolean | null
           name?: string
+          notification_email?: string | null
+          notification_phone?: string | null
           rating?: number | null
           similar_experiences?: string[]
           social_links?: Json | null
@@ -127,6 +183,56 @@ export type Database = {
           },
         ]
       }
+      connection_requests: {
+        Row: {
+          client_bio: string | null
+          client_goal: Json | null
+          client_id: string
+          coach_id: string
+          created_at: string
+          id: string
+          request_type: string | null
+          scheduled_time: string | null
+          status: string | null
+          updated_at: string
+          video_link: string | null
+        }
+        Insert: {
+          client_bio?: string | null
+          client_goal?: Json | null
+          client_id: string
+          coach_id: string
+          created_at?: string
+          id?: string
+          request_type?: string | null
+          scheduled_time?: string | null
+          status?: string | null
+          updated_at?: string
+          video_link?: string | null
+        }
+        Update: {
+          client_bio?: string | null
+          client_goal?: Json | null
+          client_id?: string
+          coach_id?: string
+          created_at?: string
+          id?: string
+          request_type?: string | null
+          scheduled_time?: string | null
+          status?: string | null
+          updated_at?: string
+          video_link?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "connection_requests_coach_id_fkey"
+            columns: ["coach_id"]
+            isOneToOne: false
+            referencedRelation: "coaches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       currency_settings: {
         Row: {
           coins_per_unit: number
@@ -151,6 +257,42 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          bio: string | null
+          created_at: string
+          email_verified: boolean | null
+          full_name: string | null
+          id: string
+          notification_method: string | null
+          phone: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          bio?: string | null
+          created_at?: string
+          email_verified?: boolean | null
+          full_name?: string | null
+          id?: string
+          notification_method?: string | null
+          phone?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          bio?: string | null
+          created_at?: string
+          email_verified?: boolean | null
+          full_name?: string | null
+          id?: string
+          notification_method?: string | null
+          phone?: string | null
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -279,6 +421,59 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      video_sessions: {
+        Row: {
+          connection_request_id: string
+          created_at: string
+          duration_minutes: number | null
+          ended_at: string | null
+          id: string
+          overtime_minutes: number | null
+          recording_url: string | null
+          session_id: string
+          started_at: string | null
+          status: string | null
+          transcript: string | null
+          updated_at: string
+        }
+        Insert: {
+          connection_request_id: string
+          created_at?: string
+          duration_minutes?: number | null
+          ended_at?: string | null
+          id?: string
+          overtime_minutes?: number | null
+          recording_url?: string | null
+          session_id: string
+          started_at?: string | null
+          status?: string | null
+          transcript?: string | null
+          updated_at?: string
+        }
+        Update: {
+          connection_request_id?: string
+          created_at?: string
+          duration_minutes?: number | null
+          ended_at?: string | null
+          id?: string
+          overtime_minutes?: number | null
+          recording_url?: string | null
+          session_id?: string
+          started_at?: string | null
+          status?: string | null
+          transcript?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "video_sessions_connection_request_id_fkey"
+            columns: ["connection_request_id"]
+            isOneToOne: false
+            referencedRelation: "connection_requests"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
