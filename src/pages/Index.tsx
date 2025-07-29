@@ -8,8 +8,15 @@ import { ConfirmationPage } from "./ConfirmationPage";
 import { CoachListPage } from "./CoachListPage";
 import { PersonalityScreeningDialog } from "@/components/PersonalityScreeningDialog";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 type PageType = 'welcome' | 'goal-selection' | 'questions' | 'summary' | 'coach-list' | 'confirmation';
+
+interface AIAnalysis {
+  analysis: string;
+  recommendations: any[];
+  totalRecommendations: number;
+}
 
 const Index = () => {
   const [currentPage, setCurrentPage] = useState<PageType>('welcome');
@@ -19,6 +26,8 @@ const Index = () => {
   const [personalityResponses, setPersonalityResponses] = useState<PersonalityResponse[]>([]);
   const [showPersonalityDialog, setShowPersonalityDialog] = useState(false);
   const [hasCompletedPersonalityScreening, setHasCompletedPersonalityScreening] = useState(false);
+  const [aiAnalysis, setAiAnalysis] = useState<AIAnalysis | null>(null);
+  const [loadingCoachRecommendations, setLoadingCoachRecommendations] = useState(false);
   const { toast } = useToast();
 
   const currentQuestions = selectedGoal ? GOAL_QUESTIONS[selectedGoal.id] || [] : [];
@@ -112,12 +121,61 @@ const Index = () => {
     proceedToCoachList();
   };
 
-  const proceedToCoachList = () => {
-    toast({
-      title: "Profile Complete!",
-      description: "We're analyzing your responses to find the perfect coach match.",
-    });
+  const proceedToCoachList = async () => {
+    if (!aiAnalysis) {
+      await fetchCoachRecommendations();
+    }
     setCurrentPage('coach-list');
+  };
+
+  const fetchCoachRecommendations = async () => {
+    if (!selectedGoal) return;
+    
+    try {
+      setLoadingCoachRecommendations(true);
+      
+      toast({
+        title: "Profile Complete!",
+        description: "We're analyzing your responses to find the perfect coach match.",
+      });
+
+      // Prepare the data for the AI matching function
+      const requestData = {
+        selectedGoal,
+        responses: responses.map(response => {
+          const question = currentQuestions.find(q => q.id === response.questionId);
+          return {
+            question: question?.question || '',
+            answer: response.answer,
+            type: question?.type || 'open-ended'
+          };
+        }),
+        userId: null // For now, we're not using authentication
+      };
+
+      const { data, error: functionError } = await supabase.functions.invoke('ai-coach-matching', {
+        body: requestData
+      });
+
+      if (functionError) {
+        throw new Error(`Failed to get coach recommendations: ${functionError.message}`);
+      }
+
+      if (data.error) {
+        throw new Error(data.error);
+      }
+
+      setAiAnalysis(data);
+    } catch (err) {
+      console.error('Error fetching coach recommendations:', err);
+      toast({
+        title: "Error",
+        description: "Failed to load coach recommendations. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingCoachRecommendations(false);
+    }
   };
 
   const handleCoachSelect = (coach: any) => {
@@ -144,6 +202,7 @@ const Index = () => {
     setPersonalityResponses([]);
     setHasCompletedPersonalityScreening(false);
     setShowPersonalityDialog(false);
+    setAiAnalysis(null);
   };
 
   const getCurrentResponse = () => {
@@ -210,8 +269,11 @@ const Index = () => {
             selectedGoal={selectedGoal}
             responses={responses}
             questions={currentQuestions}
+            aiAnalysis={aiAnalysis}
+            loading={loadingCoachRecommendations}
             onBack={() => setCurrentPage('summary')}
             onCoachSelect={handleCoachSelect}
+            onFetchRecommendations={fetchCoachRecommendations}
           />
         );
         

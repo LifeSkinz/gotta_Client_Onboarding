@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Goal, UserResponse, Question } from "@/types/goals";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,7 +7,6 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Star, Clock, DollarSign, Users, Eye, Coins } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import ConnectConfirmDialog from '@/components/ConnectConfirmDialog';
 
@@ -50,52 +50,24 @@ interface CoachListPageProps {
   selectedGoal: Goal;
   responses: UserResponse[];
   questions: Question[];
+  aiAnalysis: AIAnalysis | null;
+  loading: boolean;
   onBack: () => void;
   onCoachSelect: (coach: Coach) => void;
+  onFetchRecommendations: () => Promise<void>;
 }
 
-export const CoachListPage = ({ selectedGoal, responses, questions, onBack, onCoachSelect }: CoachListPageProps) => {
-  const [aiAnalysis, setAiAnalysis] = useState<AIAnalysis | null>(null);
-  const [loading, setLoading] = useState(true);
+export const CoachListPage = ({ selectedGoal, responses, questions, aiAnalysis, loading, onBack, onCoachSelect, onFetchRecommendations }: CoachListPageProps) => {
   const [error, setError] = useState<string | null>(null);
   const [selectedCoach, setSelectedCoach] = useState<Coach | null>(null);
   const [showConnectDialog, setShowConnectDialog] = useState(false);
+  const navigate = useNavigate();
   const { toast } = useToast();
 
+  // If no AI analysis exists, trigger fetching
   useEffect(() => {
-    const fetchCoachRecommendations = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-
-        // Prepare the data for the AI matching function
-        const requestData = {
-          selectedGoal,
-          responses: responses.map(response => {
-            const question = questions.find(q => q.id === response.questionId);
-            return {
-              question: question?.question || '',
-              answer: response.answer,
-              type: question?.type || 'open-ended'
-            };
-          }),
-          userId: null // For now, we're not using authentication
-        };
-
-        const { data, error: functionError } = await supabase.functions.invoke('ai-coach-matching', {
-          body: requestData
-        });
-
-        if (functionError) {
-          throw new Error(`Failed to get coach recommendations: ${functionError.message}`);
-        }
-
-        if (data.error) {
-          throw new Error(data.error);
-        }
-
-        setAiAnalysis(data);
-      } catch (err) {
+    if (!aiAnalysis && !loading) {
+      onFetchRecommendations().catch((err) => {
         console.error('Error fetching coach recommendations:', err);
         setError(err instanceof Error ? err.message : 'Failed to load coach recommendations');
         toast({
@@ -103,13 +75,9 @@ export const CoachListPage = ({ selectedGoal, responses, questions, onBack, onCo
           description: "Failed to load coach recommendations. Please try again.",
           variant: "destructive",
         });
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchCoachRecommendations();
-  }, [selectedGoal, responses, questions, toast]);
+      });
+    }
+  }, [aiAnalysis, loading, onFetchRecommendations, toast]);
 
   const getConfidenceColor = (score: number) => {
     if (score >= 8) return "bg-emerald-500";
@@ -189,12 +157,12 @@ export const CoachListPage = ({ selectedGoal, responses, questions, onBack, onCo
               {error}
             </p>
             <div className="flex justify-center space-x-4">
-              <Button onClick={onBack} variant="outline">
-                Go Back
-              </Button>
-              <Button onClick={() => window.location.reload()}>
-                Try Again
-              </Button>
+            <Button onClick={onBack} variant="outline">
+              Go Back
+            </Button>
+            <Button onClick={onFetchRecommendations}>
+              Try Again
+            </Button>
             </div>
           </div>
         </div>
@@ -299,7 +267,7 @@ export const CoachListPage = ({ selectedGoal, responses, questions, onBack, onCo
                         variant="outline" 
                         size="sm" 
                         className="flex-1 text-xs sm:text-sm"
-                        onClick={() => window.location.href = `/coach/${recommendation.coach.id}`}
+                        onClick={() => navigate(`/coach/${recommendation.coach.id}`)}
                       >
                         <Eye className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
                         <span className="hidden sm:inline">View Profile</span>
