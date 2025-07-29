@@ -126,6 +126,84 @@ export const GOAL_QUESTIONS: GoalQuestions = {
       placeholder: 'Share the obstacles you want to overcome...'
     }
   ],
+  'personal-growth': [
+    {
+      id: 'skills-development',
+      type: 'open-ended',
+      question: 'What specific skills or knowledge do you want to develop?',
+      placeholder: 'Describe the skills you want to build or knowledge you want to gain...'
+    },
+    {
+      id: 'ideal-self',
+      type: 'open-ended',
+      question: 'How do you envision your ideal self in terms of personal qualities or behaviors?',
+      placeholder: 'Share your vision of who you want to become...'
+    },
+    {
+      id: 'limiting-habits',
+      type: 'open-ended',
+      question: 'What habits or mindsets do you believe are holding you back from personal growth?',
+      placeholder: 'Identify what you need to change or overcome...'
+    },
+    {
+      id: 'progress-measurement',
+      type: 'open-ended',
+      question: 'How do you plan to measure your progress in personal development?',
+      placeholder: 'Describe how you will track your growth and success...'
+    }
+  ],
+  'relationships': [
+    {
+      id: 'relationship-improvements',
+      type: 'open-ended',
+      question: 'What aspects of your current relationships do you want to improve or change?',
+      placeholder: 'Share what you would like to see improve in your relationships...'
+    },
+    {
+      id: 'communication-effectiveness',
+      type: 'open-ended',
+      question: 'How effectively do you communicate your needs and boundaries to others?',
+      placeholder: 'Reflect on your communication style and effectiveness...'
+    },
+    {
+      id: 'conflict-resolution',
+      type: 'open-ended',
+      question: 'What strategies do you use to resolve conflicts in your relationships?',
+      placeholder: 'Describe your approach to handling disagreements...'
+    },
+    {
+      id: 'showing-appreciation',
+      type: 'open-ended',
+      question: 'How do you show appreciation and support to the people in your life?',
+      placeholder: 'Share how you express care and support for others...'
+    }
+  ],
+  'financial-stability': [
+    {
+      id: 'financial-goals',
+      type: 'open-ended',
+      question: 'What are your short-term and long-term financial goals?',
+      placeholder: 'Describe your financial objectives for the next few years...'
+    },
+    {
+      id: 'money-management',
+      type: 'open-ended',
+      question: 'How do you currently manage your income and expenses?',
+      placeholder: 'Share your current approach to budgeting and spending...'
+    },
+    {
+      id: 'savings-strategy',
+      type: 'open-ended',
+      question: 'How are you building your emergency fund or savings?',
+      placeholder: 'Describe your saving habits and strategies...'
+    },
+    {
+      id: 'wealth-building',
+      type: 'open-ended',
+      question: 'How do you approach investing or growing your wealth?',
+      placeholder: 'Share your investment philosophy and approach...'
+    }
+  ],
   'creativity-hobbies': [
     {
       id: 'creative-interests',
