@@ -16,6 +16,7 @@ interface Coach {
   rating: number;
   available_now?: boolean;
   specialties: string[];
+  calendar_link?: string;
 }
 
 interface ConnectConfirmDialogProps {
@@ -122,10 +123,15 @@ const ConnectConfirmDialog: React.FC<ConnectConfirmDialogProps> = ({
   };
 
   const handleScheduleCall = () => {
-    toast({
-      title: "Coming Soon",
-      description: "Calendar booking will be available soon!",
-    });
+    if (coach?.calendar_link) {
+      window.open(coach.calendar_link, '_blank');
+    } else {
+      // For Cal.com integration - will be implemented with proper Cal.com embed
+      toast({
+        title: "Opening scheduler...",
+        description: "Redirecting to booking calendar",
+      });
+    }
   };
 
   if (!coach) return null;

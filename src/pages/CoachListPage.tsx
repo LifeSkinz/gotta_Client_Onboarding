@@ -299,10 +299,7 @@ export const CoachListPage = ({ selectedGoal, responses, questions, onBack, onCo
                         variant="outline" 
                         size="sm" 
                         className="flex-1 text-xs sm:text-sm"
-                        onClick={() => {
-                          // TODO: Implement view profile functionality
-                          console.log('View profile for:', recommendation.coach.name);
-                        }}
+                        onClick={() => window.location.href = `/coach/${recommendation.coach.id}`}
                       >
                         <Eye className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
                         <span className="hidden sm:inline">View Profile</span>

@@ -65,12 +65,16 @@ export type Database = {
           avatar_url: string | null
           bio: string
           calendar_link: string | null
+          client_challenge_example: string | null
+          coaching_expertise: string | null
+          coaching_style: string | null
           created_at: string
           id: string
           is_active: boolean | null
           name: string
           notification_email: string | null
           notification_phone: string | null
+          personal_experiences: string | null
           rating: number | null
           similar_experiences: string[]
           social_links: Json | null
@@ -87,12 +91,16 @@ export type Database = {
           avatar_url?: string | null
           bio: string
           calendar_link?: string | null
+          client_challenge_example?: string | null
+          coaching_expertise?: string | null
+          coaching_style?: string | null
           created_at?: string
           id?: string
           is_active?: boolean | null
           name: string
           notification_email?: string | null
           notification_phone?: string | null
+          personal_experiences?: string | null
           rating?: number | null
           similar_experiences: string[]
           social_links?: Json | null
@@ -109,12 +117,16 @@ export type Database = {
           avatar_url?: string | null
           bio?: string
           calendar_link?: string | null
+          client_challenge_example?: string | null
+          coaching_expertise?: string | null
+          coaching_style?: string | null
           created_at?: string
           id?: string
           is_active?: boolean | null
           name?: string
           notification_email?: string | null
           notification_phone?: string | null
+          personal_experiences?: string | null
           rating?: number | null
           similar_experiences?: string[]
           social_links?: Json | null
