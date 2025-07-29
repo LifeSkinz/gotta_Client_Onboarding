@@ -24,7 +24,7 @@ export const WelcomePage = ({
         {/* Header */}
         <div className="text-center space-y-4">
           <div className="flex items-center justify-center mb-6">
-            <img src="/lovable-uploads/9f5437ec-fa52-4ad6-bccb-b92e0df1c312.png" alt="Gotta Logo" className="h-16 w-auto" />
+            <div className="text-6xl">🎯</div>
           </div>
           <h1 className="text-4xl font-bold bg-gradient-primary bg-clip-text text-transparent">Connecting AI-power with people</h1>
           <p className="text-xl text-muted-foreground">AI-power whatever you GOTTA DO!</p>
