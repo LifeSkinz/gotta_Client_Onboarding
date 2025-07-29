@@ -2,7 +2,7 @@ import { Question, UserResponse } from "@/types/goals";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface QuestionCardProps {
   question: Question;
@@ -14,6 +14,12 @@ interface QuestionCardProps {
 export const QuestionCard = ({ question, response, onAnswer, motivationalQuote }: QuestionCardProps) => {
   const [openEndedAnswer, setOpenEndedAnswer] = useState(response?.answer || '');
   const [hasStartedTyping, setHasStartedTyping] = useState(false);
+
+  // Reset local state when question changes
+  useEffect(() => {
+    setOpenEndedAnswer(response?.answer || '');
+    setHasStartedTyping(false);
+  }, [question.id, response?.answer]);
 
   const handleMultipleChoiceSelect = (option: string) => {
     onAnswer(option);
