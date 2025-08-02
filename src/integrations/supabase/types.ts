@@ -378,7 +378,7 @@ export type Database = {
           selected_goal: Json
           session_id: string
           updated_at: string
-          user_id: string | null
+          user_id: string
         }
         Insert: {
           ai_analysis?: Json | null
@@ -389,7 +389,7 @@ export type Database = {
           selected_goal: Json
           session_id?: string
           updated_at?: string
-          user_id?: string | null
+          user_id: string
         }
         Update: {
           ai_analysis?: Json | null
@@ -400,7 +400,7 @@ export type Database = {
           selected_goal?: Json
           session_id?: string
           updated_at?: string
-          user_id?: string | null
+          user_id?: string
         }
         Relationships: []
       }

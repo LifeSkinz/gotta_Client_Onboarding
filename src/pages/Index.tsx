@@ -1,4 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { User, Session } from "@supabase/supabase-js";
 import { Goal, UserResponse, Question, GOAL_QUESTIONS, PersonalityResponse } from "@/types/goals";
 import { WelcomePage } from "./WelcomePage";
 import { GoalSelectionPage } from "./GoalSelectionPage";
@@ -7,6 +9,8 @@ import { SummaryPage } from "./SummaryPage";
 import { ConfirmationPage } from "./ConfirmationPage";
 import { CoachListPage } from "./CoachListPage";
 import { PersonalityScreeningDialog } from "@/components/PersonalityScreeningDialog";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -19,6 +23,9 @@ interface AIAnalysis {
 }
 
 const Index = () => {
+  const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
+  const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState<PageType>('welcome');
   const [selectedGoal, setSelectedGoal] = useState<Goal | null>(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -29,8 +36,36 @@ const Index = () => {
   const [aiAnalysis, setAiAnalysis] = useState<AIAnalysis | null>(null);
   const [loadingCoachRecommendations, setLoadingCoachRecommendations] = useState(false);
   const { toast } = useToast();
+  const navigate = useNavigate();
+
+  // Authentication check
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        setSession(session);
+        setUser(session?.user ?? null);
+        setLoading(false);
+      }
+    );
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      setLoading(false);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   const currentQuestions = selectedGoal ? GOAL_QUESTIONS[selectedGoal.id] || [] : [];
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    toast({
+      title: "Signed out",
+      description: "You have been successfully signed out.",
+    });
+  };
 
   const handleStart = () => {
     setCurrentPage('goal-selection');
@@ -105,7 +140,35 @@ const Index = () => {
     setCurrentPage('questions');
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
+    if (!user) {
+      toast({
+        title: "Authentication Required",
+        description: "Please sign in to save your responses and get coach recommendations.",
+      });
+      navigate('/auth');
+      return;
+    }
+
+    // Save user responses to database
+    try {
+      const { error } = await supabase.from('user_responses').insert({
+        user_id: user.id,
+        selected_goal: selectedGoal as any,
+        responses: responses as any
+      });
+
+      if (error) throw error;
+    } catch (error) {
+      console.error('Error saving responses:', error);
+      toast({
+        title: "Error",
+        description: "Failed to save your responses. Please try again.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     // Check if personality screening is needed
     if (!hasCompletedPersonalityScreening) {
       setShowPersonalityDialog(true);
@@ -150,7 +213,7 @@ const Index = () => {
             type: question?.type || 'open-ended'
           };
         }),
-        userId: null // For now, we're not using authentication
+        userId: user?.id || null
       };
 
       const { data, error: functionError } = await supabase.functions.invoke('ai-coach-matching', {
@@ -214,6 +277,18 @@ const Index = () => {
     const currentResponse = getCurrentResponse();
     return currentResponse && currentResponse.answer.trim().length > 0;
   };
+
+  // Show loading screen while checking authentication
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/20 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   // Render current page
   const currentPageContent = (() => {
@@ -295,6 +370,43 @@ const Index = () => {
 
   return (
     <>
+      {/* Authentication Header */}
+      {user && (
+        <div className="fixed top-0 right-0 z-50 p-4">
+          <Card className="flex items-center gap-3 px-4 py-2 bg-card/95 backdrop-blur-sm border-border/50">
+            <div className="text-sm">
+              <p className="font-medium">{user.user_metadata?.full_name || user.email}</p>
+              <p className="text-xs text-muted-foreground">{user.email}</p>
+            </div>
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={handleSignOut}
+            >
+              Sign Out
+            </Button>
+          </Card>
+        </div>
+      )}
+      
+      {/* Not authenticated CTA */}
+      {!user && currentPage !== 'welcome' && (
+        <div className="fixed top-0 right-0 z-50 p-4">
+          <Card className="px-4 py-2 bg-card/95 backdrop-blur-sm border-border/50">
+            <div className="text-sm text-center">
+              <p className="text-muted-foreground mb-2">Sign in to save progress</p>
+              <Button 
+                variant="default" 
+                size="sm"
+                onClick={() => navigate('/auth')}
+              >
+                Sign In
+              </Button>
+            </div>
+          </Card>
+        </div>
+      )}
+
       {currentPageContent}
       <PersonalityScreeningDialog
         open={showPersonalityDialog}
