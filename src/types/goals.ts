@@ -49,7 +49,7 @@ export const GOALS: Goal[] = [
     id: 'health-fitness',
     title: 'Health & Fitness',
     description: 'Transform your physical wellbeing and build lasting healthy habits',
-    icon: '💪',
+    icon: '🏋️',
     color: 'from-emerald-500 to-teal-500'
   },
   {
