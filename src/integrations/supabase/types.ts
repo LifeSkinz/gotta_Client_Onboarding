@@ -64,13 +64,19 @@ export type Database = {
           available_now: boolean | null
           avatar_url: string | null
           bio: string
+          booking_buffer_minutes: number | null
           calendar_link: string | null
           client_challenge_example: string | null
           coaching_expertise: string | null
           coaching_style: string | null
           created_at: string
+          hourly_coin_cost: number | null
+          hourly_rate_amount: number | null
+          hourly_rate_currency: string | null
           id: string
           is_active: boolean | null
+          max_session_duration: number | null
+          min_session_duration: number | null
           name: string
           notification_email: string | null
           notification_phone: string | null
@@ -90,13 +96,19 @@ export type Database = {
           available_now?: boolean | null
           avatar_url?: string | null
           bio: string
+          booking_buffer_minutes?: number | null
           calendar_link?: string | null
           client_challenge_example?: string | null
           coaching_expertise?: string | null
           coaching_style?: string | null
           created_at?: string
+          hourly_coin_cost?: number | null
+          hourly_rate_amount?: number | null
+          hourly_rate_currency?: string | null
           id?: string
           is_active?: boolean | null
+          max_session_duration?: number | null
+          min_session_duration?: number | null
           name: string
           notification_email?: string | null
           notification_phone?: string | null
@@ -116,13 +128,19 @@ export type Database = {
           available_now?: boolean | null
           avatar_url?: string | null
           bio?: string
+          booking_buffer_minutes?: number | null
           calendar_link?: string | null
           client_challenge_example?: string | null
           coaching_expertise?: string | null
           coaching_style?: string | null
           created_at?: string
+          hourly_coin_cost?: number | null
+          hourly_rate_amount?: number | null
+          hourly_rate_currency?: string | null
           id?: string
           is_active?: boolean | null
+          max_session_duration?: number | null
+          min_session_duration?: number | null
           name?: string
           notification_email?: string | null
           notification_phone?: string | null
@@ -307,6 +325,118 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      session_recordings: {
+        Row: {
+          ai_summary: string | null
+          created_at: string
+          duration_seconds: number | null
+          file_size_bytes: number | null
+          id: string
+          recording_url: string | null
+          session_id: string
+          transcript: string | null
+          updated_at: string
+        }
+        Insert: {
+          ai_summary?: string | null
+          created_at?: string
+          duration_seconds?: number | null
+          file_size_bytes?: number | null
+          id?: string
+          recording_url?: string | null
+          session_id: string
+          transcript?: string | null
+          updated_at?: string
+        }
+        Update: {
+          ai_summary?: string | null
+          created_at?: string
+          duration_seconds?: number | null
+          file_size_bytes?: number | null
+          id?: string
+          recording_url?: string | null
+          session_id?: string
+          transcript?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "session_recordings_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sessions: {
+        Row: {
+          actual_end_time: string | null
+          actual_start_time: string | null
+          client_id: string
+          coach_id: string
+          coin_cost: number | null
+          created_at: string
+          duration_minutes: number | null
+          id: string
+          notes: string | null
+          price_amount: number | null
+          price_currency: string | null
+          scheduled_time: string
+          session_id: string
+          status: string
+          updated_at: string
+          video_join_url: string | null
+          video_room_id: string | null
+        }
+        Insert: {
+          actual_end_time?: string | null
+          actual_start_time?: string | null
+          client_id: string
+          coach_id: string
+          coin_cost?: number | null
+          created_at?: string
+          duration_minutes?: number | null
+          id?: string
+          notes?: string | null
+          price_amount?: number | null
+          price_currency?: string | null
+          scheduled_time: string
+          session_id: string
+          status?: string
+          updated_at?: string
+          video_join_url?: string | null
+          video_room_id?: string | null
+        }
+        Update: {
+          actual_end_time?: string | null
+          actual_start_time?: string | null
+          client_id?: string
+          coach_id?: string
+          coin_cost?: number | null
+          created_at?: string
+          duration_minutes?: number | null
+          id?: string
+          notes?: string | null
+          price_amount?: number | null
+          price_currency?: string | null
+          scheduled_time?: string
+          session_id?: string
+          status?: string
+          updated_at?: string
+          video_join_url?: string | null
+          video_room_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sessions_coach_id_fkey"
+            columns: ["coach_id"]
+            isOneToOne: false
+            referencedRelation: "coaches"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       transactions: {
         Row: {

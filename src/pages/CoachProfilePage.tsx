@@ -8,6 +8,7 @@ import { ArrowLeft, Star, MapPin, Calendar, Clock, MessageCircle } from "lucide-
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import ConnectConfirmDialog from "@/components/ConnectConfirmDialog";
+import { SessionBookingFlow } from "@/components/SessionBookingFlow";
 
 interface Coach {
   id: string;
@@ -48,6 +49,7 @@ export default function CoachProfilePage() {
   const [packages, setPackages] = useState<CoachingPackage[]>([]);
   const [loading, setLoading] = useState(true);
   const [showConnectDialog, setShowConnectDialog] = useState(false);
+  const [showBookingFlow, setShowBookingFlow] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -75,12 +77,8 @@ export default function CoachProfilePage() {
     }
   };
 
-  const openCalendly = () => {
-    if (coach?.calendar_link) {
-      window.open(coach.calendar_link, '_blank');
-    } else {
-      toast.info("Calendar booking will be available soon!");
-    }
+  const openBookingFlow = () => {
+    setShowBookingFlow(true);
   };
 
   if (loading) {
@@ -174,11 +172,11 @@ export default function CoachProfilePage() {
                   </Button>
                   <Button 
                     variant="outline" 
-                    onClick={openCalendly}
+                    onClick={openBookingFlow}
                     className="w-full"
                   >
                     <Calendar className="h-4 w-4 mr-2" />
-                    Schedule Call
+                    Book Session
                   </Button>
                 </div>
               </div>
@@ -286,6 +284,22 @@ export default function CoachProfilePage() {
           specialties: coach.specialties
         } : null}
       />
+
+      {coach && (
+        <SessionBookingFlow
+          isOpen={showBookingFlow}
+          onClose={() => setShowBookingFlow(false)}
+          coach={{
+            id: coach.id,
+            name: coach.name,
+            hourly_rate_amount: 100, // Will be fetched from updated coach data
+            hourly_coin_cost: 100,
+            min_session_duration: 30,
+            max_session_duration: 90,
+            booking_buffer_minutes: 15
+          }}
+        />
+      )}
     </div>
   );
 }

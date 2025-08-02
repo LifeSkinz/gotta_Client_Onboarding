@@ -8,6 +8,7 @@ import NotFound from "./pages/NotFound";
 import AuthPage from "./pages/AuthPage";
 import CoachProfilePage from "./pages/CoachProfilePage";
 import PreviewPage from "./pages/PreviewPage";
+import { UserSessionsPage } from "./components/UserSessionsPage";
 
 const queryClient = new QueryClient();
 
@@ -23,6 +24,7 @@ const App = () => (
           <Route path="/coaches" element={<Index />} />
           <Route path="/coach/:id" element={<CoachProfilePage />} />
           <Route path="/preview" element={<PreviewPage />} />
+          <Route path="/sessions" element={<UserSessionsPage />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
