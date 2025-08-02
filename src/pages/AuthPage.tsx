@@ -46,6 +46,9 @@ const AuthPage = () => {
 
         if (error) throw error;
 
+        // Handle migration and redirects after successful login
+        await handlePostAuthRedirect();
+
         toast({
           title: "Welcome back!",
           description: "You have successfully logged in.",
@@ -72,21 +75,14 @@ const AuthPage = () => {
             title: "Check your email",
             description: "We've sent you a confirmation link to complete your registration.",
           });
-        } else {
-          // Auto-login successful, create profile
-          await supabase.from('profiles').insert({
-            user_id: data.user!.id,
-            full_name: formData.fullName,
-            phone: formData.phone,
-            email_verified: false
-          });
+        } else if (data.user && data.session) {
+          // Auto-login successful, handle migration and redirect
+          await handlePostAuthRedirect();
 
           toast({
             title: "Account created!",
-            description: "Welcome! Please check your email to verify your account.",
+            description: "Welcome! Your account has been created successfully.",
           });
-          
-          navigate('/');
         }
       }
     } catch (error: any) {
@@ -97,6 +93,48 @@ const AuthPage = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handlePostAuthRedirect = async () => {
+    try {
+      // Check if user was trying to connect/schedule before auth
+      const connectAfterAuth = localStorage.getItem('connectAfterAuth');
+      if (connectAfterAuth) {
+        const { coachId, action } = JSON.parse(connectAfterAuth);
+        localStorage.removeItem('connectAfterAuth');
+        
+        // Redirect to coach profile with intent
+        setTimeout(() => {
+          navigate(`/coach/${coachId}?action=${action}`);
+        }, 1000);
+        return;
+      }
+
+      // Handle guest session migration
+      const guestSessionId = localStorage.getItem('guestSessionId');
+      if (guestSessionId) {
+        const { data: session } = await supabase.auth.getSession();
+        if (session?.session?.user) {
+          await supabase.functions.invoke('migrate-guest-session', {
+            body: {
+              sessionId: guestSessionId,
+              userId: session.session.user.id
+            }
+          });
+        }
+      }
+
+      // Default redirect to home
+      setTimeout(() => {
+        navigate('/');
+      }, 1000);
+    } catch (error) {
+      console.error('Error during post-auth processing:', error);
+      // Still redirect to home even if migration fails
+      setTimeout(() => {
+        navigate('/');
+      }, 1000);
     }
   };
 

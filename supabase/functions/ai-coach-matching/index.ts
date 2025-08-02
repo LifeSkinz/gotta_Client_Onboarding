@@ -14,6 +14,7 @@ const corsHeaders = {
 interface UserResponse {
   selectedGoal: any;
   responses: Array<{ question: string; answer: string; type: string }>;
+  sessionId: string;
   userId?: string;
 }
 
@@ -36,7 +37,45 @@ serve(async (req) => {
 
   try {
     const supabase = createClient(supabaseUrl!, supabaseServiceKey!);
-    const { selectedGoal, responses, userId }: UserResponse = await req.json();
+    const { selectedGoal, responses, sessionId, userId }: UserResponse = await req.json();
+
+    console.log('Received request:', { sessionId, userId });
+
+    // Check if we already have recommendations for this session
+    const { data: existingSession, error: sessionError } = await supabase
+      .from('guest_sessions')
+      .select('*')
+      .eq('session_id', sessionId)
+      .single();
+
+    if (!sessionError && existingSession?.ai_analysis && existingSession?.recommended_coaches) {
+      console.log('Returning cached recommendations for session:', sessionId);
+      
+      // Fetch coach details for cached recommendations
+      const { data: coaches, error: coachError } = await supabase
+        .from('coaches')
+        .select('*')
+        .in('id', existingSession.recommended_coaches)
+        .eq('is_active', true);
+
+      if (!coachError && coaches) {
+        const enrichedRecommendations = existingSession.ai_analysis.recommendations?.map((rec: any) => {
+          const coach = coaches.find(c => c.id === rec.coachId);
+          return {
+            ...rec,
+            coach: coach || null
+          };
+        }) || [];
+
+        return new Response(JSON.stringify({
+          analysis: existingSession.ai_analysis.analysis,
+          recommendations: enrichedRecommendations,
+          totalRecommendations: enrichedRecommendations.length
+        }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+    }
 
     // Fetch all active coaches
     const { data: coaches, error: coachError } = await supabase
@@ -146,20 +185,24 @@ Ensure exactly 5 recommendations, prioritizing quality of match over other facto
     console.log('AI Analysis completed:', aiAnalysis.analysis);
     console.log(`Generated ${aiAnalysis.recommendations?.length || 0} recommendations`);
 
-    // Store the analysis in user_responses table
-    const { error: storeError } = await supabase
-      .from('user_responses')
-      .insert({
-        user_id: userId || null,
+    // Store or update guest session data
+    const recommendedCoachIds = aiAnalysis.recommendations?.map((r: any) => r.coachId) || [];
+    
+    const { error: upsertError } = await supabase
+      .from('guest_sessions')
+      .upsert({
+        session_id: sessionId,
         selected_goal: selectedGoal,
         responses: responses,
         ai_analysis: aiAnalysis,
-        recommended_coaches: aiAnalysis.recommendations?.map((r: any) => r.coachId) || []
+        recommended_coaches: recommendedCoachIds
+      }, {
+        onConflict: 'session_id'
       });
 
-    if (storeError) {
-      console.error('Failed to store user responses:', storeError);
-      // Don't throw error, just log it
+    if (upsertError) {
+      console.error('Error storing guest session:', upsertError);
+      // Don't throw here, we can still return the recommendations
     }
 
     // Return the AI analysis with coach details

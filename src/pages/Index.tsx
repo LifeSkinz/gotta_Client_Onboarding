@@ -35,15 +35,35 @@ const Index = () => {
   const [hasCompletedPersonalityScreening, setHasCompletedPersonalityScreening] = useState(false);
   const [aiAnalysis, setAiAnalysis] = useState<AIAnalysis | null>(null);
   const [loadingCoachRecommendations, setLoadingCoachRecommendations] = useState(false);
+  const [sessionId, setSessionId] = useState<string>('');
   const { toast } = useToast();
   const navigate = useNavigate();
+
+  // Initialize session ID
+  useEffect(() => {
+    let storedSessionId = localStorage.getItem('guestSessionId');
+    if (!storedSessionId) {
+      storedSessionId = crypto.randomUUID();
+      localStorage.setItem('guestSessionId', storedSessionId);
+    }
+    setSessionId(storedSessionId);
+  }, []);
 
   // Authentication check
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
+        const newUser = session?.user ?? null;
+        
+        // If user just signed in and we have a guest session, migrate the data
+        if (newUser && !user && sessionId) {
+          setTimeout(() => {
+            migrateGuestSessionData(newUser.id);
+          }, 0);
+        }
+        
         setSession(session);
-        setUser(session?.user ?? null);
+        setUser(newUser);
         setLoading(false);
       }
     );
@@ -55,7 +75,7 @@ const Index = () => {
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [sessionId, user]);
 
   const currentQuestions = selectedGoal ? GOAL_QUESTIONS[selectedGoal.id] || [] : [];
 
@@ -141,40 +161,8 @@ const Index = () => {
   };
 
   const handleSubmit = async () => {
-    if (!user) {
-      toast({
-        title: "Authentication Required",
-        description: "Please sign in to save your responses and get coach recommendations.",
-      });
-      navigate('/auth');
-      return;
-    }
-
-    // Save user responses to database
-    try {
-      const { error } = await supabase.from('user_responses').insert({
-        user_id: user.id,
-        selected_goal: selectedGoal as any,
-        responses: responses as any
-      });
-
-      if (error) throw error;
-    } catch (error) {
-      console.error('Error saving responses:', error);
-      toast({
-        title: "Error",
-        description: "Failed to save your responses. Please try again.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // Check if personality screening is needed
-    if (!hasCompletedPersonalityScreening) {
-      setShowPersonalityDialog(true);
-    } else {
-      proceedToCoachList();
-    }
+    // No authentication required for summary - proceed directly to coach matching
+    proceedToCoachList();
   };
 
   const handlePersonalityComplete = (responses: PersonalityResponse[]) => {
@@ -192,7 +180,7 @@ const Index = () => {
   };
 
   const fetchCoachRecommendations = async () => {
-    if (!selectedGoal) return;
+    if (!selectedGoal || !sessionId) return;
     
     try {
       setLoadingCoachRecommendations(true);
@@ -213,6 +201,7 @@ const Index = () => {
             type: question?.type || 'open-ended'
           };
         }),
+        sessionId,
         userId: user?.id || null
       };
 
@@ -241,6 +230,28 @@ const Index = () => {
     }
   };
 
+  // Function to migrate guest session data on authentication
+  const migrateGuestSessionData = async (userId: string) => {
+    if (!sessionId) return;
+
+    try {
+      const { data, error } = await supabase.functions.invoke('migrate-guest-session', {
+        body: {
+          sessionId,
+          userId
+        }
+      });
+
+      if (error) {
+        console.error('Error migrating guest session:', error);
+      } else {
+        console.log('Successfully migrated guest session data:', data);
+      }
+    } catch (error) {
+      console.error('Error during guest session migration:', error);
+    }
+  };
+
   const handleCoachSelect = (coach: any) => {
     toast({
       title: "Coach Selected!",
@@ -266,6 +277,11 @@ const Index = () => {
     setHasCompletedPersonalityScreening(false);
     setShowPersonalityDialog(false);
     setAiAnalysis(null);
+    
+    // Generate new session ID for fresh start
+    const newSessionId = crypto.randomUUID();
+    localStorage.setItem('guestSessionId', newSessionId);
+    setSessionId(newSessionId);
   };
 
   const getCurrentResponse = () => {

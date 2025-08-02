@@ -55,12 +55,17 @@ const ConnectConfirmDialog: React.FC<ConnectConfirmDialogProps> = ({
   }, []);
 
   const handleConnectNow = async () => {
-    if (!isAuthenticated) {
+    if (!isAuthenticated || !user) {
       toast({
         title: "Authentication Required",
         description: "Please sign in or create an account to connect with coaches.",
         variant: "destructive",
       });
+      // Store that user was trying to connect so we can redirect back after auth
+      localStorage.setItem('connectAfterAuth', JSON.stringify({ 
+        coachId: coach?.id, 
+        action: 'connect' 
+      }));
       window.location.href = '/auth';
       return;
     }
@@ -123,6 +128,21 @@ const ConnectConfirmDialog: React.FC<ConnectConfirmDialogProps> = ({
   };
 
   const handleScheduleCall = () => {
+    if (!isAuthenticated || !user) {
+      toast({
+        title: "Authentication Required",
+        description: "Please sign in or create an account to schedule calls.",
+        variant: "destructive",
+      });
+      // Store that user was trying to schedule so we can redirect back after auth
+      localStorage.setItem('connectAfterAuth', JSON.stringify({ 
+        coachId: coach?.id, 
+        action: 'schedule' 
+      }));
+      window.location.href = '/auth';
+      return;
+    }
+
     if (coach?.calendar_link) {
       window.open(coach.calendar_link, '_blank');
     } else {

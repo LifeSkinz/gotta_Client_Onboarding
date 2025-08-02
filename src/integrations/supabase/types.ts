@@ -290,6 +290,36 @@ export type Database = {
         }
         Relationships: []
       }
+      guest_sessions: {
+        Row: {
+          ai_analysis: Json | null
+          created_at: string
+          expires_at: string
+          recommended_coaches: Json | null
+          responses: Json
+          selected_goal: Json
+          session_id: string
+        }
+        Insert: {
+          ai_analysis?: Json | null
+          created_at?: string
+          expires_at?: string
+          recommended_coaches?: Json | null
+          responses: Json
+          selected_goal: Json
+          session_id?: string
+        }
+        Update: {
+          ai_analysis?: Json | null
+          created_at?: string
+          expires_at?: string
+          recommended_coaches?: Json | null
+          responses?: Json
+          selected_goal?: Json
+          session_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           bio: string | null
@@ -502,6 +532,7 @@ export type Database = {
         Row: {
           ai_analysis: Json | null
           created_at: string
+          guest_session_id: string | null
           id: string
           recommended_coaches: string[] | null
           responses: Json
@@ -513,6 +544,7 @@ export type Database = {
         Insert: {
           ai_analysis?: Json | null
           created_at?: string
+          guest_session_id?: string | null
           id?: string
           recommended_coaches?: string[] | null
           responses: Json
@@ -524,6 +556,7 @@ export type Database = {
         Update: {
           ai_analysis?: Json | null
           created_at?: string
+          guest_session_id?: string | null
           id?: string
           recommended_coaches?: string[] | null
           responses?: Json
@@ -622,7 +655,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      cleanup_expired_guest_sessions: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never
