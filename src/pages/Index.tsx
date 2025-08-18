@@ -161,8 +161,12 @@ const Index = () => {
   };
 
   const handleSubmit = async () => {
-    // No authentication required for summary - proceed directly to coach matching
-    proceedToCoachList();
+    // For non-authenticated users, show personality screening first
+    if (!user && !hasCompletedPersonalityScreening) {
+      setShowPersonalityDialog(true);
+    } else {
+      proceedToCoachList();
+    }
   };
 
   const handlePersonalityComplete = (responses: PersonalityResponse[]) => {
