@@ -7,6 +7,7 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import AuthPage from "./pages/AuthPage";
 import CoachProfilePage from "./pages/CoachProfilePage";
+import CoachesPage from "./pages/CoachesPage";
 import PreviewPage from "./pages/PreviewPage";
 import { UserSessionsPage } from "./components/UserSessionsPage";
 
@@ -21,7 +22,7 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/auth" element={<AuthPage />} />
-          <Route path="/coaches" element={<Index />} />
+          <Route path="/coaches" element={<CoachesPage />} />
           <Route path="/coach/:id" element={<CoachProfilePage />} />
           <Route path="/preview" element={<PreviewPage />} />
           <Route path="/sessions" element={<UserSessionsPage />} />

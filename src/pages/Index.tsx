@@ -177,10 +177,17 @@ const Index = () => {
   };
 
   const proceedToCoachList = async () => {
-    if (!aiAnalysis) {
-      await fetchCoachRecommendations();
-    }
-    setCurrentPage('coach-list');
+    // Navigate to dedicated coaches page with state
+    navigate('/coaches', {
+      state: {
+        selectedGoal,
+        responses,
+        questions: currentQuestions,
+        aiAnalysis,
+        sessionId,
+        personalityResponses
+      }
+    });
   };
 
   const fetchCoachRecommendations = async () => {

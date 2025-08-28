@@ -115,7 +115,7 @@ export default function CoachProfilePage() {
       <div className="max-w-4xl mx-auto p-4 space-y-6">
         {/* Header */}
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="sm" onClick={() => navigate(-1)}>
+          <Button variant="ghost" size="sm" onClick={() => navigate('/coaches')}>
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Coaches
           </Button>
