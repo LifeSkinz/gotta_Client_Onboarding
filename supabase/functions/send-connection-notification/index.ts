@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { Resend } from 'npm:resend@2.0.0';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -40,49 +41,103 @@ serve(async (req) => {
       throw new Error(`Failed to fetch connection request: ${requestError.message}`);
     }
 
+    // Initialize Resend
+    const resend = new Resend(Deno.env.get('RESEND_API_KEY'));
+
     // Get coach notification preferences
-    const coachEmail = requestData.coach.notification_email || requestData.coach.name + '@example.com'; // Placeholder
+    const coachEmail = requestData.coach.notification_email || requestData.coach.name.toLowerCase().replace(/\s+/g, '.') + '@example.com';
     const coachPhone = requestData.coach.notification_phone;
 
     // Prepare notification content
     const clientName = requestData.client?.full_name || 'A client';
-    const clientBio = requestData.client_bio || 'No bio provided';
+    const clientBio = requestData.client_bio || 'No additional information provided';
     const goalTitle = requestData.client_goal?.title || 'their goals';
 
-    const emailSubject = `New Connection Request from ${clientName}`;
+    // Create action URLs for coach responses
+    const acceptUrl = `${supabaseUrl}/functions/v1/handle-coach-response?action=accept&requestId=${connectionRequestId}`;
+    const declineUrl = `${supabaseUrl}/functions/v1/handle-coach-response?action=decline&requestId=${connectionRequestId}`;
+    const rescheduleUrl = `${supabaseUrl}/functions/v1/handle-coach-response?action=reschedule&requestId=${connectionRequestId}`;
+
+    const emailSubject = `New ${requestData.request_type === 'instant' ? 'Instant' : 'Scheduled'} Connection Request from ${clientName}`;
+    
     const emailContent = `
-      <h2>New Connection Request</h2>
-      <p><strong>Client:</strong> ${clientName}</p>
-      <p><strong>Goal:</strong> ${goalTitle}</p>
-      <p><strong>Bio:</strong> ${clientBio}</p>
-      <p><strong>Request Type:</strong> ${requestData.request_type}</p>
-      ${requestData.scheduled_time ? `<p><strong>Scheduled Time:</strong> ${requestData.scheduled_time}</p>` : ''}
-      
-      <div style="margin: 20px 0;">
-        <a href="${supabaseUrl}/coach-portal/requests/${connectionRequestId}" 
-           style="background-color: #10b981; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px;">
-          Accept Connection
-        </a>
-        <a href="${supabaseUrl}/coach-portal/requests/${connectionRequestId}?action=decline" 
-           style="background-color: #ef4444; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin-left: 10px;">
-          Decline
-        </a>
-      </div>
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <style>
+          body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif; line-height: 1.6; color: #333; }
+          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+          .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
+          .content { background: white; padding: 30px; border: 1px solid #e1e5e9; }
+          .client-info { background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0; }
+          .action-buttons { text-align: center; margin: 30px 0; }
+          .btn { display: inline-block; padding: 12px 24px; margin: 0 10px; text-decoration: none; border-radius: 6px; font-weight: 600; }
+          .btn-accept { background-color: #10b981; color: white; }
+          .btn-decline { background-color: #ef4444; color: white; }
+          .btn-reschedule { background-color: #f59e0b; color: white; }
+          .footer { text-align: center; font-size: 12px; color: #6b7280; margin-top: 30px; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>New Connection Request</h1>
+            <p>${requestData.request_type === 'instant' ? 'Instant Session Request' : 'Scheduled Session Request'}</p>
+          </div>
+          
+          <div class="content">
+            <p>Hello ${requestData.coach.name},</p>
+            
+            <p>You have received a new connection request from a client who would like your coaching expertise.</p>
+            
+            <div class="client-info">
+              <h3>Client Information</h3>
+              <p><strong>Name:</strong> ${clientName}</p>
+              <p><strong>Goal:</strong> ${goalTitle}</p>
+              <p><strong>About them:</strong> ${clientBio}</p>
+              ${requestData.scheduled_time ? `<p><strong>Requested Time:</strong> ${new Date(requestData.scheduled_time).toLocaleString()}</p>` : ''}
+              ${requestData.request_type === 'instant' ? '<p><strong>Type:</strong> Immediate session (5 min preparation time)</p>' : ''}
+            </div>
+            
+            <div class="action-buttons">
+              <a href="${acceptUrl}" class="btn btn-accept">Accept Request</a>
+              <a href="${declineUrl}" class="btn btn-decline">Decline</a>
+              <a href="${rescheduleUrl}" class="btn btn-reschedule">Propose New Time</a>
+            </div>
+            
+            <p><small>Please respond within 24 hours to maintain your response rating.</small></p>
+          </div>
+          
+          <div class="footer">
+            <p>This email was sent to ${coachEmail}. If you're no longer available for coaching, please update your availability settings.</p>
+          </div>
+        </div>
+      </body>
+      </html>
     `;
 
-    // Send email notification (placeholder - would integrate with Resend)
-    console.log('Sending email notification to:', coachEmail);
-    console.log('Email content:', emailContent);
+    try {
+      // Send email notification using Resend
+      const emailResponse = await resend.emails.send({
+        from: 'Coach Platform <notifications@yourdomain.com>',
+        to: [coachEmail],
+        subject: emailSubject,
+        html: emailContent,
+      });
 
-    // Send WhatsApp notification if phone number is available (placeholder - would integrate with Twilio)
-    if (coachPhone) {
-      const whatsappMessage = `New connection request from ${clientName} for ${goalTitle}. Check your coach portal to respond.`;
-      console.log('Sending WhatsApp to:', coachPhone);
-      console.log('WhatsApp message:', whatsappMessage);
+      console.log('Email sent successfully to:', coachEmail, emailResponse);
+
+      // Send WhatsApp notification if phone number is available (placeholder for future Twilio integration)
+      if (coachPhone) {
+        const whatsappMessage = `New ${requestData.request_type} connection request from ${clientName} for ${goalTitle}. Check your email to respond.`;
+        console.log('WhatsApp notification would be sent to:', coachPhone);
+        console.log('WhatsApp message:', whatsappMessage);
+      }
+
+    } catch (emailError) {
+      console.error('Failed to send email:', emailError);
+      // Continue execution - we'll still return success but log the error
     }
-
-    // TODO: Implement actual email/WhatsApp sending with Resend/Twilio
-    // For now, we'll just log the notifications
 
     return new Response(
       JSON.stringify({ 
