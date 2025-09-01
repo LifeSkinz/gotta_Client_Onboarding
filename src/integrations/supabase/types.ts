@@ -213,6 +213,45 @@ export type Database = {
           },
         ]
       }
+      coin_packages: {
+        Row: {
+          bonus_coins: number | null
+          coin_amount: number
+          created_at: string
+          id: string
+          is_active: boolean | null
+          is_popular: boolean | null
+          name: string
+          price_amount: number
+          price_currency: string
+          updated_at: string
+        }
+        Insert: {
+          bonus_coins?: number | null
+          coin_amount: number
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          is_popular?: boolean | null
+          name: string
+          price_amount: number
+          price_currency?: string
+          updated_at?: string
+        }
+        Update: {
+          bonus_coins?: number | null
+          coin_amount?: number
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          is_popular?: boolean | null
+          name?: string
+          price_amount?: number
+          price_currency?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       connection_requests: {
         Row: {
           client_bio: string | null
