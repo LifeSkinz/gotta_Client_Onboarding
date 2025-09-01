@@ -83,10 +83,9 @@ export const UserSessionsPage = () => {
     return isAfter(now, joinWindow) && isBefore(now, endWindow) && session.status === 'scheduled';
   };
 
-  const handleJoinSession = (videoUrl: string) => {
-    if (videoUrl) {
-      window.open(videoUrl, '_blank');
-    }
+  const handleJoinSession = (sessionId: string) => {
+    // Navigate to the video session page instead of opening external link
+    window.location.href = `/session/${sessionId}`;
   };
 
   if (loading) {
@@ -163,7 +162,7 @@ export const UserSessionsPage = () => {
                     
                     {canJoinSession(session) && session.video_join_url && (
                       <Button 
-                        onClick={() => handleJoinSession(session.video_join_url!)}
+                        onClick={() => handleJoinSession(session.id)}
                         className="w-full"
                         variant="default"
                       >
