@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { User, Session } from "@supabase/supabase-js";
 import { Goal, UserResponse, Question, GOAL_QUESTIONS, PersonalityResponse } from "@/types/goals";
 import { WelcomePage } from "./WelcomePage";
@@ -12,6 +12,8 @@ import { PersonalityScreeningDialog } from "@/components/PersonalityScreeningDia
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
+import { useActivityTracker } from "@/hooks/useActivityTracker";
+import { useBehavioralInsights } from "@/hooks/useBehavioralInsights";
 import { supabase } from "@/integrations/supabase/client";
 
 type PageType = 'welcome' | 'goal-selection' | 'questions' | 'summary' | 'coach-list' | 'confirmation';
@@ -38,6 +40,21 @@ const Index = () => {
   const [sessionId, setSessionId] = useState<string>('');
   const { toast } = useToast();
   const navigate = useNavigate();
+  const location = useLocation();
+  
+  // Activity tracking and behavioral insights
+  const { 
+    trackPageView, 
+    trackGoalSelection, 
+    trackQuestionAnswer, 
+    trackCoachSelection,
+    trackInteraction 
+  } = useActivityTracker();
+  
+  const { 
+    updateBehavioralPattern, 
+    analyzeUserPersonality 
+  } = useBehavioralInsights();
 
   // Initialize session ID
   useEffect(() => {
@@ -48,6 +65,12 @@ const Index = () => {
     }
     setSessionId(storedSessionId);
   }, []);
+
+  // Track page views
+  useEffect(() => {
+    const currentPath = location.pathname + location.search;
+    trackPageView(currentPath);
+  }, [location, trackPageView]);
 
   // Authentication check
   useEffect(() => {
@@ -88,10 +111,12 @@ const Index = () => {
   };
 
   const handleStart = () => {
+    trackInteraction('start_journey');
     setCurrentPage('goal-selection');
   };
 
   const handleGoalSelect = (goal: Goal) => {
+    trackGoalSelection(goal);
     setSelectedGoal(goal);
     // Auto-advance to questions after brief delay
     setTimeout(() => {
@@ -116,6 +141,9 @@ const Index = () => {
       questionId: question.id,
       answer
     };
+    
+    // Track question answer
+    trackQuestionAnswer(question.id, answer);
     
     const updatedResponses = responses.filter(r => r.questionId !== question.id);
     setResponses([...updatedResponses, newResponse]);
