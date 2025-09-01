@@ -43,35 +43,112 @@ export const useBehavioralInsights = () => {
   }, []);
 
   const analyzeUserPersonality = useCallback(async (
+    userId: string,
     responses: any[],
-    sessionData: any[]
+    sessionData: any[] = [],
+    includeHistoricalData: boolean = false
   ) => {
-    // Placeholder for personality analysis logic
-    // This would integrate with OpenAI or other AI services
-    const personalityTraits = {
-      openness: Math.random() * 100,
-      conscientiousness: Math.random() * 100,
-      extraversion: Math.random() * 100,
-      agreeableness: Math.random() * 100,
-      neuroticism: Math.random() * 100
-    };
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-personality-profile', {
+        body: {
+          userId,
+          responses,
+          sessionData,
+          includeHistoricalData
+        }
+      });
 
-    const communicationStyle = {
-      directness: Math.random() * 100,
-      analyticalThinking: Math.random() * 100,
-      emotionalExpression: Math.random() * 100,
-      conflictStyle: ['collaborative', 'competitive', 'accommodating'][Math.floor(Math.random() * 3)]
-    };
-
-    return {
-      personalityTraits,
-      communicationStyle,
-      engagementPatterns: {
-        preferredSessionLength: '45-60 minutes',
-        bestTimeOfDay: 'morning',
-        responseToFeedback: 'positive'
+      if (error) {
+        console.error('Failed to analyze personality:', error);
+        return null;
       }
-    };
+
+      return data.profile;
+    } catch (error) {
+      console.error('Failed to analyze user personality:', error);
+      return null;
+    }
+  }, []);
+
+  const predictCoachCompatibility = useCallback(async (
+    userId: string,
+    coachIds: string[] = []
+  ) => {
+    try {
+      const { data, error } = await supabase.functions.invoke('predict-coach-compatibility', {
+        body: {
+          userId,
+          coachIds,
+          analysisMode: 'compatibility'
+        }
+      });
+
+      if (error) {
+        console.error('Failed to predict compatibility:', error);
+        return null;
+      }
+
+      return data.compatibility;
+    } catch (error) {
+      console.error('Failed to predict coach compatibility:', error);
+      return null;
+    }
+  }, []);
+
+  const generateResourceRecommendations = useCallback(async (
+    userId: string,
+    goalContext?: any,
+    sessionContext?: any,
+    recommendationType: string = 'general'
+  ) => {
+    try {
+      const { data, error } = await supabase.functions.invoke('recommend-resources', {
+        body: {
+          userId,
+          goalContext,
+          sessionContext,
+          recommendationType
+        }
+      });
+
+      if (error) {
+        console.error('Failed to generate recommendations:', error);
+        return null;
+      }
+
+      return data.recommendations;
+    } catch (error) {
+      console.error('Failed to generate resource recommendations:', error);
+      return null;
+    }
+  }, []);
+
+  const generateCoachingInsights = useCallback(async (
+    userId: string,
+    coachId?: string,
+    sessionId?: string,
+    insightType: string = 'pre-session'
+  ) => {
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-coaching-insights', {
+        body: {
+          userId,
+          coachId,
+          sessionId,
+          insightType
+        }
+      });
+
+      if (error) {
+        console.error('Failed to generate insights:', error);
+        return null;
+      }
+
+      return data.insights;
+    } catch (error) {
+      console.error('Failed to generate coaching insights:', error);
+      return null;
+    }
   }, []);
 
   const trackResourceInteraction = useCallback(async (
@@ -141,6 +218,9 @@ export const useBehavioralInsights = () => {
     updateBehavioralPattern,
     updateConversationTheme,
     analyzeUserPersonality,
+    predictCoachCompatibility,
+    generateResourceRecommendations,
+    generateCoachingInsights,
     trackResourceInteraction,
     recordSessionOutcome
   };

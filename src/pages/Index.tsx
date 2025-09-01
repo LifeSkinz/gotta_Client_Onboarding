@@ -56,6 +56,36 @@ const Index = () => {
     analyzeUserPersonality 
   } = useBehavioralInsights();
 
+  const currentQuestions = selectedGoal ? GOAL_QUESTIONS[selectedGoal.id] || [] : [];
+
+  // Auto-trigger AI analysis for authenticated users after completing journey
+  useEffect(() => {
+    if (user && selectedGoal && responses.length > 0 && currentPage === 'summary') {
+      // Trigger behavioral analysis
+      const triggerAnalysis = async () => {
+        try {
+          const analysis = await analyzeUserPersonality(
+            user.id,
+            responses.map(r => ({
+              ...r,
+              question: currentQuestions.find(q => q.id === r.questionId)?.question
+            })),
+            [],
+            true
+          );
+          
+          if (analysis) {
+            console.log('User analysis completed:', analysis);
+          }
+        } catch (error) {
+          console.error('Failed to analyze user:', error);
+        }
+      };
+
+      triggerAnalysis();
+    }
+  }, [user, selectedGoal, responses, currentPage, analyzeUserPersonality, currentQuestions]);
+
   // Initialize session ID
   useEffect(() => {
     let storedSessionId = localStorage.getItem('guestSessionId');
@@ -99,8 +129,6 @@ const Index = () => {
 
     return () => subscription.unsubscribe();
   }, [sessionId, user]);
-
-  const currentQuestions = selectedGoal ? GOAL_QUESTIONS[selectedGoal.id] || [] : [];
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
