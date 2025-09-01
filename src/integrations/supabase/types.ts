@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "12.2.12 (cd3cf9e)"
@@ -263,6 +263,48 @@ export type Database = {
           },
         ]
       }
+      conversation_themes: {
+        Row: {
+          first_mentioned_at: string
+          id: string
+          importance_score: number | null
+          last_mentioned_at: string
+          mention_count: number | null
+          related_goals: string[] | null
+          sentiment_trend: Json | null
+          session_ids: string[] | null
+          theme_description: string | null
+          theme_name: string
+          user_id: string | null
+        }
+        Insert: {
+          first_mentioned_at?: string
+          id?: string
+          importance_score?: number | null
+          last_mentioned_at?: string
+          mention_count?: number | null
+          related_goals?: string[] | null
+          sentiment_trend?: Json | null
+          session_ids?: string[] | null
+          theme_description?: string | null
+          theme_name: string
+          user_id?: string | null
+        }
+        Update: {
+          first_mentioned_at?: string
+          id?: string
+          importance_score?: number | null
+          last_mentioned_at?: string
+          mention_count?: number | null
+          related_goals?: string[] | null
+          sentiment_trend?: Json | null
+          session_ids?: string[] | null
+          theme_description?: string | null
+          theme_name?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       currency_settings: {
         Row: {
           coins_per_unit: number
@@ -322,70 +364,323 @@ export type Database = {
       }
       profiles: {
         Row: {
+          average_session_rating: number | null
           bio: string | null
+          coaching_history_summary: string | null
+          communication_style: Json | null
           created_at: string
           email_verified: boolean | null
+          engagement_patterns: Json | null
           full_name: string | null
           id: string
+          last_session_at: string | null
+          learning_preferences: Json | null
+          motivation_triggers: string[] | null
           notification_method: string | null
+          personality_traits: Json | null
           phone: string | null
+          preferred_session_times: string[] | null
+          success_patterns: Json | null
+          total_sessions_count: number | null
           updated_at: string
           user_id: string
         }
         Insert: {
+          average_session_rating?: number | null
           bio?: string | null
+          coaching_history_summary?: string | null
+          communication_style?: Json | null
           created_at?: string
           email_verified?: boolean | null
+          engagement_patterns?: Json | null
           full_name?: string | null
           id?: string
+          last_session_at?: string | null
+          learning_preferences?: Json | null
+          motivation_triggers?: string[] | null
           notification_method?: string | null
+          personality_traits?: Json | null
           phone?: string | null
+          preferred_session_times?: string[] | null
+          success_patterns?: Json | null
+          total_sessions_count?: number | null
           updated_at?: string
           user_id: string
         }
         Update: {
+          average_session_rating?: number | null
           bio?: string | null
+          coaching_history_summary?: string | null
+          communication_style?: Json | null
           created_at?: string
           email_verified?: boolean | null
+          engagement_patterns?: Json | null
           full_name?: string | null
           id?: string
+          last_session_at?: string | null
+          learning_preferences?: Json | null
+          motivation_triggers?: string[] | null
           notification_method?: string | null
+          personality_traits?: Json | null
           phone?: string | null
+          preferred_session_times?: string[] | null
+          success_patterns?: Json | null
+          total_sessions_count?: number | null
           updated_at?: string
           user_id?: string
         }
         Relationships: []
       }
+      resource_interactions: {
+        Row: {
+          completion_percentage: number | null
+          created_at: string
+          duration_seconds: number | null
+          engagement_score: number | null
+          feedback_notes: string | null
+          feedback_rating: number | null
+          id: string
+          interaction_type: string
+          resource_id: string
+          resource_title: string | null
+          resource_type: string
+          user_id: string | null
+        }
+        Insert: {
+          completion_percentage?: number | null
+          created_at?: string
+          duration_seconds?: number | null
+          engagement_score?: number | null
+          feedback_notes?: string | null
+          feedback_rating?: number | null
+          id?: string
+          interaction_type: string
+          resource_id: string
+          resource_title?: string | null
+          resource_type: string
+          user_id?: string | null
+        }
+        Update: {
+          completion_percentage?: number | null
+          created_at?: string
+          duration_seconds?: number | null
+          engagement_score?: number | null
+          feedback_notes?: string | null
+          feedback_rating?: number | null
+          id?: string
+          interaction_type?: string
+          resource_id?: string
+          resource_title?: string | null
+          resource_type?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      session_goals_tracking: {
+        Row: {
+          barriers_identified: string[] | null
+          created_at: string
+          final_assessment: number | null
+          goal_category: string
+          goal_description: string
+          id: string
+          initial_assessment: number | null
+          next_steps: string | null
+          progress_notes: string | null
+          session_id: string | null
+          success_factors: string[] | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          barriers_identified?: string[] | null
+          created_at?: string
+          final_assessment?: number | null
+          goal_category: string
+          goal_description: string
+          id?: string
+          initial_assessment?: number | null
+          next_steps?: string | null
+          progress_notes?: string | null
+          session_id?: string | null
+          success_factors?: string[] | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          barriers_identified?: string[] | null
+          created_at?: string
+          final_assessment?: number | null
+          goal_category?: string
+          goal_description?: string
+          id?: string
+          initial_assessment?: number | null
+          next_steps?: string | null
+          progress_notes?: string | null
+          session_id?: string | null
+          success_factors?: string[] | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "session_goals_tracking_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      session_insights: {
+        Row: {
+          ai_model_version: string | null
+          confidence_score: number | null
+          created_at: string
+          id: string
+          insight_data: Json
+          insight_type: string
+          session_id: string | null
+        }
+        Insert: {
+          ai_model_version?: string | null
+          confidence_score?: number | null
+          created_at?: string
+          id?: string
+          insight_data: Json
+          insight_type: string
+          session_id?: string | null
+        }
+        Update: {
+          ai_model_version?: string | null
+          confidence_score?: number | null
+          created_at?: string
+          id?: string
+          insight_data?: Json
+          insight_type?: string
+          session_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "session_insights_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      session_outcomes: {
+        Row: {
+          action_items: string[] | null
+          challenges_faced: string[] | null
+          coach_effectiveness_rating: number | null
+          coach_id: string | null
+          created_at: string
+          follow_up_needed: boolean | null
+          follow_up_notes: string | null
+          goal_achievement_rating: number | null
+          id: string
+          key_breakthroughs: string[] | null
+          session_id: string | null
+          session_satisfaction_rating: number | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          action_items?: string[] | null
+          challenges_faced?: string[] | null
+          coach_effectiveness_rating?: number | null
+          coach_id?: string | null
+          created_at?: string
+          follow_up_needed?: boolean | null
+          follow_up_notes?: string | null
+          goal_achievement_rating?: number | null
+          id?: string
+          key_breakthroughs?: string[] | null
+          session_id?: string | null
+          session_satisfaction_rating?: number | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          action_items?: string[] | null
+          challenges_faced?: string[] | null
+          coach_effectiveness_rating?: number | null
+          coach_id?: string | null
+          created_at?: string
+          follow_up_needed?: boolean | null
+          follow_up_notes?: string | null
+          goal_achievement_rating?: number | null
+          id?: string
+          key_breakthroughs?: string[] | null
+          session_id?: string | null
+          session_satisfaction_rating?: number | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "session_outcomes_coach_id_fkey"
+            columns: ["coach_id"]
+            isOneToOne: false
+            referencedRelation: "coaches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "session_outcomes_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       session_recordings: {
         Row: {
           ai_summary: string | null
+          coaching_effectiveness_score: number | null
           created_at: string
           duration_seconds: number | null
+          emotional_journey: Json | null
           file_size_bytes: number | null
           id: string
+          key_topics: string[] | null
+          personality_insights: Json | null
           recording_url: string | null
+          sentiment_analysis: Json | null
           session_id: string
           transcript: string | null
           updated_at: string
         }
         Insert: {
           ai_summary?: string | null
+          coaching_effectiveness_score?: number | null
           created_at?: string
           duration_seconds?: number | null
+          emotional_journey?: Json | null
           file_size_bytes?: number | null
           id?: string
+          key_topics?: string[] | null
+          personality_insights?: Json | null
           recording_url?: string | null
+          sentiment_analysis?: Json | null
           session_id: string
           transcript?: string | null
           updated_at?: string
         }
         Update: {
           ai_summary?: string | null
+          coaching_effectiveness_score?: number | null
           created_at?: string
           duration_seconds?: number | null
+          emotional_journey?: Json | null
           file_size_bytes?: number | null
           id?: string
+          key_topics?: string[] | null
+          personality_insights?: Json | null
           recording_url?: string | null
+          sentiment_analysis?: Json | null
           session_id?: string
           transcript?: string | null
           updated_at?: string
@@ -528,6 +823,75 @@ export type Database = {
           },
         ]
       }
+      user_activity_logs: {
+        Row: {
+          action_details: Json | null
+          activity_type: string
+          created_at: string
+          duration_seconds: number | null
+          id: string
+          metadata: Json | null
+          page_url: string | null
+          session_token: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action_details?: Json | null
+          activity_type: string
+          created_at?: string
+          duration_seconds?: number | null
+          id?: string
+          metadata?: Json | null
+          page_url?: string | null
+          session_token?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action_details?: Json | null
+          activity_type?: string
+          created_at?: string
+          duration_seconds?: number | null
+          id?: string
+          metadata?: Json | null
+          page_url?: string | null
+          session_token?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      user_behavioral_patterns: {
+        Row: {
+          confidence_score: number | null
+          id: string
+          identified_at: string
+          last_reinforced_at: string
+          occurrence_count: number | null
+          pattern_data: Json
+          pattern_type: string
+          user_id: string | null
+        }
+        Insert: {
+          confidence_score?: number | null
+          id?: string
+          identified_at?: string
+          last_reinforced_at?: string
+          occurrence_count?: number | null
+          pattern_data: Json
+          pattern_type: string
+          user_id?: string | null
+        }
+        Update: {
+          confidence_score?: number | null
+          id?: string
+          identified_at?: string
+          last_reinforced_at?: string
+          occurrence_count?: number | null
+          pattern_data?: Json
+          pattern_type?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       user_responses: {
         Row: {
           ai_analysis: Json | null
@@ -658,6 +1022,38 @@ export type Database = {
       cleanup_expired_guest_sessions: {
         Args: Record<PropertyKey, never>
         Returns: undefined
+      }
+      track_user_activity: {
+        Args: {
+          p_action_details?: Json
+          p_activity_type: string
+          p_duration_seconds?: number
+          p_metadata?: Json
+          p_page_url: string
+          p_session_token: string
+          p_user_id: string
+        }
+        Returns: string
+      }
+      update_behavioral_pattern: {
+        Args: {
+          p_confidence_score?: number
+          p_pattern_data: Json
+          p_pattern_type: string
+          p_user_id: string
+        }
+        Returns: string
+      }
+      update_conversation_theme: {
+        Args: {
+          p_importance_score?: number
+          p_sentiment_score?: number
+          p_session_id?: string
+          p_theme_description: string
+          p_theme_name: string
+          p_user_id: string
+        }
+        Returns: string
       }
     }
     Enums: {
