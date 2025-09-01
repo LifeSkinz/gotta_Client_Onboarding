@@ -161,7 +161,7 @@ serve(async (req) => {
     if (requestData.client) {
       try {
         await resend.emails.send({
-          from: 'Coach Platform <notifications@yourdomain.com>',
+          from: 'onboarding@resend.dev',
           to: [requestData.client.user_id + '@placeholder.com'], // TODO: Get actual email from auth
           subject: clientNotificationSubject,
           html: `

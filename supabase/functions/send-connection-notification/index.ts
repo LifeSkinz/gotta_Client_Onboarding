@@ -473,7 +473,7 @@ serve(async (req) => {
     try {
       // Send email notification using Resend
       const emailResponse = await resend.emails.send({
-        from: 'Coach Platform <notifications@yourdomain.com>',
+        from: 'onboarding@resend.dev',
         to: [coachEmail],
         subject: emailSubject,
         html: emailContent,
