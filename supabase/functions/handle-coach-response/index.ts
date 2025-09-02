@@ -282,25 +282,6 @@ serve(async (req) => {
           `;
         }
 
-        responseHtml = `
-          <html>
-            <head>
-              <meta charset="UTF-8">
-              <meta name="viewport" content="width=device-width, initial-scale=1.0">
-              <title>Request Accepted</title>
-            </head>
-            <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); margin: 0; padding: 20px; min-height: 100vh; display: flex; align-items: center; justify-content: center;">
-              <div style="background: white; border-radius: 12px; padding: 40px; text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.1); max-width: 500px; width: 100%;">
-                <div style="font-size: 48px; margin-bottom: 20px;">✅</div>
-                <h1 style="color: #10b981; margin: 0 0 16px 0; font-size: 24px;">Thank You for Accepting!</h1>
-                <p style="color: #6b7280; font-size: 16px; line-height: 1.5; margin: 0 0 24px 0;">Thank you for accepting this session and schedule. You and the client will now receive an email with a link to the session portal.</p>
-                <div style="background: #f3f4f6; border-radius: 8px; padding: 16px; margin: 16px 0;">
-                  <p style="margin: 0; color: #374151; font-size: 14px;"><strong>Next steps:</strong> Check your email for confirmation and the client will receive their session link shortly.</p>
-                </div>
-              </div>
-            </body>
-          </html>
-        `;
         break;
 
       case 'decline':
@@ -320,25 +301,6 @@ serve(async (req) => {
           <p><a href="https://nqoysxjjimvihcvfpesr.lovable.app/coaches" style="background-color: #667eea; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px;">Browse Other Coaches</a></p>
         `;
 
-        responseHtml = `
-          <html>
-            <head>
-              <meta charset="UTF-8">
-              <meta name="viewport" content="width=device-width, initial-scale=1.0">
-              <title>Request Declined</title>
-            </head>
-            <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); margin: 0; padding: 20px; min-height: 100vh; display: flex; align-items: center; justify-content: center;">
-              <div style="background: white; border-radius: 12px; padding: 40px; text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.1); max-width: 500px; width: 100%;">
-                <div style="font-size: 48px; margin-bottom: 20px;">❌</div>
-                <h1 style="color: #ef4444; margin: 0 0 16px 0; font-size: 24px;">Request Declined</h1>
-                <p style="color: #6b7280; font-size: 16px; line-height: 1.5; margin: 0 0 24px 0;">Your response has been submitted. The client will be notified and can explore other coaching options.</p>
-                <div style="background: #f3f4f6; border-radius: 8px; padding: 16px; margin: 16px 0;">
-                  <p style="margin: 0; color: #374151; font-size: 14px;"><strong>Next steps:</strong> You'll receive a confirmation email, and the client will be provided with alternative coach suggestions.</p>
-                </div>
-              </div>
-            </body>
-          </html>
-        `;
         break;
 
       case 'reschedule':
@@ -358,84 +320,54 @@ serve(async (req) => {
           <p><a href="https://nqoysxjjimvihcvfpesr.lovable.app/reschedule/${requestId}" style="background-color: #f59e0b; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px;">View Available Times</a></p>
         `;
 
-        responseHtml = `
-          <html>
-            <head>
-              <meta charset="UTF-8">
-              <meta name="viewport" content="width=device-width, initial-scale=1.0">
-              <title>Reschedule Requested</title>
-            </head>
-            <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); margin: 0; padding: 20px; min-height: 100vh; display: flex; align-items: center; justify-content: center;">
-              <div style="background: white; border-radius: 12px; padding: 40px; text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.1); max-width: 500px; width: 100%;">
-                <div style="font-size: 48px; margin-bottom: 20px;">📅</div>
-                <h1 style="color: #f59e0b; margin: 0 0 16px 0; font-size: 24px;">Reschedule Requested</h1>
-                <p style="color: #6b7280; font-size: 16px; line-height: 1.5; margin: 0 0 24px 0;">Your reschedule request has been submitted. The client will be notified and able to view your available times.</p>
-                <div style="background: #f3f4f6; border-radius: 8px; padding: 16px; margin: 16px 0;">
-                  <p style="margin: 0; color: #374151; font-size: 14px;"><strong>Next steps:</strong> You'll receive a confirmation email, and the client will be able to select a new time that works for both of you.</p>
-                </div>
-              </div>
-            </body>
-          </html>
-        `;
         break;
 
       default:
         throw new Error('Invalid action');
     }
 
-    // Send notification to both client and coach
     console.log('Attempting to send notification emails');
-    
-    // Send email to client
+
+    // Send notification emails (both coaches and clients)
     if (clientEmail) {
       try {
-        const emailResult = await resend.emails.send({
-          from: 'onboarding@resend.dev',
+        const clientEmailResult = await resend.emails.send({
+          from: 'Lovable Coach <onboarding@resend.dev>',
           to: [clientEmail],
           subject: clientNotificationSubject,
-          html: `
-            <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-              ${clientNotificationContent}
-            </div>
-          `,
+          html: clientNotificationContent,
         });
-        console.log(`Client notification email sent successfully to: ${clientEmail}`, emailResult);
+        console.log('Client notification email sent successfully to:', clientEmail, clientEmailResult);
       } catch (emailError) {
-        console.error('Failed to send client notification:', emailError);
+        console.error('Error sending client email:', emailError);
       }
-    } else {
-      console.error('No client email found for notification - cannot send email');
     }
 
-    // Send confirmation email to coach
-    const coachEmail = requestData.coach?.notification_email;
-    if (coachEmail) {
+    // Send coach confirmation email
+    if (requestData.coach?.notification_email) {
       try {
-        const coachEmailResult = await resend.emails.send({
-          from: 'onboarding@resend.dev',
-          to: [coachEmail],
-          subject: `Session ${action.charAt(0).toUpperCase() + action.slice(1)} - Client Preparation Details`,
-          html: generateCoachEmailContent(action) || `
-            <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-              <h2>✅ Response Recorded</h2>
-              <p>Hi ${coachName},</p>
-              <p>Your response has been successfully submitted and processed.</p>
-              <p><strong>Action taken:</strong> ${action.charAt(0).toUpperCase() + action.slice(1)}</p>
-              <p><strong>Client:</strong> ${clientName}</p>
-              <p>Thank you for your prompt response!</p>
-            </div>
-          `,
-        });
-        console.log(`Coach confirmation email sent successfully to: ${coachEmail}`, coachEmailResult);
+        const coachEmailContent = generateCoachEmailContent(action);
+        if (coachEmailContent) {
+          const coachEmailResult = await resend.emails.send({
+            from: 'Lovable Coach <onboarding@resend.dev>',
+            to: [requestData.coach.notification_email],
+            subject: `Session Request ${action.charAt(0).toUpperCase() + action.slice(1)} - Client: ${clientName}`,
+            html: coachEmailContent,
+          });
+          console.log('Coach confirmation email sent successfully to:', requestData.coach.notification_email, coachEmailResult);
+        }
       } catch (emailError) {
-        console.error('Failed to send coach confirmation:', emailError);
+        console.error('Error sending coach email:', emailError);
       }
-    } else {
-      console.log('No coach notification email found');
     }
 
-    return new Response(responseHtml, {
-      headers: { ...corsHeaders, 'Content-Type': 'text/html' },
+    // After sending emails, redirect to success page
+    return new Response(null, {
+      status: 302,
+      headers: {
+        'Location': `https://nqoysxjjimvihcvfpesr.lovable.app/coach-response-success?action=${action}`,
+        ...corsHeaders
+      }
     });
 
   } catch (error) {

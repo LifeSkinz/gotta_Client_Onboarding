@@ -14,6 +14,8 @@ import VideoSessionPage from "./pages/VideoSessionPage";
 import SessionPortalPage from "./pages/SessionPortalPage";
 import { PaymentSuccessPage } from "./pages/PaymentSuccessPage";
 import { PaymentCancelledPage } from "./pages/PaymentCancelledPage";
+import CoachResponseSuccessPage from "./pages/CoachResponseSuccessPage";
+import SessionPortalFallbackPage from "./pages/SessionPortalFallbackPage";
 
 const queryClient = new QueryClient();
 
@@ -32,6 +34,8 @@ const App = () => (
           <Route path="/sessions" element={<UserSessionsPage />} />
           <Route path="/session/:sessionId" element={<VideoSessionPage />} />
           <Route path="/session-portal/:sessionId" element={<SessionPortalPage />} />
+          <Route path="/session-portal" element={<SessionPortalFallbackPage />} />
+          <Route path="/coach-response-success" element={<CoachResponseSuccessPage />} />
           <Route path="/payment-success" element={<PaymentSuccessPage />} />
           <Route path="/payment-cancelled" element={<PaymentCancelledPage />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
