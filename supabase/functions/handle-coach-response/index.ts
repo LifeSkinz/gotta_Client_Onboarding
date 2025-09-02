@@ -169,11 +169,23 @@ serve(async (req) => {
         }
 
         responseHtml = `
-          <html><body style="font-family: sans-serif; text-align: center; padding: 50px;">
-            <h1 style="color: #10b981;">Request Accepted!</h1>
-            <p>Thank you for accepting the connection request.</p>
-            <p>The client has been notified and will receive further instructions.</p>
-          </body></html>
+          <html>
+            <head>
+              <meta charset="UTF-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <title>Request Accepted</title>
+            </head>
+            <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); margin: 0; padding: 20px; min-height: 100vh; display: flex; align-items: center; justify-content: center;">
+              <div style="background: white; border-radius: 12px; padding: 40px; text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.1); max-width: 500px; width: 100%;">
+                <div style="font-size: 48px; margin-bottom: 20px;">✅</div>
+                <h1 style="color: #10b981; margin: 0 0 16px 0; font-size: 24px;">Request Accepted!</h1>
+                <p style="color: #6b7280; font-size: 16px; line-height: 1.5; margin: 0 0 24px 0;">Your response has been submitted successfully. Both you and the client will receive follow-up emails with session details and connection instructions.</p>
+                <div style="background: #f3f4f6; border-radius: 8px; padding: 16px; margin: 16px 0;">
+                  <p style="margin: 0; color: #374151; font-size: 14px;"><strong>Next steps:</strong> Check your email for confirmation and the client will receive their session link shortly.</p>
+                </div>
+              </div>
+            </body>
+          </html>
         `;
         break;
 
@@ -195,11 +207,23 @@ serve(async (req) => {
         `;
 
         responseHtml = `
-          <html><body style="font-family: sans-serif; text-align: center; padding: 50px;">
-            <h1 style="color: #ef4444;">Request Declined</h1>
-            <p>The connection request has been declined.</p>
-            <p>The client will be notified and can explore other coaching options.</p>
-          </body></html>
+          <html>
+            <head>
+              <meta charset="UTF-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <title>Request Declined</title>
+            </head>
+            <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); margin: 0; padding: 20px; min-height: 100vh; display: flex; align-items: center; justify-content: center;">
+              <div style="background: white; border-radius: 12px; padding: 40px; text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.1); max-width: 500px; width: 100%;">
+                <div style="font-size: 48px; margin-bottom: 20px;">❌</div>
+                <h1 style="color: #ef4444; margin: 0 0 16px 0; font-size: 24px;">Request Declined</h1>
+                <p style="color: #6b7280; font-size: 16px; line-height: 1.5; margin: 0 0 24px 0;">Your response has been submitted. The client will be notified and can explore other coaching options.</p>
+                <div style="background: #f3f4f6; border-radius: 8px; padding: 16px; margin: 16px 0;">
+                  <p style="margin: 0; color: #374151; font-size: 14px;"><strong>Next steps:</strong> You'll receive a confirmation email, and the client will be provided with alternative coach suggestions.</p>
+                </div>
+              </div>
+            </body>
+          </html>
         `;
         break;
 
@@ -221,11 +245,23 @@ serve(async (req) => {
         `;
 
         responseHtml = `
-          <html><body style="font-family: sans-serif; text-align: center; padding: 50px;">
-            <h1 style="color: #f59e0b;">Reschedule Requested</h1>
-            <p>The client will be notified about the reschedule request.</p>
-            <p>They'll be able to view your available times and select a new slot.</p>
-          </body></html>
+          <html>
+            <head>
+              <meta charset="UTF-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <title>Reschedule Requested</title>
+            </head>
+            <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); margin: 0; padding: 20px; min-height: 100vh; display: flex; align-items: center; justify-content: center;">
+              <div style="background: white; border-radius: 12px; padding: 40px; text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.1); max-width: 500px; width: 100%;">
+                <div style="font-size: 48px; margin-bottom: 20px;">📅</div>
+                <h1 style="color: #f59e0b; margin: 0 0 16px 0; font-size: 24px;">Reschedule Requested</h1>
+                <p style="color: #6b7280; font-size: 16px; line-height: 1.5; margin: 0 0 24px 0;">Your reschedule request has been submitted. The client will be notified and able to view your available times.</p>
+                <div style="background: #f3f4f6; border-radius: 8px; padding: 16px; margin: 16px 0;">
+                  <p style="margin: 0; color: #374151; font-size: 14px;"><strong>Next steps:</strong> You'll receive a confirmation email, and the client will be able to select a new time that works for both of you.</p>
+                </div>
+              </div>
+            </body>
+          </html>
         `;
         break;
 
@@ -233,9 +269,10 @@ serve(async (req) => {
         throw new Error('Invalid action');
     }
 
-    // Send notification to client
-    console.log('Attempting to send notification email to:', clientEmail);
+    // Send notification to both client and coach
+    console.log('Attempting to send notification emails');
     
+    // Send email to client
     if (clientEmail) {
       try {
         const emailResult = await resend.emails.send({
@@ -248,13 +285,40 @@ serve(async (req) => {
             </div>
           `,
         });
-        console.log(`Notification email sent successfully to client: ${clientEmail}`, emailResult);
+        console.log(`Client notification email sent successfully to: ${clientEmail}`, emailResult);
       } catch (emailError) {
         console.error('Failed to send client notification:', emailError);
-        // Don't throw error to avoid breaking the flow
       }
     } else {
       console.error('No client email found for notification - cannot send email');
+    }
+
+    // Send confirmation email to coach
+    const coachEmail = requestData.coach?.notification_email;
+    if (coachEmail) {
+      try {
+        const coachEmailResult = await resend.emails.send({
+          from: 'onboarding@resend.dev',
+          to: [coachEmail],
+          subject: `Response Confirmation - ${action.charAt(0).toUpperCase() + action.slice(1)} Request`,
+          html: `
+            <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+              <h2>✅ Response Recorded</h2>
+              <p>Hi ${coachName},</p>
+              <p>Your response has been successfully submitted and processed.</p>
+              <p><strong>Action taken:</strong> ${action.charAt(0).toUpperCase() + action.slice(1)}</p>
+              <p><strong>Client:</strong> ${clientName}</p>
+              ${action === 'accept' ? '<p>The client will receive a follow-up email with the session link.</p>' : ''}
+              <p>Thank you for your prompt response!</p>
+            </div>
+          `,
+        });
+        console.log(`Coach confirmation email sent successfully to: ${coachEmail}`, coachEmailResult);
+      } catch (emailError) {
+        console.error('Failed to send coach confirmation:', emailError);
+      }
+    } else {
+      console.log('No coach notification email found');
     }
 
     return new Response(responseHtml, {
