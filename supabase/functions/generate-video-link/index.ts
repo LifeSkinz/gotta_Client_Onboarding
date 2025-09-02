@@ -13,11 +13,7 @@ serve(async (req) => {
   }
 
   try {
-    const { connectionRequestId } = await req.json();
-
-    if (!connectionRequestId) {
-      throw new Error('Connection request ID is required');
-    }
+    const { connectionRequestId, sessionId, justInTime } = await req.json();
 
     // Initialize Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
@@ -25,61 +21,91 @@ serve(async (req) => {
     
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Get connection request details to create proper session
-    const { data: requestData, error: requestError } = await supabase
-      .from('connection_requests')
-      .select('*')
-      .eq('id', connectionRequestId)
-      .single();
+    let sessionData;
 
-    if (requestError) {
-      throw new Error(`Connection request not found: ${requestError.message}`);
+    if (justInTime && sessionId) {
+      // Just-in-time video room creation for existing session
+      const { data: existingSession, error: sessionError } = await supabase
+        .from('sessions')
+        .select('*')
+        .eq('id', sessionId)
+        .single();
+
+      if (sessionError || !existingSession) {
+        throw new Error(`Session not found: ${sessionError?.message}`);
+      }
+
+      sessionData = existingSession;
+    } else if (connectionRequestId) {
+      // Legacy flow: create session from connection request
+      const { data: requestData, error: requestError } = await supabase
+        .from('connection_requests')
+        .select('*')
+        .eq('id', connectionRequestId)
+        .single();
+
+      if (requestError) {
+        throw new Error(`Connection request not found: ${requestError.message}`);
+      }
+
+      // Create session from connection request
+      const sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      
+      const { data: newSession, error: sessionError } = await supabase
+        .from('sessions')
+        .insert({
+          session_id: sessionId,
+          client_id: requestData.client_id,
+          coach_id: requestData.coach_id,
+          scheduled_time: requestData.request_type === 'instant' 
+            ? new Date(Date.now() + 5 * 60 * 1000).toISOString()
+            : requestData.scheduled_time,
+          duration_minutes: 60,
+          status: requestData.request_type === 'instant' ? 'ready' : 'scheduled'
+        })
+        .select()
+        .single();
+
+      if (sessionError) {
+        throw new Error(`Failed to create session: ${sessionError.message}`);
+      }
+
+      sessionData = newSession;
+    } else {
+      throw new Error('Either connectionRequestId or sessionId is required');
     }
 
-    // Generate unique session ID for VideoSDK
-    const sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    
-    // Create VideoSDK meeting room
-    const videoRoomId = `room_${sessionId}`;
+    // Generate unique video room for this session
+    const videoRoomId = `room_${sessionData.id}_${Date.now()}`;
     const videoLink = `https://meet.videosdk.live/${videoRoomId}`;
 
-    // Create session record in sessions table
-    const { data: sessionData, error: sessionError } = await supabase
+    // Update session with video details
+    const { error: updateError } = await supabase
       .from('sessions')
-      .insert({
-        session_id: sessionId,
-        client_id: requestData.client_id,
-        coach_id: requestData.coach_id,
-        scheduled_time: requestData.request_type === 'instant' 
-          ? new Date(Date.now() + 5 * 60 * 1000).toISOString() // 5 minutes from now
-          : requestData.scheduled_time,
+      .update({
         video_room_id: videoRoomId,
         video_join_url: videoLink,
-        duration_minutes: 60,
-        status: requestData.request_type === 'instant' ? 'ready' : 'scheduled'
+        status: 'ready'
       })
-      .select()
-      .single();
-
-    if (sessionError) {
-      throw new Error(`Failed to create session: ${sessionError.message}`);
-    }
-
-    // Update connection request with accepted status
-    const { error: updateError } = await supabase
-      .from('connection_requests')
-      .update({ 
-        status: 'accepted',
-        session_id: sessionData.id
-      })
-      .eq('id', connectionRequestId);
+      .eq('id', sessionData.id);
 
     if (updateError) {
-      throw new Error(`Failed to update connection request: ${updateError.message}`);
+      throw new Error(`Failed to update session with video details: ${updateError.message}`);
+    }
+
+    // Update connection request if applicable
+    if (connectionRequestId) {
+      await supabase
+        .from('connection_requests')
+        .update({ 
+          status: 'accepted',
+          session_id: sessionData.id
+        })
+        .eq('id', connectionRequestId);
     }
 
     console.log('Generated video link:', videoLink);
-    console.log('Session ID:', sessionId);
+    console.log('Session ID:', sessionData.id);
 
     return new Response(
       JSON.stringify({ 
@@ -88,7 +114,7 @@ serve(async (req) => {
         sessionId: sessionData.id,
         sessionDbId: sessionData.id,
         roomId: videoRoomId,
-        message: 'Video link generated successfully'
+        message: 'Video room created successfully'
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

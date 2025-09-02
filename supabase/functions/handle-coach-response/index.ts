@@ -30,7 +30,7 @@ serve(async (req) => {
     // Initialize Resend
     const resend = new Resend(Deno.env.get('RESEND_API_KEY'));
 
-    // Get connection request details with proper joins
+    // Get connection request details with proper joins and client insights
     const { data: requestData, error: requestError } = await supabase
       .from('connection_requests')
       .select(`
@@ -43,6 +43,16 @@ serve(async (req) => {
     if (requestError || !requestData) {
       throw new Error(`Connection request not found: ${requestError?.message}`);
     }
+
+    // Get comprehensive client data including responses and AI analysis
+    const { data: clientInsights, error: insightsError } = await supabase
+      .from('user_responses')
+      .select('selected_goal, responses, ai_analysis')
+      .eq('user_id', requestData.client_id)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
 
     // Get client details from auth.users and profiles
     console.log('Fetching client details for client_id:', requestData.client_id);
@@ -84,6 +94,100 @@ serve(async (req) => {
     const coachName = requestData.coach?.name || 'Coach';
     console.log('Final client details - Email:', clientEmail, 'Name:', clientName, 'Coach:', coachName);
 
+    // Generate comprehensive coach email content
+    const generateCoachEmailContent = (action: string) => {
+      const clientGoal = clientInsights?.selected_goal;
+      const responses = clientInsights?.responses || [];
+      const analysis = clientInsights?.ai_analysis?.analysis || '';
+      
+      const goalSection = clientGoal ? `
+        <div style="background: #f8fafc; border-left: 4px solid #3b82f6; padding: 16px; margin: 16px 0;">
+          <h3 style="margin: 0 0 8px 0; color: #1e40af;">🎯 Client's Primary Goal</h3>
+          <h4 style="margin: 0 0 8px 0; color: #374151;">${clientGoal.title}</h4>
+          <p style="margin: 0; color: #6b7280; font-size: 14px;">${clientGoal.description}</p>
+        </div>
+      ` : '';
+
+      const responsesSection = responses.length > 0 ? `
+        <div style="background: #f0fdf4; border-left: 4px solid #10b981; padding: 16px; margin: 16px 0;">
+          <h3 style="margin: 0 0 12px 0; color: #059669;">💬 Client Responses</h3>
+          ${responses.map(r => `
+            <div style="margin-bottom: 12px;">
+              <p style="margin: 0 0 4px 0; font-weight: 600; color: #374151; font-size: 14px;">${r.question}</p>
+              <p style="margin: 0; color: #6b7280; font-size: 14px; font-style: italic;">"${r.answer}"</p>
+            </div>
+          `).join('')}
+        </div>
+      ` : '';
+
+      const insightsSection = analysis ? `
+        <div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 16px; margin: 16px 0;">
+          <h3 style="margin: 0 0 8px 0; color: #d97706;">🧠 AI Analysis & Insights</h3>
+          <p style="margin: 0; color: #92400e; font-size: 14px;">${analysis}</p>
+        </div>
+      ` : '';
+
+      const starterQuestions = clientGoal ? `
+        <div style="background: #ede9fe; border-left: 4px solid #8b5cf6; padding: 16px; margin: 16px 0;">
+          <h3 style="margin: 0 0 12px 0; color: #7c3aed;">❓ Suggested Starter Questions</h3>
+          <ul style="margin: 0; padding-left: 20px; color: #5b21b6;">
+            <li style="margin-bottom: 8px;">What specific aspect of ${clientGoal.title.toLowerCase()} feels most challenging right now?</li>
+            <li style="margin-bottom: 8px;">What have you already tried to address this goal?</li>
+            <li style="margin-bottom: 8px;">What would success look like to you in this area?</li>
+            <li style="margin-bottom: 8px;">What's holding you back from achieving this goal?</li>
+          </ul>
+        </div>
+      ` : '';
+
+      const portalUrl = `${supabaseUrl}/session-portal`;
+
+      if (action === 'accept') {
+        return `
+          <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <div style="text-align: center; margin-bottom: 30px;">
+              <h1 style="color: #059669; margin: 0;">🎉 Session Request Accepted!</h1>
+              <p style="color: #6b7280; margin: 8px 0 0 0;">Here's everything you need to prepare for your session with ${clientName}</p>
+            </div>
+
+            ${goalSection}
+            ${responsesSection}
+            ${insightsSection}
+            ${starterQuestions}
+
+            <div style="background: #f1f5f9; border-radius: 8px; padding: 20px; margin: 24px 0; text-align: center;">
+              <h3 style="margin: 0 0 12px 0; color: #334155;">🎥 Session Access</h3>
+              <p style="margin: 0 0 16px 0; color: #64748b; font-size: 14px;">
+                ${requestData.request_type === 'instant' 
+                  ? 'The client will receive their session link shortly. You can access your session portal here:'
+                  : `Session scheduled for ${new Date(requestData.scheduled_time).toLocaleString()}. Both you and the client will receive session links closer to the appointment time.`
+                }
+              </p>
+              ${requestData.request_type === 'instant' ? `
+                <a href="${portalUrl}" style="background: #3b82f6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; display: inline-block; font-weight: 600;">Access Session Portal</a>
+              ` : ''}
+            </div>
+
+            <div style="background: #f8fafc; border-radius: 8px; padding: 16px; margin: 16px 0;">
+              <h4 style="margin: 0 0 8px 0; color: #374151;">💡 Coaching Tips</h4>
+              <ul style="margin: 0; padding-left: 20px; color: #6b7280; font-size: 14px;">
+                <li>Review the client's responses and AI insights before the session</li>
+                <li>Start with open-ended questions to understand their current situation</li>
+                <li>Listen for underlying concerns that may not be explicitly stated</li>
+                <li>Be prepared to adapt your coaching style based on their responses</li>
+              </ul>
+            </div>
+
+            <div style="text-align: center; margin-top: 24px; padding-top: 24px; border-top: 1px solid #e5e7eb;">
+              <p style="margin: 0; color: #9ca3af; font-size: 12px;">
+                This email contains confidential client information. Please handle with care and maintain professional confidentiality.
+              </p>
+            </div>
+          </div>
+        `;
+      }
+      return '';
+    };
+
     let responseHtml = '';
     let clientNotificationSubject = '';
     let clientNotificationContent = '';
@@ -99,54 +203,51 @@ serve(async (req) => {
           })
           .eq('id', requestId);
 
-        // If instant session, generate video link and start preparation
-        if (requestData.request_type === 'instant') {
-          try {
-            // Generate video session using existing function
-            const { data: videoData } = await supabase.functions.invoke('generate-video-link', {
-              body: { connectionRequestId: requestId }
-            });
+        // Create session and send portal access
+        try {
+          let sessionData;
+          if (requestData.request_type === 'instant') {
+            // For instant sessions, create session without video room (lazy creation)
+            const { data: newSession } = await supabase
+              .from('sessions')
+              .insert({
+                session_id: `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                client_id: requestData.client_id,
+                coach_id: requestData.coach_id,
+                scheduled_time: new Date(Date.now() + 5 * 60 * 1000).toISOString(), // 5 minutes from now
+                duration_minutes: 60,
+                status: 'ready'
+              })
+              .select()
+              .single();
             
-            if (videoData?.success) {
-              // Send session link to client
-              await supabase.functions.invoke('send-session-link', {
-                body: {
-                  sessionId: videoData.sessionId,
-                  clientEmail: clientEmail,
-                  coachName,
-                  videoLink: videoData.videoLink
-                }
-              });
-            }
+            sessionData = newSession;
             
-            clientNotificationSubject = 'Session Accepted - Join Link Sent!';
+            clientNotificationSubject = 'Session Accepted - Ready to Join!';
             clientNotificationContent = `
               <h2>🎉 Great news!</h2>
               <p>${coachName} has accepted your instant session request.</p>
               <p><strong>Status:</strong> ✅ Session ready</p>
-              <p>Check your email for the video link to join your session!</p>
-              <p>You can join up to 5 minutes early.</p>
+              <p><a href="${supabaseUrl}/session-portal/${sessionData?.id}" style="background-color: #3b82f6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; margin: 16px 0;">Join Session Portal</a></p>
+              <p style="font-size: 14px; color: #6b7280;">You can join up to 5 minutes early. The video room will be created when you click "Join Session".</p>
             `;
-          } catch (videoError) {
-            console.error('Error generating video link:', videoError);
-            clientNotificationContent = `
-              <h2>Session Accepted!</h2>
-              <p>${coachName} has accepted your instant session request.</p>
-              <p><strong>Status:</strong> Setting up your session...</p>
-              <p>You'll receive the video link shortly.</p>
-            `;
-          }
-        } else {
-          // For scheduled sessions, create the session but don't send link yet
-          try {
+          } else {
+            // For scheduled sessions, create session record
             const sessionTime = new Date(requestData.scheduled_time);
-            const { data: sessionData } = await supabase.functions.invoke('create-video-session', {
-              body: {
-                coachId: requestData.coach_id,
-                scheduledTime: sessionTime.toISOString(),
-                sessionDuration: 60
-              }
-            });
+            const { data: newSession } = await supabase
+              .from('sessions')
+              .insert({
+                session_id: `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                client_id: requestData.client_id,
+                coach_id: requestData.coach_id,
+                scheduled_time: sessionTime.toISOString(),
+                duration_minutes: 60,
+                status: 'scheduled'
+              })
+              .select()
+              .single();
+            
+            sessionData = newSession;
             
             clientNotificationSubject = 'Session Request Accepted';
             clientNotificationContent = `
@@ -154,18 +255,30 @@ serve(async (req) => {
               <p>${coachName} has accepted your session request.</p>
               <p><strong>📅 Scheduled Time:</strong> ${sessionTime.toLocaleString()}</p>
               <p><strong>⏱️ Duration:</strong> 60 minutes</p>
-              <p>You'll receive the video link 30 minutes before your session starts.</p>
-            `;
-          } catch (sessionError) {
-            console.error('Error creating scheduled session:', sessionError);
-            clientNotificationSubject = 'Session Request Accepted';
-            clientNotificationContent = `
-              <h2>Session Accepted!</h2>
-              <p>${coachName} has accepted your session request.</p>
-              <p><strong>Scheduled Time:</strong> ${new Date(requestData.scheduled_time).toLocaleString()}</p>
-              <p>You'll receive the video link and session details closer to your appointment time.</p>
+              <p><a href="${supabaseUrl}/session-portal/${sessionData?.id}" style="background-color: #3b82f6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; margin: 16px 0;">Access Session Portal</a></p>
+              <p style="font-size: 14px; color: #6b7280;">You can access your session portal anytime. The video room will be created when the session begins.</p>
             `;
           }
+
+          // Update connection request with session reference
+          if (sessionData) {
+            await supabase
+              .from('connection_requests')
+              .update({ 
+                status: 'accepted',
+                session_id: sessionData.id,
+                updated_at: new Date().toISOString()
+              })
+              .eq('id', requestId);
+          }
+        } catch (sessionError) {
+          console.error('Error creating session:', sessionError);
+          clientNotificationSubject = 'Session Request Accepted';
+          clientNotificationContent = `
+            <h2>Session Accepted!</h2>
+            <p>${coachName} has accepted your session request.</p>
+            <p>We're setting up your session details. You'll receive a follow-up email shortly with access information.</p>
+          `;
         }
 
         responseHtml = `
@@ -300,15 +413,14 @@ serve(async (req) => {
         const coachEmailResult = await resend.emails.send({
           from: 'onboarding@resend.dev',
           to: [coachEmail],
-          subject: `Response Confirmation - ${action.charAt(0).toUpperCase() + action.slice(1)} Request`,
-          html: `
+          subject: `Session ${action.charAt(0).toUpperCase() + action.slice(1)} - Client Preparation Details`,
+          html: generateCoachEmailContent(action) || `
             <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
               <h2>✅ Response Recorded</h2>
               <p>Hi ${coachName},</p>
               <p>Your response has been successfully submitted and processed.</p>
               <p><strong>Action taken:</strong> ${action.charAt(0).toUpperCase() + action.slice(1)}</p>
               <p><strong>Client:</strong> ${clientName}</p>
-              ${action === 'accept' ? '<p>The client will receive a follow-up email with the session link.</p>' : ''}
               <p>Thank you for your prompt response!</p>
             </div>
           `,

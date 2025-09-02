@@ -11,6 +11,7 @@ import CoachesPage from "./pages/CoachesPage";
 import PreviewPage from "./pages/PreviewPage";
 import { UserSessionsPage } from "./components/UserSessionsPage";
 import VideoSessionPage from "./pages/VideoSessionPage";
+import SessionPortalPage from "./pages/SessionPortalPage";
 import { PaymentSuccessPage } from "./pages/PaymentSuccessPage";
 import { PaymentCancelledPage } from "./pages/PaymentCancelledPage";
 
@@ -30,6 +31,7 @@ const App = () => (
           <Route path="/preview" element={<PreviewPage />} />
           <Route path="/sessions" element={<UserSessionsPage />} />
           <Route path="/session/:sessionId" element={<VideoSessionPage />} />
+          <Route path="/session-portal/:sessionId" element={<SessionPortalPage />} />
           <Route path="/payment-success" element={<PaymentSuccessPage />} />
           <Route path="/payment-cancelled" element={<PaymentCancelledPage />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
