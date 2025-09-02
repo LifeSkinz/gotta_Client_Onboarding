@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { VideoSessionInterface } from "@/components/VideoSessionInterface";
+import { SessionLobby } from "@/components/SessionLobby";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Clock, AlertCircle } from "lucide-react";
@@ -29,6 +30,7 @@ export default function VideoSessionPage() {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [canJoin, setCanJoin] = useState(false);
+  const [inSession, setInSession] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -85,6 +87,10 @@ export default function VideoSessionPage() {
                        session.status === 'scheduled';
 
     setCanJoin(canJoinNow);
+  };
+
+  const handleJoinSession = () => {
+    setInSession(true);
   };
 
   const handleSessionEnd = () => {
@@ -191,6 +197,20 @@ export default function VideoSessionPage() {
           </CardContent>
         </Card>
       </div>
+    );
+  }
+
+  // Show lobby first, then session interface after joining
+  if (!inSession) {
+    return (
+      <SessionLobby
+        sessionId={session.id}
+        scheduledTime={session.scheduled_time}
+        coachName={session.coaches.name}
+        duration={session.duration_minutes}
+        onJoinSession={handleJoinSession}
+        canJoin={canJoin}
+      />
     );
   }
 

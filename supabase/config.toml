@@ -8,3 +8,12 @@ verify_jwt = false
 
 [functions.generate-video-link]
 verify_jwt = false
+
+[functions.handle-coach-response]
+verify_jwt = false
+
+[functions.send-session-link]
+verify_jwt = false
+
+[functions.update-session-status]
+verify_jwt = false

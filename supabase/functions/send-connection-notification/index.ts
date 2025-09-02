@@ -292,9 +292,28 @@ function generatePremiumEmailTemplate(context: any, personalizedContent: string)
       text-decoration: none;
     }
     @media (max-width: 600px) {
-      .action-buttons { flex-direction: column; }
-      .btn { min-width: auto; width: 100%; }
-      .container { margin: 10px; border-radius: 12px; }
+      .action-buttons { 
+        flex-direction: column; 
+        gap: 8px;
+      }
+      .btn { 
+        min-width: auto; 
+        width: 100%; 
+        padding: 16px 20px;
+        font-size: 16px;
+        word-wrap: break-word;
+        white-space: normal;
+      }
+      .container { 
+        margin: 10px; 
+        border-radius: 12px; 
+      }
+      .content {
+        padding: 24px 20px;
+      }
+      .header {
+        padding: 30px 20px;
+      }
     }
   </style>
 </head>

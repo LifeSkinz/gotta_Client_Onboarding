@@ -65,31 +65,71 @@ serve(async (req) => {
 
         // If instant session, generate video link and start preparation
         if (requestData.request_type === 'instant') {
-          // Generate video session using existing function
           try {
+            // Generate video session using existing function
             const { data: videoData } = await supabase.functions.invoke('generate-video-link', {
               body: { connectionRequestId: requestId }
             });
             
-            clientNotificationSubject = 'Session Accepted - Preparing Your Connection';
+            if (videoData?.success) {
+              // Send session link to client
+              await supabase.functions.invoke('send-session-link', {
+                body: {
+                  sessionId: videoData.sessionId,
+                  clientEmail: requestData.client?.user_id + '@example.com', // TODO: Get real email
+                  coachName,
+                  videoLink: videoData.videoLink
+                }
+              });
+            }
+            
+            clientNotificationSubject = 'Session Accepted - Join Link Sent!';
             clientNotificationContent = `
-              <h2>Great news!</h2>
+              <h2>🎉 Great news!</h2>
               <p>${coachName} has accepted your instant session request.</p>
-              <p><strong>Status:</strong> Preparing your session...</p>
-              <p>You'll receive another email with the video link in approximately 5 minutes.</p>
-              <p>Please be ready to join at that time!</p>
+              <p><strong>Status:</strong> ✅ Session ready</p>
+              <p>Check your email for the video link to join your session!</p>
+              <p>You can join up to 5 minutes early.</p>
             `;
           } catch (videoError) {
             console.error('Error generating video link:', videoError);
+            clientNotificationContent = `
+              <h2>Session Accepted!</h2>
+              <p>${coachName} has accepted your instant session request.</p>
+              <p><strong>Status:</strong> Setting up your session...</p>
+              <p>You'll receive the video link shortly.</p>
+            `;
           }
         } else {
-          clientNotificationSubject = 'Session Request Accepted';
-          clientNotificationContent = `
-            <h2>Session Accepted!</h2>
-            <p>${coachName} has accepted your session request.</p>
-            <p><strong>Scheduled Time:</strong> ${new Date(requestData.scheduled_time).toLocaleString()}</p>
-            <p>You'll receive the video link and session details closer to your appointment time.</p>
-          `;
+          // For scheduled sessions, create the session but don't send link yet
+          try {
+            const sessionTime = new Date(requestData.scheduled_time);
+            const { data: sessionData } = await supabase.functions.invoke('create-video-session', {
+              body: {
+                coachId: requestData.coach_id,
+                scheduledTime: sessionTime.toISOString(),
+                sessionDuration: 60
+              }
+            });
+            
+            clientNotificationSubject = 'Session Request Accepted';
+            clientNotificationContent = `
+              <h2>🎯 Session Confirmed!</h2>
+              <p>${coachName} has accepted your session request.</p>
+              <p><strong>📅 Scheduled Time:</strong> ${sessionTime.toLocaleString()}</p>
+              <p><strong>⏱️ Duration:</strong> 60 minutes</p>
+              <p>You'll receive the video link 30 minutes before your session starts.</p>
+            `;
+          } catch (sessionError) {
+            console.error('Error creating scheduled session:', sessionError);
+            clientNotificationSubject = 'Session Request Accepted';
+            clientNotificationContent = `
+              <h2>Session Accepted!</h2>
+              <p>${coachName} has accepted your session request.</p>
+              <p><strong>Scheduled Time:</strong> ${new Date(requestData.scheduled_time).toLocaleString()}</p>
+              <p>You'll receive the video link and session details closer to your appointment time.</p>
+            `;
+          }
         }
 
         responseHtml = `
