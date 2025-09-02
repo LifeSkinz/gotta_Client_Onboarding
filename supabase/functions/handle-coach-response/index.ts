@@ -139,7 +139,8 @@ serve(async (req) => {
         </div>
       ` : '';
 
-      const portalUrl = `${supabaseUrl}/session-portal`;
+      // Use the actual React app URL for the portal
+      const portalUrl = 'https://nqoysxjjimvihcvfpesr.lovable.app/session-portal';
 
       if (action === 'accept') {
         return `
@@ -228,7 +229,7 @@ serve(async (req) => {
               <h2>🎉 Great news!</h2>
               <p>${coachName} has accepted your instant session request.</p>
               <p><strong>Status:</strong> ✅ Session ready</p>
-              <p><a href="${supabaseUrl}/session-portal/${sessionData?.id}" style="background-color: #3b82f6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; margin: 16px 0;">Join Session Portal</a></p>
+              <p><a href="${portalUrl}/${sessionData?.id}" style="background-color: #3b82f6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; margin: 16px 0;">Join Session Portal</a></p>
               <p style="font-size: 14px; color: #6b7280;">You can join up to 5 minutes early. The video room will be created when you click "Join Session".</p>
             `;
           } else {
@@ -255,7 +256,7 @@ serve(async (req) => {
               <p>${coachName} has accepted your session request.</p>
               <p><strong>📅 Scheduled Time:</strong> ${sessionTime.toLocaleString()}</p>
               <p><strong>⏱️ Duration:</strong> 60 minutes</p>
-              <p><a href="${supabaseUrl}/session-portal/${sessionData?.id}" style="background-color: #3b82f6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; margin: 16px 0;">Access Session Portal</a></p>
+              <p><a href="${portalUrl}/${sessionData?.id}" style="background-color: #3b82f6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; margin: 16px 0;">Access Session Portal</a></p>
               <p style="font-size: 14px; color: #6b7280;">You can access your session portal anytime. The video room will be created when the session begins.</p>
             `;
           }
@@ -291,8 +292,8 @@ serve(async (req) => {
             <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); margin: 0; padding: 20px; min-height: 100vh; display: flex; align-items: center; justify-content: center;">
               <div style="background: white; border-radius: 12px; padding: 40px; text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.1); max-width: 500px; width: 100%;">
                 <div style="font-size: 48px; margin-bottom: 20px;">✅</div>
-                <h1 style="color: #10b981; margin: 0 0 16px 0; font-size: 24px;">Request Accepted!</h1>
-                <p style="color: #6b7280; font-size: 16px; line-height: 1.5; margin: 0 0 24px 0;">Your response has been submitted successfully. Both you and the client will receive follow-up emails with session details and connection instructions.</p>
+                <h1 style="color: #10b981; margin: 0 0 16px 0; font-size: 24px;">Thank You for Accepting!</h1>
+                <p style="color: #6b7280; font-size: 16px; line-height: 1.5; margin: 0 0 24px 0;">Thank you for accepting this session and schedule. You and the client will now receive an email with a link to the session portal.</p>
                 <div style="background: #f3f4f6; border-radius: 8px; padding: 16px; margin: 16px 0;">
                   <p style="margin: 0; color: #374151; font-size: 14px;"><strong>Next steps:</strong> Check your email for confirmation and the client will receive their session link shortly.</p>
                 </div>
@@ -316,7 +317,7 @@ serve(async (req) => {
           <h2>Session Request Update</h2>
           <p>Unfortunately, ${coachName} is not available for your requested session.</p>
           <p>Don't worry! We'll help you find another excellent coach who matches your needs.</p>
-          <p><a href="${supabaseUrl}/coaches" style="background-color: #667eea; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px;">Browse Other Coaches</a></p>
+          <p><a href="https://nqoysxjjimvihcvfpesr.lovable.app/coaches" style="background-color: #667eea; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px;">Browse Other Coaches</a></p>
         `;
 
         responseHtml = `
@@ -354,7 +355,7 @@ serve(async (req) => {
           <h2>Reschedule Request</h2>
           <p>${coachName} is interested in working with you but would like to propose a different time.</p>
           <p>Please check your calendar and respond with your availability.</p>
-          <p><a href="${supabaseUrl}/reschedule/${requestId}" style="background-color: #f59e0b; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px;">View Available Times</a></p>
+          <p><a href="https://nqoysxjjimvihcvfpesr.lovable.app/reschedule/${requestId}" style="background-color: #f59e0b; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px;">View Available Times</a></p>
         `;
 
         responseHtml = `
