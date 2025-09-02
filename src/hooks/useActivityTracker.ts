@@ -48,29 +48,56 @@ export const useActivityTracker = () => {
   };
 
   const trackPageView = (pageUrl: string) => {
+    // Skip tracking in development mode to prevent excessive logging
+    if (process.env.NODE_ENV === 'development') {
+      return;
+    }
+
     const now = Date.now();
     const previousPageDuration = currentPageRef.current 
       ? Math.floor((now - startTimeRef.current) / 1000) 
       : null;
 
-    // Track previous page exit if there was one
-    if (currentPageRef.current && previousPageDuration) {
+    // Only track if user spent meaningful time on previous page (>5 seconds)
+    if (currentPageRef.current && previousPageDuration && previousPageDuration > 5) {
       trackActivity('page_exit', currentPageRef.current, {
         duration_seconds: previousPageDuration
       });
     }
 
-    // Track new page view
+    // Debounce page views to prevent rapid successive logs
+    const lastPageView = localStorage.getItem('lastPageView');
+    const lastUrl = localStorage.getItem('lastPageUrl');
+    if (lastPageView && lastUrl === pageUrl && now - parseInt(lastPageView) < 3000) {
+      return; // Skip if same page viewed within 3 seconds
+    }
+
     trackActivity('page_view', pageUrl);
     
+    localStorage.setItem('lastPageView', now.toString());
+    localStorage.setItem('lastPageUrl', pageUrl);
     currentPageRef.current = pageUrl;
     startTimeRef.current = now;
   };
 
   const trackInteraction = (action: string, details: Record<string, any> = {}) => {
+    // Skip tracking in development mode
+    if (process.env.NODE_ENV === 'development') {
+      return;
+    }
+    
+    // Rate limit interactions to prevent spam
+    const lastInteraction = localStorage.getItem('lastInteraction');
+    const now = Date.now();
+    if (lastInteraction && now - parseInt(lastInteraction) < 1000) {
+      return; // Skip if interaction within 1 second
+    }
+    
     trackActivity('interaction', currentPageRef.current, {
       action_details: { action, ...details }
     });
+    
+    localStorage.setItem('lastInteraction', now.toString());
   };
 
   const trackSessionJoin = (sessionId: string, coachId: string) => {
@@ -101,14 +128,21 @@ export const useActivityTracker = () => {
     });
   };
 
-  // Track page visibility changes
+  // Track page visibility changes (less aggressively)
   useEffect(() => {
     const handleVisibilityChange = () => {
+      if (process.env.NODE_ENV === 'development') {
+        return;
+      }
+      
       if (document.hidden && currentPageRef.current) {
         const duration = Math.floor((Date.now() - startTimeRef.current) / 1000);
-        trackActivity('page_blur', currentPageRef.current, {
-          duration_seconds: duration
-        });
+        // Only track if user spent meaningful time (>10 seconds)
+        if (duration > 10) {
+          trackActivity('page_blur', currentPageRef.current, {
+            duration_seconds: duration
+          });
+        }
       } else if (!document.hidden && currentPageRef.current) {
         startTimeRef.current = Date.now();
         trackActivity('page_focus', currentPageRef.current);
