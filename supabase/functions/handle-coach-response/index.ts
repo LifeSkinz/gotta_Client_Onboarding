@@ -30,13 +30,12 @@ serve(async (req) => {
     // Initialize Resend
     const resend = new Resend(Deno.env.get('RESEND_API_KEY'));
 
-    // Get connection request details
+    // Get connection request details with proper joins
     const { data: requestData, error: requestError } = await supabase
       .from('connection_requests')
       .select(`
         *,
-        coach:coaches(*),
-        client:profiles!connection_requests_client_id_fkey(*)
+        coach:coaches(*)
       `)
       .eq('id', requestId)
       .single();
@@ -45,8 +44,17 @@ serve(async (req) => {
       throw new Error(`Connection request not found: ${requestError?.message}`);
     }
 
-    const clientName = requestData.client?.full_name || 'Client';
+    // Get client details from auth.users and profiles
+    const { data: clientAuthData } = await supabase.auth.admin.getUserById(requestData.client_id);
+    const { data: clientProfile } = await supabase
+      .from('profiles')
+      .select('full_name')
+      .eq('user_id', requestData.client_id)
+      .single();
+
+    const clientName = clientProfile?.full_name || 'Client';
     const coachName = requestData.coach?.name || 'Coach';
+    const clientEmail = clientAuthData?.user?.email;
 
     let responseHtml = '';
     let clientNotificationSubject = '';
@@ -76,7 +84,7 @@ serve(async (req) => {
               await supabase.functions.invoke('send-session-link', {
                 body: {
                   sessionId: videoData.sessionId,
-                  clientEmail: requestData.client?.user_id + '@example.com', // TODO: Get real email
+                  clientEmail: clientEmail,
                   coachName,
                   videoLink: videoData.videoLink
                 }
@@ -198,11 +206,11 @@ serve(async (req) => {
     }
 
     // Send notification to client
-    if (requestData.client) {
+    if (clientEmail) {
       try {
         await resend.emails.send({
           from: 'onboarding@resend.dev',
-          to: [requestData.client.user_id + '@placeholder.com'], // TODO: Get actual email from auth
+          to: [clientEmail],
           subject: clientNotificationSubject,
           html: `
             <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
@@ -210,9 +218,12 @@ serve(async (req) => {
             </div>
           `,
         });
+        console.log(`Notification email sent to client: ${clientEmail}`);
       } catch (emailError) {
         console.error('Failed to send client notification:', emailError);
       }
+    } else {
+      console.error('No client email found for notification');
     }
 
     return new Response(responseHtml, {
