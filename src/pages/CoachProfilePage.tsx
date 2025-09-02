@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import ConnectConfirmDialog from "@/components/ConnectConfirmDialog";
 import { SessionBookingFlow } from "@/components/SessionBookingFlow";
+import { UserWallet } from "@/components/UserWallet";
 
 interface Coach {
   id: string;
@@ -50,12 +51,19 @@ export default function CoachProfilePage() {
   const [loading, setLoading] = useState(true);
   const [showConnectDialog, setShowConnectDialog] = useState(false);
   const [showBookingFlow, setShowBookingFlow] = useState(false);
+  const [user, setUser] = useState<any>(null);
 
   useEffect(() => {
     if (id) {
       fetchCoachData(id);
     }
+    fetchUser();
   }, [id]);
+
+  const fetchUser = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    setUser(user);
+  };
 
   const fetchCoachData = async (coachId: string) => {
     try {
@@ -114,11 +122,12 @@ export default function CoachProfilePage() {
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
       <div className="max-w-4xl mx-auto p-4 space-y-6">
         {/* Header */}
-        <div className="flex items-center gap-4">
+        <div className="flex items-center justify-between gap-4">
           <Button variant="ghost" size="sm" onClick={() => navigate('/coaches')}>
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Coaches
           </Button>
+          {user && <UserWallet userId={user.id} />}
         </div>
 
         {/* Coach Profile Card */}
