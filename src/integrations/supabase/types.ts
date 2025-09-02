@@ -1055,10 +1055,22 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      table_sizes: {
+        Row: {
+          schemaname: unknown | null
+          size: string | null
+          size_bytes: number | null
+          tablename: unknown | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       cleanup_expired_guest_sessions: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      cleanup_old_activity_logs: {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
