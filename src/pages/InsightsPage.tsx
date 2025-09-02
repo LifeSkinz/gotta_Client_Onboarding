@@ -63,9 +63,8 @@ export const InsightsPage = () => {
     setLoadingCoaches(true);
     try {
       const { data, error } = await supabase
-        .from('coaches')
+        .from('coaches_public')
         .select('*')
-        .eq('is_active', true)
         .order('rating', { ascending: false });
 
       if (error) throw error;

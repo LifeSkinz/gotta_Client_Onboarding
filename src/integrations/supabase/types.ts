@@ -1206,6 +1206,38 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      get_public_coaches: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          availability_hours: string | null
+          available_now: boolean | null
+          avatar_url: string | null
+          bio: string | null
+          booking_buffer_minutes: number | null
+          client_challenge_example: string | null
+          coaching_expertise: string | null
+          coaching_style: string | null
+          created_at: string | null
+          hourly_coin_cost: number | null
+          hourly_rate_amount: number | null
+          hourly_rate_currency: string | null
+          id: string | null
+          is_active: boolean | null
+          max_session_duration: number | null
+          min_session_duration: number | null
+          name: string | null
+          personal_experiences: string | null
+          rating: number | null
+          similar_experiences: string[] | null
+          social_links: Json | null
+          specialties: string[] | null
+          timezone: string | null
+          title: string | null
+          total_reviews: number | null
+          updated_at: string | null
+          years_experience: number | null
+        }[]
+      }
       track_user_activity: {
         Args: {
           p_action_details?: Json
