@@ -45,16 +45,44 @@ serve(async (req) => {
     }
 
     // Get client details from auth.users and profiles
-    const { data: clientAuthData } = await supabase.auth.admin.getUserById(requestData.client_id);
-    const { data: clientProfile } = await supabase
-      .from('profiles')
-      .select('full_name')
-      .eq('user_id', requestData.client_id)
-      .single();
+    console.log('Fetching client details for client_id:', requestData.client_id);
+    
+    let clientEmail = null;
+    let clientName = 'Client';
+    
+    try {
+      const { data: clientAuthData, error: authError } = await supabase.auth.admin.getUserById(requestData.client_id);
+      if (authError) {
+        console.error('Error fetching auth user:', authError);
+      } else {
+        clientEmail = clientAuthData?.user?.email;
+        console.log('Client email found:', clientEmail);
+      }
+    } catch (authError) {
+      console.error('Exception fetching auth user:', authError);
+    }
 
-    const clientName = clientProfile?.full_name || 'Client';
+    try {
+      const { data: clientProfile, error: profileError } = await supabase
+        .from('profiles')
+        .select('full_name')
+        .eq('user_id', requestData.client_id)
+        .maybeSingle();
+        
+      if (profileError) {
+        console.error('Error fetching profile:', profileError);
+      } else if (clientProfile) {
+        clientName = clientProfile.full_name || 'Client';
+        console.log('Client name found:', clientName);
+      } else {
+        console.log('No profile found for user');
+      }
+    } catch (profileError) {
+      console.error('Exception fetching profile:', profileError);
+    }
+
     const coachName = requestData.coach?.name || 'Coach';
-    const clientEmail = clientAuthData?.user?.email;
+    console.log('Final client details - Email:', clientEmail, 'Name:', clientName, 'Coach:', coachName);
 
     let responseHtml = '';
     let clientNotificationSubject = '';
@@ -206,9 +234,11 @@ serve(async (req) => {
     }
 
     // Send notification to client
+    console.log('Attempting to send notification email to:', clientEmail);
+    
     if (clientEmail) {
       try {
-        await resend.emails.send({
+        const emailResult = await resend.emails.send({
           from: 'onboarding@resend.dev',
           to: [clientEmail],
           subject: clientNotificationSubject,
@@ -218,12 +248,13 @@ serve(async (req) => {
             </div>
           `,
         });
-        console.log(`Notification email sent to client: ${clientEmail}`);
+        console.log(`Notification email sent successfully to client: ${clientEmail}`, emailResult);
       } catch (emailError) {
         console.error('Failed to send client notification:', emailError);
+        // Don't throw error to avoid breaking the flow
       }
     } else {
-      console.error('No client email found for notification');
+      console.error('No client email found for notification - cannot send email');
     }
 
     return new Response(responseHtml, {
@@ -232,12 +263,19 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('Error in handle-coach-response:', error);
+    console.error('Error details:', {
+      message: error.message,
+      stack: error.stack,
+      cause: error.cause
+    });
     
     const errorHtml = `
       <html><body style="font-family: sans-serif; text-align: center; padding: 50px;">
-        <h1 style="color: #ef4444;">Error</h1>
-        <p>Something went wrong processing your response.</p>
+        <h1 style="color: #ef4444;">Error Processing Response</h1>
+        <p>There was an issue processing your response.</p>
+        <p>Error: ${error.message}</p>
         <p>Please contact support if this issue persists.</p>
+        <p>Error ID: ${new Date().toISOString()}</p>
       </body></html>
     `;
 
