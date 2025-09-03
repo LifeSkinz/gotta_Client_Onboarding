@@ -4,6 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Video, VideoOff, Mic, MicOff, Clock, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { format, differenceInMinutes } from "date-fns";
+import { SessionNavigationHeader } from "./SessionNavigationHeader";
+import { SessionEducationCard } from "./SessionEducationCard";
+import { TranscriptionConsentDialog } from "./TranscriptionConsentDialog";
 
 interface SessionLobbyProps {
   sessionId: string;
@@ -12,6 +15,7 @@ interface SessionLobbyProps {
   duration: number;
   onJoinSession: () => void;
   canJoin: boolean;
+  isPostBooking?: boolean;
 }
 
 export const SessionLobby = ({
@@ -20,7 +24,8 @@ export const SessionLobby = ({
   coachName,
   duration,
   onJoinSession,
-  canJoin
+  canJoin,
+  isPostBooking = false
 }: SessionLobbyProps) => {
   const [videoEnabled, setVideoEnabled] = useState(true);
   const [audioEnabled, setAudioEnabled] = useState(true);
@@ -28,6 +33,8 @@ export const SessionLobby = ({
   const [timeUntilStart, setTimeUntilStart] = useState<number>(0);
   const [mediaStream, setMediaStream] = useState<MediaStream | null>(null);
   const [deviceErrors, setDeviceErrors] = useState<string[]>([]);
+  const [showConsentDialog, setShowConsentDialog] = useState(false);
+  const [transcriptionConsent, setTranscriptionConsent] = useState<'full' | 'basic' | 'none' | null>(null);
 
   useEffect(() => {
     const scheduledDate = new Date(scheduledTime);
@@ -114,29 +121,69 @@ export const SessionLobby = ({
     return "destructive";
   };
 
+  const handleJoinSession = () => {
+    if (!transcriptionConsent) {
+      setShowConsentDialog(true);
+    } else {
+      onJoinSession();
+    }
+  };
+
+  const handleTranscriptionConsent = (consentLevel: 'full' | 'basic' | 'none') => {
+    setTranscriptionConsent(consentLevel);
+    setShowConsentDialog(false);
+    onJoinSession();
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 flex items-center justify-center p-4">
-      <div className="w-full max-w-2xl space-y-6">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 p-4">
+      <div className="max-w-4xl mx-auto">
         
-        {/* Session Info Card */}
-        <Card>
-          <CardHeader className="text-center">
-            <CardTitle className="flex items-center justify-center gap-2">
-              <Video className="h-5 w-5" />
-              Session Lobby
-            </CardTitle>
-            <div className="space-y-2">
-              <p className="text-lg font-semibold">Coaching Session with {coachName}</p>
-              <p className="text-muted-foreground">
-                {format(new Date(scheduledTime), 'PPP p')} • {duration} minutes
-              </p>
-              <Badge variant={getStatusColor()}>
-                <Clock className="h-3 w-3 mr-1" />
-                {getStatusMessage()}
-              </Badge>
-            </div>
-          </CardHeader>
-        </Card>
+        {/* Navigation Header */}
+        <SessionNavigationHeader 
+          sessionId={sessionId}
+          coachName={coachName}
+          sessionStatus="waiting"
+        />
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          
+          {/* Main Session Info Column */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Post-booking Success Message */}
+            {isPostBooking && (
+              <Card className="border-l-4 border-l-green-500 bg-green-50 dark:bg-green-950">
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-2 text-green-700 dark:text-green-300">
+                    <CheckCircle2 className="h-5 w-5" />
+                    <span className="font-semibold">Session Successfully Booked!</span>
+                  </div>
+                  <p className="text-sm text-green-600 dark:text-green-400 mt-1">
+                    You're all set for your coaching session. Use this time to prepare and familiarize yourself with the platform.
+                  </p>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Session Info Card */}
+            <Card>
+              <CardHeader className="text-center">
+                <CardTitle className="flex items-center justify-center gap-2">
+                  <Video className="h-5 w-5" />
+                  Session Lobby
+                </CardTitle>
+                <div className="space-y-2">
+                  <p className="text-lg font-semibold">Coaching Session with {coachName}</p>
+                  <p className="text-muted-foreground">
+                    {format(new Date(scheduledTime), 'PPP p')} • {duration} minutes
+                  </p>
+                  <Badge variant={getStatusColor()}>
+                    <Clock className="h-3 w-3 mr-1" />
+                    {getStatusMessage()}
+                  </Badge>
+                </div>
+              </CardHeader>
+            </Card>
 
         {/* Device Check Card */}
         <Card>
@@ -244,31 +291,46 @@ export const SessionLobby = ({
           </CardContent>
         </Card>
 
-        {/* Join Button */}
-        <div className="text-center">
-          <Button 
-            onClick={onJoinSession}
-            disabled={!canJoin || !deviceChecked}
-            size="lg"
-            className="px-8 py-3 text-lg"
-          >
-            {!canJoin ? (
-              timeUntilStart > 5 ? 
-                `Join Available in ${timeUntilStart} minutes` : 
-                "Waiting for session window..."
-            ) : !deviceChecked ? (
-              "Checking devices..."
-            ) : (
-              "Join Session"
-            )}
-          </Button>
+            {/* Join Button */}
+            <div className="text-center">
+              <Button 
+                onClick={handleJoinSession}
+                disabled={!canJoin || !deviceChecked}
+                size="lg"
+                className="px-8 py-3 text-lg"
+              >
+                {!canJoin ? (
+                  timeUntilStart > 5 ? 
+                    `Join Available in ${timeUntilStart} minutes` : 
+                    "Waiting for session window..."
+                ) : !deviceChecked ? (
+                  "Checking devices..."
+                ) : (
+                  "Join Session"
+                )}
+              </Button>
+              
+              {canJoin && deviceErrors.length > 0 && (
+                <p className="text-sm text-muted-foreground mt-2">
+                  You can join even with device issues - they can be resolved in the session
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* Sidebar Column */}
+          <div className="space-y-6">
+            <SessionEducationCard />
+          </div>
           
-          {canJoin && deviceErrors.length > 0 && (
-            <p className="text-sm text-muted-foreground mt-2">
-              You can join even with device issues - they can be resolved in the session
-            </p>
-          )}
         </div>
+
+        {/* Transcription Consent Dialog */}
+        <TranscriptionConsentDialog 
+          isOpen={showConsentDialog}
+          onConsent={handleTranscriptionConsent}
+        />
+
       </div>
     </div>
   );

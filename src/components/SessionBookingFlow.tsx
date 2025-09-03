@@ -130,7 +130,8 @@ export const SessionBookingFlow = ({ isOpen, onClose, coach, userGoal }: Session
         description: `Your ${sessionDuration}-minute session with ${coach.name} has been scheduled for ${format(scheduledTime, 'PPP p')}. Check your email for details and calendar invite.`,
       });
 
-      onClose();
+      // Redirect to session page instead of closing dialog
+      window.location.href = `/session/${data.sessionId}`;
       
     } catch (error) {
       console.error('Error booking session:', error);

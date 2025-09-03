@@ -210,6 +210,7 @@ export default function VideoSessionPage() {
         duration={session.duration_minutes}
         onJoinSession={handleJoinSession}
         canJoin={canJoin}
+        isPostBooking={window.location.search.includes('from=booking')}
       />
     );
   }
