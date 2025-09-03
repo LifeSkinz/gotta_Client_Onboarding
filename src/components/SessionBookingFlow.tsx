@@ -30,7 +30,7 @@ interface SessionBookingFlowProps {
 export const SessionBookingFlow = ({ isOpen, onClose, coach, userGoal }: SessionBookingFlowProps) => {
   const [selectedDate, setSelectedDate] = useState<Date>();
   const [selectedTime, setSelectedTime] = useState<string>();
-  const [sessionDuration, setSessionDuration] = useState<number>(60);
+  const [sessionDuration, setSessionDuration] = useState<number>(15);
   const [loading, setLoading] = useState(false);
   const [timeSlots, setTimeSlots] = useState<string[]>([]);
   const { toast } = useToast();
@@ -45,7 +45,7 @@ export const SessionBookingFlow = ({ isOpen, onClose, coach, userGoal }: Session
     const endHour = 17; // 5 PM
     
     for (let hour = startHour; hour < endHour; hour++) {
-      for (let minute = 0; minute < 60; minute += 30) {
+      for (let minute = 0; minute < 60; minute += 15) {
         const slotTime = setMinutes(setHours(selectedDate, hour), minute);
         
         // Only show future slots
@@ -165,18 +165,28 @@ export const SessionBookingFlow = ({ isOpen, onClose, coach, userGoal }: Session
           <Card>
             <CardHeader>
               <CardTitle className="text-lg">Session Duration</CardTitle>
+              <CardDescription>Choose your session length and see coin costs</CardDescription>
             </CardHeader>
             <CardContent>
-              <Select value={sessionDuration.toString()} onValueChange={(value) => setSessionDuration(parseInt(value))}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="30">30 minutes</SelectItem>
-                  <SelectItem value="60">60 minutes</SelectItem>
-                  <SelectItem value="90">90 minutes</SelectItem>
-                </SelectContent>
-              </Select>
+              <div className="grid grid-cols-2 gap-3">
+                {[15, 30, 45, 60].map((duration) => {
+                  const coinCost = Math.round((coach.hourly_coin_cost * duration) / 60);
+                  return (
+                    <Button
+                      key={duration}
+                      variant={sessionDuration === duration ? "default" : "outline"}
+                      onClick={() => setSessionDuration(duration)}
+                      className="h-auto p-4 flex flex-col items-center gap-1"
+                    >
+                      <span className="font-medium">{duration} minutes</span>
+                      <span className="text-xs opacity-75 flex items-center gap-1">
+                        <Coins className="h-3 w-3" />
+                        {coinCost} coins
+                      </span>
+                    </Button>
+                  );
+                })}
+              </div>
             </CardContent>
           </Card>
 
@@ -204,21 +214,47 @@ export const SessionBookingFlow = ({ isOpen, onClose, coach, userGoal }: Session
               <CardHeader>
                 <CardTitle className="text-lg">Select Time</CardTitle>
                 <CardDescription>
-                  Available times for {format(selectedDate, 'PPP')}
+                  Available times for {format(selectedDate, 'PPP')} (Standard Time)
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-4 gap-2">
-                  {timeSlots.map((time) => (
-                    <Button
-                      key={time}
-                      variant={selectedTime === time ? "default" : "outline"}
-                      onClick={() => setSelectedTime(time)}
-                      className="text-sm"
-                    >
-                      {time}
-                    </Button>
-                  ))}
+                <div className="space-y-4">
+                  <div>
+                    <h4 className="text-sm font-medium mb-2 text-muted-foreground">Morning (9:00 AM - 12:00 PM)</h4>
+                    <div className="grid grid-cols-6 gap-2">
+                      {timeSlots.filter(time => {
+                        const hour = parseInt(time.split(':')[0]);
+                        return hour >= 9 && hour < 12;
+                      }).map((time) => (
+                        <Button
+                          key={time}
+                          variant={selectedTime === time ? "default" : "outline"}
+                          onClick={() => setSelectedTime(time)}
+                          className="text-xs h-8"
+                        >
+                          {time}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-medium mb-2 text-muted-foreground">Afternoon (12:00 PM - 5:00 PM)</h4>
+                    <div className="grid grid-cols-6 gap-2">
+                      {timeSlots.filter(time => {
+                        const hour = parseInt(time.split(':')[0]);
+                        return hour >= 12 && hour < 17;
+                      }).map((time) => (
+                        <Button
+                          key={time}
+                          variant={selectedTime === time ? "default" : "outline"}
+                          onClick={() => setSelectedTime(time)}
+                          className="text-xs h-8"
+                        >
+                          {time}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               </CardContent>
             </Card>
