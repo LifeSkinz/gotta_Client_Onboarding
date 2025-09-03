@@ -92,9 +92,42 @@ export const SessionBookingFlow = ({ isOpen, onClose, coach, userGoal }: Session
 
       if (error) throw error;
 
+      // Get user profile for enhanced emails
+      const { data: { user } } = await supabase.auth.getUser();
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('full_name')
+        .eq('user_id', user?.id)
+        .single();
+
+      // Send enhanced session confirmation email to client
+      await supabase.functions.invoke('send-enhanced-session-email', {
+        body: {
+          sessionId: data.sessionId,
+          clientEmail: user?.email,
+          clientName: profile?.full_name,
+          coachName: coach.name,
+          emailType: 'confirmation'
+        }
+      });
+
+      // Send enhanced coach notification
+      const { data: coachData } = await supabase
+        .from('coaches')
+        .select('notification_email')
+        .eq('id', coach.id)
+        .single();
+
+      await supabase.functions.invoke('send-enhanced-coach-notification', {
+        body: {
+          sessionId: data.sessionId,
+          coachEmail: coachData?.notification_email || 'coach@example.com'
+        }
+      });
+
       toast({
         title: "Session Booked!",
-        description: `Your ${sessionDuration}-minute session with ${coach.name} has been scheduled for ${format(scheduledTime, 'PPP p')}.`,
+        description: `Your ${sessionDuration}-minute session with ${coach.name} has been scheduled for ${format(scheduledTime, 'PPP p')}. Check your email for details and calendar invite.`,
       });
 
       onClose();

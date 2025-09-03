@@ -88,6 +88,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         success: true, 
+        sessionId: session.id,
         session,
         videoJoinUrl,
         message: 'Video session created successfully'
