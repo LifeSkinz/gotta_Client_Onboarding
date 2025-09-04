@@ -14,6 +14,7 @@ import { Card } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { useActivityTracker } from "@/hooks/useActivityTracker";
 import { useBehavioralInsights } from "@/hooks/useBehavioralInsights";
+import { AppNavigation } from "@/components/AppNavigation";
 import { supabase } from "@/integrations/supabase/client";
 
 type PageType = 'welcome' | 'goal-selection' | 'questions' | 'summary' | 'coach-list' | 'confirmation';
@@ -86,15 +87,24 @@ const Index = () => {
     }
   }, [user, selectedGoal, responses, currentPage, analyzeUserPersonality, currentQuestions]);
 
-  // Initialize session ID
+  // Initialize session ID and check for restart parameter
   useEffect(() => {
+    const urlParams = new URLSearchParams(location.search);
+    const shouldRestart = urlParams.get('restart') === 'true';
+    
+    if (shouldRestart) {
+      handleStartOver();
+      // Clean URL
+      navigate('/', { replace: true });
+    }
+    
     let storedSessionId = localStorage.getItem('guestSessionId');
     if (!storedSessionId) {
       storedSessionId = crypto.randomUUID();
       localStorage.setItem('guestSessionId', storedSessionId);
     }
     setSessionId(storedSessionId);
-  }, []);
+  }, [location.search]);
 
   // Track page views
   useEffect(() => {
@@ -453,44 +463,10 @@ const Index = () => {
 
   return (
     <>
-      {/* Authentication Header */}
-      {user && (
-        <div className="fixed top-0 right-0 z-50 p-4">
-          <Card className="flex items-center gap-3 px-4 py-2 bg-card/95 backdrop-blur-sm border-border/50">
-            <div className="text-sm">
-              <p className="font-medium">{user.user_metadata?.full_name || user.email}</p>
-              <p className="text-xs text-muted-foreground">{user.email}</p>
-            </div>
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={handleSignOut}
-            >
-              Sign Out
-            </Button>
-          </Card>
-        </div>
-      )}
-      
-      {/* Not authenticated CTA */}
-      {!user && currentPage !== 'welcome' && (
-        <div className="fixed top-0 right-0 z-50 p-4">
-          <Card className="px-4 py-2 bg-card/95 backdrop-blur-sm border-border/50">
-            <div className="text-sm text-center">
-              <p className="text-muted-foreground mb-2">Sign in to save progress</p>
-              <Button 
-                variant="default" 
-                size="sm"
-                onClick={() => navigate('/auth')}
-              >
-                Sign In
-              </Button>
-            </div>
-          </Card>
-        </div>
-      )}
-
-      {currentPageContent}
+      <AppNavigation user={user} />
+      <div className={user ? "pt-16 lg:pt-20" : ""}>
+        {currentPageContent}
+      </div>
       <PersonalityScreeningDialog
         open={showPersonalityDialog}
         onComplete={handlePersonalityComplete}

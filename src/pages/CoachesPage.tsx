@@ -2,8 +2,10 @@ import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Goal, UserResponse, Question, PersonalityResponse } from "@/types/goals";
 import { CoachListPage } from "./CoachListPage";
+import { AppNavigation } from "@/components/AppNavigation";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { User } from "@supabase/supabase-js";
 
 interface AIAnalysis {
   analysis: string;
@@ -25,9 +27,26 @@ export default function CoachesPage() {
   const location = useLocation();
   const { toast } = useToast();
   
+  const [user, setUser] = useState<User | null>(null);
   const [state, setState] = useState<CoachesPageState | null>(null);
   const [aiAnalysis, setAiAnalysis] = useState<AIAnalysis | null>(null);
   const [loading, setLoading] = useState(false);
+
+  // Get current user
+  useEffect(() => {
+    const getCurrentUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setUser(user);
+    };
+
+    getCurrentUser();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   useEffect(() => {
     // Try to get state from navigation
@@ -137,15 +156,20 @@ export default function CoachesPage() {
   }
 
   return (
-    <CoachListPage
-      selectedGoal={state.selectedGoal}
-      responses={state.responses}
-      questions={state.questions}
-      aiAnalysis={aiAnalysis}
-      loading={loading}
-      onBack={handleBack}
-      onCoachSelect={handleCoachSelect}
-      onFetchRecommendations={fetchCoachRecommendations}
-    />
+    <>
+      <AppNavigation user={user} />
+      <div className="pt-16 lg:pt-20">
+        <CoachListPage
+          selectedGoal={state.selectedGoal}
+          responses={state.responses}
+          questions={state.questions}
+          aiAnalysis={aiAnalysis}
+          loading={loading}
+          onBack={handleBack}
+          onCoachSelect={handleCoachSelect}
+          onFetchRecommendations={fetchCoachRecommendations}
+        />
+      </div>
+    </>
   );
 }

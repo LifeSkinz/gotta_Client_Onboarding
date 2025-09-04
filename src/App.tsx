@@ -16,6 +16,7 @@ import { PaymentSuccessPage } from "./pages/PaymentSuccessPage";
 import { PaymentCancelledPage } from "./pages/PaymentCancelledPage";
 import CoachResponseSuccessPage from "./pages/CoachResponseSuccessPage";
 import SessionPortalFallbackPage from "./pages/SessionPortalFallbackPage";
+import ProfilePage from "./pages/ProfilePage";
 
 const queryClient = new QueryClient();
 
@@ -32,6 +33,7 @@ const App = () => (
           <Route path="/coach/:id" element={<CoachProfilePage />} />
           <Route path="/preview" element={<PreviewPage />} />
           <Route path="/sessions" element={<UserSessionsPage />} />
+          <Route path="/profile" element={<ProfilePage />} />
           <Route path="/session/:sessionId" element={<VideoSessionPage />} />
           <Route path="/session-portal/:sessionId" element={<SessionPortalPage />} />
           <Route path="/session-portal" element={<SessionPortalFallbackPage />} />
