@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { User } from "@supabase/supabase-js";
 import { Button } from "@/components/ui/button";
@@ -24,30 +24,39 @@ interface AppNavigationProps {
 export const AppNavigation = ({ user }: AppNavigationProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [activeSessionsCount, setActiveSessionsCount] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
 
-  useEffect(() => {
-    if (user) {
-      fetchActiveSessionsCount();
-    }
-  }, [user]);
-
-  const fetchActiveSessionsCount = async () => {
+  const fetchActiveSessionsCount = useCallback(async () => {
+    if (!user?.id || isLoading) return;
+    
+    setIsLoading(true);
     try {
       const { data, error } = await supabase
         .from('sessions')
         .select('id')
-        .eq('client_id', user?.id)
+        .eq('client_id', user.id)
         .in('status', ['scheduled', 'in_progress']);
 
       if (error) throw error;
       setActiveSessionsCount(data?.length || 0);
     } catch (error) {
       console.error('Error fetching active sessions:', error);
+      // Don't show toast for this error to avoid spam
+    } finally {
+      setIsLoading(false);
     }
-  };
+  }, [user?.id, isLoading]);
+
+  useEffect(() => {
+    if (user?.id) {
+      fetchActiveSessionsCount();
+    } else {
+      setActiveSessionsCount(0);
+    }
+  }, [user?.id, fetchActiveSessionsCount]);
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
