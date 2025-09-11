@@ -63,7 +63,7 @@ export const InsightsPage = () => {
     setLoadingCoaches(true);
     try {
       const { data, error } = await supabase
-        .from('coaches_public')
+        .from('coaches')
         .select('*')
         .order('rating', { ascending: false });
 

@@ -50,7 +50,7 @@ export const SessionFeedbackDialog = ({ isOpen, onClose, sessionId, coachId }: S
 
       // Save session outcome
       await supabase
-        .from('session_outcomes')
+        .from('session_analytics')
         .insert({
           session_id: sessionId,
           user_id: user.user.id,

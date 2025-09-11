@@ -276,7 +276,7 @@ export const VideoSessionInterface = ({
       // Save session goals
       for (const goal of goals) {
         await supabase
-          .from('session_goals_tracking')
+          .from('session_analytics')
           .insert({
             user_id: clientId,
             session_id: sessionId,

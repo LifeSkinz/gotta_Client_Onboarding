@@ -195,7 +195,7 @@ export const useBehavioralInsights = () => {
   ) => {
     try {
       await supabase
-        .from('session_outcomes')
+        .from('session_analytics')
         .insert({
           session_id: sessionId,
           user_id: userId,

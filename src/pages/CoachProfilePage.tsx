@@ -68,7 +68,7 @@ export default function CoachProfilePage() {
   const fetchCoachData = async (coachId: string) => {
     try {
       const [coachResponse, packagesResponse] = await Promise.all([
-        supabase.from('coaches_public').select('*').eq('id', coachId).single(),
+        supabase.from('coaches').select('*').eq('id', coachId).single(),
         supabase.from('coaching_packages').select('*').eq('coach_id', coachId).eq('is_active', true)
       ]);
 

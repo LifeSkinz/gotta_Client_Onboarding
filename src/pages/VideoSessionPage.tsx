@@ -11,7 +11,6 @@ import { format, isAfter, isBefore, addMinutes } from "date-fns";
 
 interface Session {
   id: string;
-  session_id: string;
   client_id: string;
   coach_id: string;
   scheduled_time: string;

@@ -9,7 +9,6 @@ import { User } from "@supabase/supabase-js";
 
 interface Session {
   id: string;
-  session_id: string;
   scheduled_time: string;
   actual_start_time?: string;
   actual_end_time?: string;

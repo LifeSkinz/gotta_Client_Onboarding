@@ -13,7 +13,6 @@ import { format, isAfter, isBefore, addMinutes, differenceInMinutes } from "date
 
 interface Session {
   id: string;
-  session_id: string;
   client_id: string;
   coach_id: string;
   scheduled_time: string;
@@ -82,7 +81,7 @@ export default function SessionPortalPage() {
 
       // Fetch session goals
       const { data: goalsData, error: goalsError } = await supabase
-        .from('session_goals_tracking')
+        .from('session_analytics')
         .select('id, goal_description, initial_assessment, final_assessment')
         .eq('session_id', sessionId);
 

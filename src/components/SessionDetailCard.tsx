@@ -26,7 +26,6 @@ import { useToast } from "@/hooks/use-toast";
 interface SessionDetailCardProps {
   session: {
     id: string;
-    session_id: string;
     scheduled_time: string;
     actual_start_time?: string;
     actual_end_time?: string;
@@ -72,7 +71,7 @@ export const SessionDetailCard = ({ session }: SessionDetailCardProps) => {
       const { data: responseData } = await supabase
         .from('user_responses')
         .select('selected_goal, ai_analysis, responses')
-        .eq('session_id', session.session_id)
+        .eq('session_id', session.id)
         .single();
 
       // Fetch session recording data
@@ -82,9 +81,9 @@ export const SessionDetailCard = ({ session }: SessionDetailCardProps) => {
         .eq('session_id', session.id)
         .single();
 
-      // Fetch session outcome data
-      const { data: outcomeData } = await supabase
-        .from('session_outcomes')
+      // Fetch session analytics data (replaces session_outcomes after schema cleanup)
+      const { data: analyticsData } = await supabase
+        .from('session_analytics')
         .select('*')
         .eq('session_id', session.id)
         .single();
@@ -95,13 +94,13 @@ export const SessionDetailCard = ({ session }: SessionDetailCardProps) => {
           : 'Coaching Session',
         aiAnalysis: responseData?.ai_analysis,
         transcript: recordingData?.transcript,
-        actionItems: outcomeData?.action_items || [],
+        actionItems: analyticsData?.action_items || [],
         insights: {
           summary: recordingData?.ai_summary,
           keyTopics: recordingData?.key_topics || [],
           personalityInsights: recordingData?.personality_insights
         },
-        sessionOutcome: outcomeData
+        sessionOutcome: analyticsData
       });
     } catch (error) {
       console.error('Error fetching extended session data:', error);
@@ -179,7 +178,7 @@ export const SessionDetailCard = ({ session }: SessionDetailCardProps) => {
               <CardDescription className="flex items-center gap-2">
                 {session.coaches.title}
                 <Separator orientation="vertical" className="h-4" />
-                <span className="text-xs">Session #{session.session_id.split('_').pop()}</span>
+                <span className="text-xs">Session #{session.id.slice(-8)}</span>
               </CardDescription>
             </div>
           </div>
