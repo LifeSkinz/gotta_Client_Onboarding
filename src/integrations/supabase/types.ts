@@ -56,13 +56,6 @@ export type Database = {
             referencedRelation: "coaches"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "coach_availability_coach_id_fkey"
-            columns: ["coach_id"]
-            isOneToOne: false
-            referencedRelation: "coaches_public"
-            referencedColumns: ["id"]
-          },
         ]
       }
       coaches: {
@@ -218,13 +211,6 @@ export type Database = {
             referencedRelation: "coaches"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "coaching_packages_coach_id_fkey"
-            columns: ["coach_id"]
-            isOneToOne: false
-            referencedRelation: "coaches_public"
-            referencedColumns: ["id"]
-          },
         ]
       }
       coin_packages: {
@@ -314,13 +300,6 @@ export type Database = {
             referencedRelation: "coaches"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "connection_requests_coach_id_fkey"
-            columns: ["coach_id"]
-            isOneToOne: false
-            referencedRelation: "coaches_public"
-            referencedColumns: ["id"]
-          },
         ]
       }
       conversation_themes: {
@@ -335,7 +314,7 @@ export type Database = {
           session_ids: string[] | null
           theme_description: string | null
           theme_name: string
-          user_id: string | null
+          user_id: string
         }
         Insert: {
           first_mentioned_at?: string
@@ -348,7 +327,7 @@ export type Database = {
           session_ids?: string[] | null
           theme_description?: string | null
           theme_name: string
-          user_id?: string | null
+          user_id: string
         }
         Update: {
           first_mentioned_at?: string
@@ -361,7 +340,7 @@ export type Database = {
           session_ids?: string[] | null
           theme_description?: string | null
           theme_name?: string
-          user_id?: string | null
+          user_id?: string
         }
         Relationships: []
       }
@@ -504,7 +483,7 @@ export type Database = {
           resource_id: string
           resource_title: string | null
           resource_type: string
-          user_id: string | null
+          user_id: string
         }
         Insert: {
           completion_percentage?: number | null
@@ -518,7 +497,7 @@ export type Database = {
           resource_id: string
           resource_title?: string | null
           resource_type: string
-          user_id?: string | null
+          user_id: string
         }
         Update: {
           completion_percentage?: number | null
@@ -532,99 +511,100 @@ export type Database = {
           resource_id?: string
           resource_title?: string | null
           resource_type?: string
-          user_id?: string | null
+          user_id?: string
         }
         Relationships: []
       }
-      session_goals_tracking: {
+      session_analytics: {
         Row: {
-          barriers_identified: string[] | null
-          created_at: string
-          final_assessment: number | null
-          goal_category: string
-          goal_description: string
-          id: string
-          initial_assessment: number | null
-          next_steps: string | null
-          progress_notes: string | null
-          session_id: string | null
-          success_factors: string[] | null
-          updated_at: string
-          user_id: string | null
-        }
-        Insert: {
-          barriers_identified?: string[] | null
-          created_at?: string
-          final_assessment?: number | null
-          goal_category: string
-          goal_description: string
-          id?: string
-          initial_assessment?: number | null
-          next_steps?: string | null
-          progress_notes?: string | null
-          session_id?: string | null
-          success_factors?: string[] | null
-          updated_at?: string
-          user_id?: string | null
-        }
-        Update: {
-          barriers_identified?: string[] | null
-          created_at?: string
-          final_assessment?: number | null
-          goal_category?: string
-          goal_description?: string
-          id?: string
-          initial_assessment?: number | null
-          next_steps?: string | null
-          progress_notes?: string | null
-          session_id?: string | null
-          success_factors?: string[] | null
-          updated_at?: string
-          user_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "session_goals_tracking_session_id_fkey"
-            columns: ["session_id"]
-            isOneToOne: false
-            referencedRelation: "sessions"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      session_insights: {
-        Row: {
+          action_items: string[] | null
           ai_model_version: string | null
+          barriers_identified: string[] | null
+          challenges_faced: string[] | null
+          coach_effectiveness_rating: number | null
+          coach_id: string | null
           confidence_score: number | null
           created_at: string
+          final_assessment: number | null
+          follow_up_needed: boolean | null
+          follow_up_notes: string | null
+          goal_achievement_rating: number | null
+          goal_category: string | null
+          goal_description: string | null
           id: string
-          insight_data: Json
-          insight_type: string
-          session_id: string | null
+          initial_assessment: number | null
+          insight_data: Json | null
+          insight_type: string | null
+          key_breakthroughs: string[] | null
+          next_steps: string | null
+          progress_notes: string | null
+          session_id: string
+          session_satisfaction_rating: number | null
+          success_factors: string[] | null
+          updated_at: string
+          user_id: string
         }
         Insert: {
+          action_items?: string[] | null
           ai_model_version?: string | null
+          barriers_identified?: string[] | null
+          challenges_faced?: string[] | null
+          coach_effectiveness_rating?: number | null
+          coach_id?: string | null
           confidence_score?: number | null
           created_at?: string
+          final_assessment?: number | null
+          follow_up_needed?: boolean | null
+          follow_up_notes?: string | null
+          goal_achievement_rating?: number | null
+          goal_category?: string | null
+          goal_description?: string | null
           id?: string
-          insight_data: Json
-          insight_type: string
-          session_id?: string | null
+          initial_assessment?: number | null
+          insight_data?: Json | null
+          insight_type?: string | null
+          key_breakthroughs?: string[] | null
+          next_steps?: string | null
+          progress_notes?: string | null
+          session_id: string
+          session_satisfaction_rating?: number | null
+          success_factors?: string[] | null
+          updated_at?: string
+          user_id: string
         }
         Update: {
+          action_items?: string[] | null
           ai_model_version?: string | null
+          barriers_identified?: string[] | null
+          challenges_faced?: string[] | null
+          coach_effectiveness_rating?: number | null
+          coach_id?: string | null
           confidence_score?: number | null
           created_at?: string
+          final_assessment?: number | null
+          follow_up_needed?: boolean | null
+          follow_up_notes?: string | null
+          goal_achievement_rating?: number | null
+          goal_category?: string | null
+          goal_description?: string | null
           id?: string
-          insight_data?: Json
-          insight_type?: string
-          session_id?: string | null
+          initial_assessment?: number | null
+          insight_data?: Json | null
+          insight_type?: string | null
+          key_breakthroughs?: string[] | null
+          next_steps?: string | null
+          progress_notes?: string | null
+          session_id?: string
+          session_satisfaction_rating?: number | null
+          success_factors?: string[] | null
+          updated_at?: string
+          user_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "session_insights_session_id_fkey"
+            foreignKeyName: "session_analytics_session_id_fkey"
             columns: ["session_id"]
-            isOneToOne: false
+            isOneToOne: true
             referencedRelation: "sessions"
             referencedColumns: ["id"]
           },
@@ -659,79 +639,6 @@ export type Database = {
           session_id?: string
         }
         Relationships: []
-      }
-      session_outcomes: {
-        Row: {
-          action_items: string[] | null
-          challenges_faced: string[] | null
-          coach_effectiveness_rating: number | null
-          coach_id: string | null
-          created_at: string
-          follow_up_needed: boolean | null
-          follow_up_notes: string | null
-          goal_achievement_rating: number | null
-          id: string
-          key_breakthroughs: string[] | null
-          session_id: string | null
-          session_satisfaction_rating: number | null
-          updated_at: string
-          user_id: string | null
-        }
-        Insert: {
-          action_items?: string[] | null
-          challenges_faced?: string[] | null
-          coach_effectiveness_rating?: number | null
-          coach_id?: string | null
-          created_at?: string
-          follow_up_needed?: boolean | null
-          follow_up_notes?: string | null
-          goal_achievement_rating?: number | null
-          id?: string
-          key_breakthroughs?: string[] | null
-          session_id?: string | null
-          session_satisfaction_rating?: number | null
-          updated_at?: string
-          user_id?: string | null
-        }
-        Update: {
-          action_items?: string[] | null
-          challenges_faced?: string[] | null
-          coach_effectiveness_rating?: number | null
-          coach_id?: string | null
-          created_at?: string
-          follow_up_needed?: boolean | null
-          follow_up_notes?: string | null
-          goal_achievement_rating?: number | null
-          id?: string
-          key_breakthroughs?: string[] | null
-          session_id?: string | null
-          session_satisfaction_rating?: number | null
-          updated_at?: string
-          user_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "session_outcomes_coach_id_fkey"
-            columns: ["coach_id"]
-            isOneToOne: false
-            referencedRelation: "coaches"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "session_outcomes_coach_id_fkey"
-            columns: ["coach_id"]
-            isOneToOne: false
-            referencedRelation: "coaches_public"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "session_outcomes_session_id_fkey"
-            columns: ["session_id"]
-            isOneToOne: false
-            referencedRelation: "sessions"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       session_recordings: {
         Row: {
@@ -825,6 +732,44 @@ export type Database = {
         }
         Relationships: []
       }
+      session_video_details: {
+        Row: {
+          created_at: string
+          id: string
+          recording_url: string | null
+          session_id: string
+          updated_at: string
+          video_join_url: string | null
+          video_room_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          recording_url?: string | null
+          session_id: string
+          updated_at?: string
+          video_join_url?: string | null
+          video_room_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          recording_url?: string | null
+          session_id?: string
+          updated_at?: string
+          video_join_url?: string | null
+          video_room_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "session_video_details_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: true
+            referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sessions: {
         Row: {
           actual_end_time: string | null
@@ -845,14 +790,11 @@ export type Database = {
           resource_usage: Json | null
           retry_count: number | null
           scheduled_time: string
-          session_id: string
           session_state: string | null
           state_locked_at: string | null
           state_locked_by: string | null
           status: string
           updated_at: string
-          video_join_url: string | null
-          video_room_id: string | null
         }
         Insert: {
           actual_end_time?: string | null
@@ -873,14 +815,11 @@ export type Database = {
           resource_usage?: Json | null
           retry_count?: number | null
           scheduled_time: string
-          session_id: string
           session_state?: string | null
           state_locked_at?: string | null
           state_locked_by?: string | null
           status?: string
           updated_at?: string
-          video_join_url?: string | null
-          video_room_id?: string | null
         }
         Update: {
           actual_end_time?: string | null
@@ -901,14 +840,11 @@ export type Database = {
           resource_usage?: Json | null
           retry_count?: number | null
           scheduled_time?: string
-          session_id?: string
           session_state?: string | null
           state_locked_at?: string | null
           state_locked_by?: string | null
           status?: string
           updated_at?: string
-          video_join_url?: string | null
-          video_room_id?: string | null
         }
         Relationships: [
           {
@@ -916,13 +852,6 @@ export type Database = {
             columns: ["coach_id"]
             isOneToOne: false
             referencedRelation: "coaches"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "sessions_coach_id_fkey"
-            columns: ["coach_id"]
-            isOneToOne: false
-            referencedRelation: "coaches_public"
             referencedColumns: ["id"]
           },
         ]
@@ -1006,13 +935,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "transactions_coach_id_fkey"
-            columns: ["coach_id"]
-            isOneToOne: false
-            referencedRelation: "coaches_public"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "transactions_package_id_fkey"
             columns: ["package_id"]
             isOneToOne: false
@@ -1066,7 +988,7 @@ export type Database = {
           occurrence_count: number | null
           pattern_data: Json
           pattern_type: string
-          user_id: string | null
+          user_id: string
         }
         Insert: {
           confidence_score?: number | null
@@ -1076,7 +998,7 @@ export type Database = {
           occurrence_count?: number | null
           pattern_data: Json
           pattern_type: string
-          user_id?: string | null
+          user_id: string
         }
         Update: {
           confidence_score?: number | null
@@ -1086,7 +1008,7 @@ export type Database = {
           occurrence_count?: number | null
           pattern_data?: Json
           pattern_type?: string
-          user_id?: string | null
+          user_id?: string
         }
         Relationships: []
       }
@@ -1214,96 +1136,6 @@ export type Database = {
       }
     }
     Views: {
-      coaches_public: {
-        Row: {
-          availability_hours: string | null
-          available_now: boolean | null
-          avatar_url: string | null
-          bio: string | null
-          booking_buffer_minutes: number | null
-          client_challenge_example: string | null
-          coaching_expertise: string | null
-          coaching_style: string | null
-          created_at: string | null
-          hourly_coin_cost: number | null
-          hourly_rate_amount: number | null
-          hourly_rate_currency: string | null
-          id: string | null
-          is_active: boolean | null
-          max_session_duration: number | null
-          min_session_duration: number | null
-          name: string | null
-          personal_experiences: string | null
-          rating: number | null
-          similar_experiences: string[] | null
-          social_links: Json | null
-          specialties: string[] | null
-          timezone: string | null
-          title: string | null
-          total_reviews: number | null
-          updated_at: string | null
-          years_experience: number | null
-        }
-        Insert: {
-          availability_hours?: string | null
-          available_now?: boolean | null
-          avatar_url?: string | null
-          bio?: string | null
-          booking_buffer_minutes?: number | null
-          client_challenge_example?: string | null
-          coaching_expertise?: string | null
-          coaching_style?: string | null
-          created_at?: string | null
-          hourly_coin_cost?: number | null
-          hourly_rate_amount?: number | null
-          hourly_rate_currency?: string | null
-          id?: string | null
-          is_active?: boolean | null
-          max_session_duration?: number | null
-          min_session_duration?: number | null
-          name?: string | null
-          personal_experiences?: string | null
-          rating?: number | null
-          similar_experiences?: string[] | null
-          social_links?: Json | null
-          specialties?: string[] | null
-          timezone?: string | null
-          title?: string | null
-          total_reviews?: number | null
-          updated_at?: string | null
-          years_experience?: number | null
-        }
-        Update: {
-          availability_hours?: string | null
-          available_now?: boolean | null
-          avatar_url?: string | null
-          bio?: string | null
-          booking_buffer_minutes?: number | null
-          client_challenge_example?: string | null
-          coaching_expertise?: string | null
-          coaching_style?: string | null
-          created_at?: string | null
-          hourly_coin_cost?: number | null
-          hourly_rate_amount?: number | null
-          hourly_rate_currency?: string | null
-          id?: string | null
-          is_active?: boolean | null
-          max_session_duration?: number | null
-          min_session_duration?: number | null
-          name?: string | null
-          personal_experiences?: string | null
-          rating?: number | null
-          similar_experiences?: string[] | null
-          social_links?: Json | null
-          specialties?: string[] | null
-          timezone?: string | null
-          title?: string | null
-          total_reviews?: number | null
-          updated_at?: string | null
-          years_experience?: number | null
-        }
-        Relationships: []
-      }
       table_sizes: {
         Row: {
           schemaname: unknown | null
@@ -1333,30 +1165,33 @@ export type Database = {
           availability_hours: string | null
           available_now: boolean | null
           avatar_url: string | null
-          bio: string | null
+          bio: string
           booking_buffer_minutes: number | null
+          calendar_link: string | null
           client_challenge_example: string | null
           coaching_expertise: string | null
           coaching_style: string | null
-          created_at: string | null
+          created_at: string
           hourly_coin_cost: number | null
           hourly_rate_amount: number | null
           hourly_rate_currency: string | null
-          id: string | null
+          id: string
           is_active: boolean | null
           max_session_duration: number | null
           min_session_duration: number | null
-          name: string | null
+          name: string
+          notification_email: string | null
+          notification_phone: string | null
           personal_experiences: string | null
           rating: number | null
-          similar_experiences: string[] | null
+          similar_experiences: string[]
           social_links: Json | null
-          specialties: string[] | null
+          specialties: string[]
           timezone: string | null
-          title: string | null
+          title: string
           total_reviews: number | null
-          updated_at: string | null
-          years_experience: number | null
+          updated_at: string
+          years_experience: number
         }[]
       }
       track_user_activity: {
