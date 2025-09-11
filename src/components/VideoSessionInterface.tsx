@@ -6,10 +6,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { Video, VideoOff, Mic, MicOff, Phone, Clock, Target, FileText, Save } from "lucide-react";
+import { Video, VideoOff, Mic, MicOff, Phone, Clock, Target, FileText, Save, AlertCircle, CheckCircle } from "lucide-react";
 import { format, addMinutes } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useSessionManager } from "@/hooks/useSessionManager";
 import { SessionFeedbackDialog } from "./SessionFeedbackDialog";
 
 interface VideoSessionInterfaceProps {
@@ -46,6 +47,9 @@ export const VideoSessionInterface = ({
   const [isRecording, setIsRecording] = useState(false);
   const [videoEnabled, setVideoEnabled] = useState(true);
   const [audioEnabled, setAudioEnabled] = useState(true);
+  const [currentVideoUrl, setCurrentVideoUrl] = useState(videoUrl);
+  const [sessionStatus, setSessionStatus] = useState<'pending' | 'ready' | 'in_progress' | 'completed'>('pending');
+  const [connectionQuality, setConnectionQuality] = useState<'good' | 'fair' | 'poor'>('good');
   
   // Session goals
   const [goals, setGoals] = useState<SessionGoal[]>([]);
@@ -60,6 +64,13 @@ export const VideoSessionInterface = ({
   
   const { toast } = useToast();
   const timerRef = useRef<NodeJS.Timeout>();
+  
+  const { 
+    updateSessionState, 
+    createVideoRoom, 
+    cleanupSession,
+    loading: sessionManagerLoading 
+  } = useSessionManager();
 
   useEffect(() => {
     if (sessionStarted && startTime) {
@@ -87,24 +98,64 @@ export const VideoSessionInterface = ({
 
   const startSession = async () => {
     try {
+      // If video URL is a placeholder, create the actual video room
+      if (currentVideoUrl?.startsWith('pending://')) {
+        const roomResult = await createVideoRoom(sessionId);
+        if (roomResult?.success && roomResult.videoJoinUrl) {
+          setCurrentVideoUrl(roomResult.videoJoinUrl);
+        } else {
+          throw new Error('Failed to create video room');
+        }
+      }
+
+      setSessionStarted(true);
       const start = new Date();
       setStartTime(start);
-      setSessionStarted(true);
       setIsRecording(true);
+      setSessionStatus('in_progress');
+      
+      // Update session state using enhanced session management
+      const stateResult = await updateSessionState({
+        sessionId,
+        newState: 'in_progress',
+        reason: 'Session started by client',
+        metadata: {
+          actual_start_time: start.toISOString(),
+          client_id: clientId,
+          coach_id: coachId
+        }
+      });
 
-      // Update session status in database
-      await supabase
+      if (!stateResult.success) {
+        console.error('Failed to update session state:', stateResult.error);
+        // Continue anyway - the session can still function
+      }
+
+      // Update session status in database for compatibility
+      const { error: statusError } = await supabase
         .from('sessions')
         .update({ 
           status: 'in_progress',
-          actual_start_time: start.toISOString()
+          actual_start_time: start.toISOString(),
+          participant_status: {
+            client_joined: true,
+            session_started_at: start.toISOString()
+          }
         })
         .eq('id', sessionId);
 
+      if (statusError) {
+        console.error('Error updating session status:', statusError);
+      }
+
       // Start recording
-      await supabase.functions.invoke('start-session-recording', {
+      const { error: recordingError } = await supabase.functions.invoke('start-session-recording', {
         body: { sessionId, startTime: start.toISOString() }
       });
+
+      if (recordingError) {
+        console.error('Error starting recording:', recordingError);
+      }
 
       toast({
         title: "Session Started",
@@ -114,7 +165,7 @@ export const VideoSessionInterface = ({
       console.error('Error starting session:', error);
       toast({
         title: "Error",
-        description: "Failed to start session recording.",
+        description: "Failed to start session properly.",
         variant: "destructive",
       });
     }
@@ -122,40 +173,76 @@ export const VideoSessionInterface = ({
 
   const endSession = async () => {
     try {
-      const endTime = new Date();
       setSessionEnded(true);
       setIsRecording(false);
+      setSessionStatus('completed');
+      
+      const endTime = new Date();
+      const actualDuration = startTime ? Math.round((endTime.getTime() - startTime.getTime()) / (1000 * 60)) : duration;
 
-      // Update session status
-      await supabase
+      // Save session data before ending
+      await saveSessionData();
+
+      // Update session state using enhanced session management
+      const stateResult = await updateSessionState({
+        sessionId,
+        newState: 'completed',
+        reason: 'Session ended by client',
+        metadata: {
+          actual_end_time: endTime.toISOString(),
+          actual_duration: actualDuration,
+          session_completed_successfully: true
+        }
+      });
+
+      if (!stateResult.success) {
+        console.error('Failed to update session state:', stateResult.error);
+      }
+
+      // Update session status for compatibility
+      const { error: statusError } = await supabase
         .from('sessions')
         .update({ 
           status: 'completed',
           actual_end_time: endTime.toISOString(),
-          duration_minutes: Math.floor(timeElapsed / 60)
+          duration_minutes: actualDuration,
+          participant_status: {
+            client_joined: true,
+            session_ended_at: endTime.toISOString(),
+            session_completed: true
+          }
         })
         .eq('id', sessionId);
 
-      // Save session notes and goals
-      await saveSessionData();
+      if (statusError) {
+        console.error('Error updating session status:', statusError);
+      }
 
       // Process recording and transcript
-      await supabase.functions.invoke('finalize-session-recording', {
+      const { error: recordingError } = await supabase.functions.invoke('finalize-session-recording', {
         body: { 
           sessionId, 
           endTime: endTime.toISOString(),
+          actualDuration,
           clientNotes,
           coachNotes,
           goals
         }
       });
 
+      if (recordingError) {
+        console.error('Error finalizing recording:', recordingError);
+      }
+
+      // Cleanup session resources
+      await cleanupSession(sessionId);
+
       setShowFeedbackDialog(true);
     } catch (error) {
       console.error('Error ending session:', error);
       toast({
         title: "Error",
-        description: "Failed to finalize session.",
+        description: "There was an issue ending the session.",
         variant: "destructive",
       });
     }
@@ -262,13 +349,42 @@ export const VideoSessionInterface = ({
             </CardHeader>
             <CardContent>
               {/* Video iframe */}
-              <div className="aspect-video bg-black rounded-lg mb-4 flex items-center justify-center">
-                <iframe
-                  src={videoUrl}
-                  className="w-full h-full rounded-lg"
-                  allow="camera; microphone; fullscreen"
-                  title="Video Session"
-                />
+              <div className="aspect-video bg-black rounded-lg mb-4 flex items-center justify-center relative">
+                {currentVideoUrl?.startsWith('pending://') ? (
+                  <div className="text-white text-center">
+                    <AlertCircle className="h-12 w-12 mx-auto mb-4 text-yellow-500" />
+                    <p className="text-lg">Preparing video room...</p>
+                    <p className="text-sm text-gray-300">Video link will be available when session starts</p>
+                  </div>
+                ) : currentVideoUrl ? (
+                  <iframe
+                    src={currentVideoUrl}
+                    className="w-full h-full rounded-lg"
+                    allow="camera; microphone; fullscreen"
+                    title="Video Session"
+                  />
+                ) : (
+                  <div className="text-white text-center">
+                    <Video className="h-12 w-12 mx-auto mb-4 text-gray-500" />
+                    <p className="text-lg">No video room available</p>
+                  </div>
+                )}
+                
+                {/* Session Status Indicator */}
+                <div className="absolute top-4 right-4">
+                  <Badge 
+                    className={
+                      sessionStatus === 'in_progress' ? 'bg-green-500' :
+                      sessionStatus === 'ready' ? 'bg-blue-500' :
+                      sessionStatus === 'completed' ? 'bg-gray-500' :
+                      'bg-yellow-500'
+                    }
+                  >
+                    {sessionStatus === 'in_progress' && <CheckCircle className="h-3 w-3 mr-1" />}
+                    {sessionStatus === 'pending' && <Clock className="h-3 w-3 mr-1" />}
+                    {sessionStatus}
+                  </Badge>
+                </div>
               </div>
               
               {/* Session Controls */}
