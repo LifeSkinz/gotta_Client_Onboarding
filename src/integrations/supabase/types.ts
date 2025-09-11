@@ -630,6 +630,36 @@ export type Database = {
           },
         ]
       }
+      session_locks: {
+        Row: {
+          expires_at: string
+          id: string
+          locked_at: string
+          locked_by: string
+          metadata: Json | null
+          operation_type: string
+          session_id: string
+        }
+        Insert: {
+          expires_at?: string
+          id?: string
+          locked_at?: string
+          locked_by: string
+          metadata?: Json | null
+          operation_type: string
+          session_id: string
+        }
+        Update: {
+          expires_at?: string
+          id?: string
+          locked_at?: string
+          locked_by?: string
+          metadata?: Json | null
+          operation_type?: string
+          session_id?: string
+        }
+        Relationships: []
+      }
       session_outcomes: {
         Row: {
           action_items: string[] | null
@@ -762,6 +792,39 @@ export type Database = {
           },
         ]
       }
+      session_state_logs: {
+        Row: {
+          change_reason: string | null
+          changed_by: string | null
+          created_at: string
+          from_state: string | null
+          id: string
+          metadata: Json | null
+          session_id: string
+          to_state: string
+        }
+        Insert: {
+          change_reason?: string | null
+          changed_by?: string | null
+          created_at?: string
+          from_state?: string | null
+          id?: string
+          metadata?: Json | null
+          session_id: string
+          to_state: string
+        }
+        Update: {
+          change_reason?: string | null
+          changed_by?: string | null
+          created_at?: string
+          from_state?: string | null
+          id?: string
+          metadata?: Json | null
+          session_id?: string
+          to_state?: string
+        }
+        Relationships: []
+      }
       sessions: {
         Row: {
           actual_end_time: string | null
@@ -769,14 +832,23 @@ export type Database = {
           client_id: string
           coach_id: string
           coin_cost: number | null
+          connection_quality: Json | null
           created_at: string
           duration_minutes: number | null
+          estimated_end_time: string | null
           id: string
+          last_error: string | null
           notes: string | null
+          participant_status: Json | null
           price_amount: number | null
           price_currency: string | null
+          resource_usage: Json | null
+          retry_count: number | null
           scheduled_time: string
           session_id: string
+          session_state: string | null
+          state_locked_at: string | null
+          state_locked_by: string | null
           status: string
           updated_at: string
           video_join_url: string | null
@@ -788,14 +860,23 @@ export type Database = {
           client_id: string
           coach_id: string
           coin_cost?: number | null
+          connection_quality?: Json | null
           created_at?: string
           duration_minutes?: number | null
+          estimated_end_time?: string | null
           id?: string
+          last_error?: string | null
           notes?: string | null
+          participant_status?: Json | null
           price_amount?: number | null
           price_currency?: string | null
+          resource_usage?: Json | null
+          retry_count?: number | null
           scheduled_time: string
           session_id: string
+          session_state?: string | null
+          state_locked_at?: string | null
+          state_locked_by?: string | null
           status?: string
           updated_at?: string
           video_join_url?: string | null
@@ -807,14 +888,23 @@ export type Database = {
           client_id?: string
           coach_id?: string
           coin_cost?: number | null
+          connection_quality?: Json | null
           created_at?: string
           duration_minutes?: number | null
+          estimated_end_time?: string | null
           id?: string
+          last_error?: string | null
           notes?: string | null
+          participant_status?: Json | null
           price_amount?: number | null
           price_currency?: string | null
+          resource_usage?: Json | null
+          retry_count?: number | null
           scheduled_time?: string
           session_id?: string
+          session_state?: string | null
+          state_locked_at?: string | null
+          state_locked_by?: string | null
           status?: string
           updated_at?: string
           video_join_url?: string | null
@@ -836,6 +926,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      system_capacity: {
+        Row: {
+          active_sessions_count: number
+          db_connections_used: number
+          id: string
+          last_updated: string
+          max_db_connections: number
+          max_sessions_limit: number
+        }
+        Insert: {
+          active_sessions_count?: number
+          db_connections_used?: number
+          id?: string
+          last_updated?: string
+          max_db_connections?: number
+          max_sessions_limit?: number
+        }
+        Update: {
+          active_sessions_count?: number
+          db_connections_used?: number
+          id?: string
+          last_updated?: string
+          max_db_connections?: number
+          max_sessions_limit?: number
+        }
+        Relationships: []
       }
       transactions: {
         Row: {
@@ -1202,6 +1319,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      cleanup_expired_session_locks: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
       cleanup_old_activity_logs: {
         Args: Record<PropertyKey, never>
         Returns: undefined
@@ -1269,6 +1390,20 @@ export type Database = {
           p_user_id: string
         }
         Returns: string
+      }
+      update_session_state: {
+        Args: {
+          p_locked_by: string
+          p_metadata?: Json
+          p_new_state: string
+          p_reason?: string
+          p_session_id: string
+        }
+        Returns: boolean
+      }
+      update_system_capacity: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
       }
     }
     Enums: {
