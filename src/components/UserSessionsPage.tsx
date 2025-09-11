@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { AppNavigation } from "@/components/AppNavigation";
 import { SessionDetailCard } from "@/components/SessionDetailCard";
-import { User } from "@supabase/supabase-js";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface Session {
   id: string;
@@ -26,38 +26,19 @@ interface Session {
 }
 
 export const UserSessionsPage = () => {
+  const { user } = useAuth();
   const [sessions, setSessions] = useState<Session[]>([]);
   const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState<User | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
-    // Get current user
-    const getCurrentUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      setUser(user);
-      if (user) {
-        fetchSessions();
-      } else {
-        setLoading(false);
-      }
-    };
-
-    getCurrentUser();
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        fetchSessions();
-      } else {
-        setSessions([]);
-        setLoading(false);
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
+    if (user) {
+      fetchSessions();
+    } else {
+      setSessions([]);
+      setLoading(false);
+    }
+  }, [user]);
 
   const fetchSessions = async () => {
     try {

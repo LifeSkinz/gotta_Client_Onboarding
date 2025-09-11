@@ -8,7 +8,7 @@ import { User, Settings, Bell, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { AppNavigation } from "@/components/AppNavigation";
-import { User as SupabaseUser } from "@supabase/supabase-js";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface Profile {
   id: string;
@@ -21,37 +21,20 @@ interface Profile {
 }
 
 export default function ProfilePage() {
-  const [user, setUser] = useState<SupabaseUser | null>(null);
+  const { user } = useAuth();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
-    const getCurrentUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      setUser(user);
-      if (user) {
-        fetchProfile(user.id);
-      } else {
-        setLoading(false);
-      }
-    };
-
-    getCurrentUser();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        fetchProfile(session.user.id);
-      } else {
-        setProfile(null);
-        setLoading(false);
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
+    if (user) {
+      fetchProfile(user.id);
+    } else {
+      setProfile(null);
+      setLoading(false);
+    }
+  }, [user]);
 
   const fetchProfile = async (userId: string) => {
     try {

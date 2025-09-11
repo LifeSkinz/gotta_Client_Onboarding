@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { User, Session } from "@supabase/supabase-js";
+import { useAuth } from "@/contexts/AuthContext";
 import { Goal, UserResponse, Question, GOAL_QUESTIONS, PersonalityResponse } from "@/types/goals";
 import { WelcomePage } from "./WelcomePage";
 import { GoalSelectionPage } from "./GoalSelectionPage";
@@ -26,9 +26,7 @@ interface AIAnalysis {
 }
 
 const Index = () => {
-  const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { user, session, loading, signOut } = useAuth();
   const [currentPage, setCurrentPage] = useState<PageType>('welcome');
   const [selectedGoal, setSelectedGoal] = useState<Goal | null>(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -112,36 +110,18 @@ const Index = () => {
     trackPageView(currentPath);
   }, [location, trackPageView]);
 
-  // Authentication check
+  // Migration check for guest sessions
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        const newUser = session?.user ?? null;
-        
-        // If user just signed in and we have a guest session, migrate the data
-        if (newUser && !user && sessionId) {
-          setTimeout(() => {
-            migrateGuestSessionData(newUser.id);
-          }, 0);
-        }
-        
-        setSession(session);
-        setUser(newUser);
-        setLoading(false);
-      }
-    );
-
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
-
-    return () => subscription.unsubscribe();
+    // If user just signed in and we have a guest session, migrate the data
+    if (user && sessionId) {
+      setTimeout(() => {
+        migrateGuestSessionData(user.id);
+      }, 0);
+    }
   }, [sessionId, user]);
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut();
+    await signOut();
     toast({
       title: "Signed out",
       description: "You have been successfully signed out.",
