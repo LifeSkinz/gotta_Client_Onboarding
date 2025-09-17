@@ -84,9 +84,9 @@ serve(async (req) => {
       return Response.redirect('/error?code=video-provider-down', 302);
     }
 
-    // Redirect to session page
-    console.log(`Redirecting to session: ${session.id}`);
-    return Response.redirect(`/session/${session.id}`, 302);
+    // Redirect to session portal page (for unauthenticated access)
+    console.log(`Redirecting to session portal: ${session.id}`);
+    return Response.redirect(`/session-portal/${session.id}`, 302);
 
   } catch (error) {
     console.error('Unexpected error in join-session:', error);

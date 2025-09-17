@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { useNavigate } from 'react-router-dom';
 import { Coins, Clock, Video, Calendar, User, Star, CheckCircle } from 'lucide-react';
 
 interface Coach {
@@ -36,6 +37,7 @@ const ConnectConfirmDialog: React.FC<ConnectConfirmDialogProps> = ({
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState<any>(null);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -82,40 +84,34 @@ const ConnectConfirmDialog: React.FC<ConnectConfirmDialogProps> = ({
         .eq('user_id', user.id)
         .single();
 
-      // Create connection request
-      const { data: requestData, error } = await supabase
-        .from('connection_requests')
-        .insert({
-          client_id: user.id,
-          coach_id: coach.id,
-          client_goal: userGoal,
-          client_bio: profile?.bio || 'No bio provided',
-          request_type: 'instant'
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      // Send notification to coach via edge function
-      const { error: notificationError } = await supabase.functions.invoke(
-        'send-connection-notification',
+      // Create instant session via edge function
+      const { data, error } = await supabase.functions.invoke(
+        'create-instant-session',
         {
-          body: { connectionRequestId: requestData.id }
+          body: {
+            coachId: coach.id,
+            clientId: user.id,
+            userGoal,
+            clientBio: profile?.bio || 'No bio provided'
+          }
         }
       );
 
-      if (notificationError) {
-        console.error('Failed to send notification:', notificationError);
-        // Don't throw error - request was created successfully
-      }
-      
-      toast({
-        title: "Connection Request Sent!",
-        description: `We've notified ${coach.name}. You'll receive an update shortly.`,
-      });
+      if (error) throw error;
 
-      onClose();
+      if (data?.success && data?.sessionId) {
+        toast({
+          title: "Session Created!",
+          description: `Session created successfully. ${coach.name} has been notified.`,
+        });
+
+        onClose();
+        
+        // Navigate to the session page
+        navigate(`/session/${data.sessionId}`);
+      } else {
+        throw new Error('Failed to create session');
+      }
     } catch (error: any) {
       toast({
         title: "Error",

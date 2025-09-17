@@ -37,6 +37,26 @@ interface SessionGoal {
 export default function SessionPortalPage() {
   const { sessionId } = useParams();
   const navigate = useNavigate();
+
+  // Handle missing sessionId
+  if (!sessionId) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <Card className="w-full max-w-md">
+          <CardContent className="p-6 text-center">
+            <AlertCircle className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+            <h2 className="text-lg font-semibold mb-2">Invalid Session Link</h2>
+            <p className="text-muted-foreground mb-4">
+              The session link is missing or invalid. Please check your email for the correct link.
+            </p>
+            <Button onClick={() => navigate('/')}>
+              Go to Home
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
   const [session, setSession] = useState<Session | null>(null);
   const [goals, setGoals] = useState<SessionGoal[]>([]);
   const [loading, setLoading] = useState(true);
