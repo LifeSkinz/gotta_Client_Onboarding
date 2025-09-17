@@ -17,3 +17,9 @@ verify_jwt = false
 
 [functions.update-session-status]
 verify_jwt = false
+
+[functions.daily-transcription-webhook]
+verify_jwt = false
+
+[functions.create-daily-room]
+verify_jwt = false

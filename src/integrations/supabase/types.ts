@@ -651,10 +651,13 @@ export type Database = {
           id: string
           key_topics: string[] | null
           personality_insights: Json | null
+          privacy_settings: Json | null
           recording_url: string | null
           sentiment_analysis: Json | null
           session_id: string
           transcript: string | null
+          transcription_paused_segments: Json | null
+          transcription_status: string | null
           updated_at: string
         }
         Insert: {
@@ -667,10 +670,13 @@ export type Database = {
           id?: string
           key_topics?: string[] | null
           personality_insights?: Json | null
+          privacy_settings?: Json | null
           recording_url?: string | null
           sentiment_analysis?: Json | null
           session_id: string
           transcript?: string | null
+          transcription_paused_segments?: Json | null
+          transcription_status?: string | null
           updated_at?: string
         }
         Update: {
@@ -683,10 +689,13 @@ export type Database = {
           id?: string
           key_topics?: string[] | null
           personality_insights?: Json | null
+          privacy_settings?: Json | null
           recording_url?: string | null
           sentiment_analysis?: Json | null
           session_id?: string
           transcript?: string | null
+          transcription_paused_segments?: Json | null
+          transcription_status?: string | null
           updated_at?: string
         }
         Relationships: [
