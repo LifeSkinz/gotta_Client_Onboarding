@@ -37,6 +37,7 @@ serve(async (req) => {
 
     // Create session immediately (15 minutes from now to allow for quick response)
     const scheduledTime = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes from now
+    const joinToken = crypto.randomUUID();
     
     const { data: session, error: sessionError } = await supabase
       .from('sessions')
@@ -50,6 +51,7 @@ serve(async (req) => {
         coin_cost: 1,
         status: 'scheduled',
         session_state: 'pending_coach_response',
+        join_token: joinToken,
         notes: JSON.stringify({ userGoal, clientBio, type: 'instant' })
       })
       .select()
@@ -64,6 +66,16 @@ serve(async (req) => {
     }
 
     console.log('Session created successfully:', session.id);
+
+    // Get client email for confirmation email
+    const { data: clientProfile } = await supabase
+      .from('profiles')
+      .select('full_name')
+      .eq('user_id', clientId)
+      .single();
+
+    const { data: authUser } = await supabase.auth.admin.getUserById(clientId);
+    const clientEmail = authUser?.user?.email;
 
     // Send notifications to coach (but don't fail if this fails)
     try {
@@ -81,6 +93,25 @@ serve(async (req) => {
     } catch (notificationError) {
       console.error('Failed to send coach notification:', notificationError);
       // Don't fail the request - session was created successfully
+    }
+
+    // Send client confirmation email (but don't fail if this fails)
+    if (clientEmail) {
+      try {
+        await supabase.functions.invoke('send-enhanced-session-email', {
+          body: {
+            sessionId: session.id,
+            clientEmail: clientEmail,
+            clientName: clientProfile?.full_name || 'Client',
+            coachName: coach.name,
+            emailType: 'confirmation'
+          }
+        });
+        console.log('Client confirmation email sent');
+      } catch (emailError) {
+        console.error(`Failed to send client email for session ${session.id}:`, emailError);
+        // Don't fail the request - session was created successfully
+      }
     }
 
     return new Response(

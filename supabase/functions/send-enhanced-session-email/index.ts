@@ -33,7 +33,7 @@ Coaching Session Details:
 - Duration: ${session.duration_minutes || 60} minutes
 - Session Goals: ${goals.map(g => g.goal_description).join(', ') || 'To be discussed'}
 
-Join Link: ${session.video_join_url || 'Will be provided before session'}
+Join Link: ${session.join_token ? `${Deno.env.get('SUPABASE_URL')?.replace('/supabase', '')}/join-session?token=${session.join_token}` : 'Will be provided before session'}
 
 Preparation Notes:
 - Review your goals and progress since last session
@@ -41,7 +41,7 @@ Preparation Notes:
 - Find a quiet, well-lit space for the video call
     `,
     location: 'Video Conference',
-    url: session.video_join_url,
+    url: session.join_token ? `${Deno.env.get('SUPABASE_URL')?.replace('/supabase', '')}/join-session?token=${session.join_token}` : session.video_join_url,
     organizer: {
       name: coach?.name || 'Coaching Platform',
       email: 'sessions@coaching-platform.com'
@@ -193,11 +193,11 @@ const generateEmailTemplate = (type: string, data: any) => {
           </div>
           ` : ''}
           
-          ${session.video_join_url && type !== 'summary' ? `
+          ${(session.join_token || session.video_join_url) && type !== 'summary' ? `
           <div class="section">
             <h2>🎥 Join Your Session</h2>
             <p>Click the button below to join your video session. You can join up to 5 minutes before the scheduled time.</p>
-            <a href="${session.video_join_url}" class="join-button">Join Video Session</a>
+            <a href="${session.join_token ? `${Deno.env.get('SUPABASE_URL')?.replace('/supabase', '')}/join-session?token=${session.join_token}` : session.video_join_url}" class="join-button">Join Video Session</a>
           </div>
           ` : ''}
           
