@@ -791,6 +791,7 @@ export type Database = {
           duration_minutes: number | null
           estimated_end_time: string | null
           id: string
+          join_token: string
           last_error: string | null
           notes: string | null
           participant_status: Json | null
@@ -816,6 +817,7 @@ export type Database = {
           duration_minutes?: number | null
           estimated_end_time?: string | null
           id?: string
+          join_token?: string
           last_error?: string | null
           notes?: string | null
           participant_status?: Json | null
@@ -841,6 +843,7 @@ export type Database = {
           duration_minutes?: number | null
           estimated_end_time?: string | null
           id?: string
+          join_token?: string
           last_error?: string | null
           notes?: string | null
           participant_status?: Json | null

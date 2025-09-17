@@ -19,6 +19,7 @@ import { PaymentCancelledPage } from "./pages/PaymentCancelledPage";
 import CoachResponseSuccessPage from "./pages/CoachResponseSuccessPage";
 import SessionPortalFallbackPage from "./pages/SessionPortalFallbackPage";
 import ProfilePage from "./pages/ProfilePage";
+import { JoinSessionRedirect } from "./components/JoinSessionRedirect";
 
 const queryClient = new QueryClient();
 
@@ -43,6 +44,7 @@ const App = () => (
             <Route path="/coach-response-success" element={<CoachResponseSuccessPage />} />
             <Route path="/payment-success" element={<PaymentSuccessPage />} />
             <Route path="/payment-cancelled" element={<PaymentCancelledPage />} />
+            <Route path="/join-session" element={<JoinSessionRedirect />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

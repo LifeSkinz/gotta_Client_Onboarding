@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Clock, Video, DollarSign, Coins } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useNavigate } from "react-router-dom";
 import { format, addDays, setHours, setMinutes, isAfter, isBefore } from "date-fns";
 
 interface Coach {
@@ -34,6 +35,7 @@ export const SessionBookingFlow = ({ isOpen, onClose, coach, userGoal }: Session
   const [loading, setLoading] = useState(false);
   const [timeSlots, setTimeSlots] = useState<string[]>([]);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   // Generate available time slots for selected date
   useEffect(() => {
@@ -130,8 +132,8 @@ export const SessionBookingFlow = ({ isOpen, onClose, coach, userGoal }: Session
         description: `Your ${sessionDuration}-minute session with ${coach.name} has been scheduled for ${format(scheduledTime, 'PPP p')}. Check your email for details and calendar invite.`,
       });
 
-      // Redirect to session page instead of closing dialog
-      window.location.href = `/session/${data.sessionId}`;
+      // Use React Router navigation instead of window.location
+      navigate(`/session/${data.sessionId}?from=booking`);
       
     } catch (error) {
       console.error('Error booking session:', error);
