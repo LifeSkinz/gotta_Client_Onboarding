@@ -67,9 +67,10 @@ const generateCoachEmailTemplate = (session: any, client: any, coach: any, goals
             <div class="session-details">
               <p><strong>Date:</strong> ${sessionDate}</p>
               <p><strong>Time:</strong> ${sessionTime}</p>
-              <p><strong>Duration:</strong> ${session.duration_minutes || 60} minutes</p>
-              <p><strong>Session Type:</strong> ${session.request_type || 'Standard'} Session</p>
-              <p><strong>Compensation:</strong> ${session.coin_cost || 100} coins (${session.price_amount ? `$${session.price_amount}` : 'TBD'})</p>
+              <p><strong>Duration:</strong> ${session.duration_minutes || 15} minutes</p>
+              <p><strong>Session Type:</strong> Immediate Coaching Session</p>
+              <p><strong>Compensation:</strong> ${session.coin_cost || 1} coins (${session.price_amount ? `$${session.price_amount}` : '$25.00'})</p>
+              <p><strong>⚡ Priority:</strong> <span style="color: #dc2626; font-weight: bold;">IMMEDIATE - Client waiting</span></p>
             </div>
           </div>
 
@@ -146,7 +147,13 @@ const generateCoachEmailTemplate = (session: any, client: any, coach: any, goals
 
           <div class="action-buttons">
             <a href="https://nqoysxjjimvihcvfpesr.supabase.co/functions/v1/handle-coach-response?action=accept&sessionId=${session.id}" class="btn btn-primary">
-              ✅ Accept Session
+              ✅ Accept - Ready Now
+            </a>
+            <a href="https://nqoysxjjimvihcvfpesr.supabase.co/functions/v1/handle-coach-response?action=accept_5min&sessionId=${session.id}" class="btn btn-primary" style="background: #22c55e;">
+              ✅ Accept - Ready in 5 min
+            </a>
+            <a href="https://nqoysxjjimvihcvfpesr.supabase.co/functions/v1/handle-coach-response?action=accept_10min&sessionId=${session.id}" class="btn btn-primary" style="background: #f59e0b;">
+              ✅ Accept - Ready in 10 min
             </a>
             <a href="https://nqoysxjjimvihcvfpesr.supabase.co/functions/v1/handle-coach-response?action=reschedule&sessionId=${session.id}" class="btn btn-secondary">
               📅 Request Reschedule

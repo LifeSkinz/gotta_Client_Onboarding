@@ -195,26 +195,47 @@ serve(async (req) => {
 
     switch (action) {
       case 'accept':
+      case 'accept_5min':
+      case 'accept_10min':
+        // Calculate new scheduled time based on coach response
+        let newScheduledTime = new Date();
+        if (action === 'accept_5min') {
+          newScheduledTime = new Date(Date.now() + 5 * 60 * 1000);
+        } else if (action === 'accept_10min') {
+          newScheduledTime = new Date(Date.now() + 10 * 60 * 1000);
+        } else {
+          newScheduledTime = new Date(Date.now() + 2 * 60 * 1000); // 2 minutes for immediate
+        }
+
         // Update session status
         await supabase
           .from('sessions')
           .update({ 
             status: 'confirmed',
             session_state: 'ready',
+            scheduled_time: newScheduledTime.toISOString(),
             updated_at: new Date().toISOString()
           })
           .eq('id', sessionId);
 
-        // Send portal access notification
+        // Send portal access notification with timing details
         const portalUrl = 'https://nqoysxjjimvihcvfpesr.lovable.app/join-session';
         
-        clientNotificationSubject = 'Session Accepted - Ready to Join!';
+        let timingMessage = 'Ready now!';
+        if (action === 'accept_5min') {
+          timingMessage = 'Ready in 5 minutes';
+        } else if (action === 'accept_10min') {
+          timingMessage = 'Ready in 10 minutes';
+        }
+        
+        clientNotificationSubject = `Session Accepted - ${timingMessage}`;
         clientNotificationContent = `
           <h2>🎉 Great news!</h2>
-          <p>${coachName} has accepted your session request.</p>
+          <p>${coachName} has accepted your session request and is ${timingMessage.toLowerCase()}!</p>
           <p><strong>Status:</strong> ✅ Session confirmed and ready</p>
+          <p><strong>Start Time:</strong> ${newScheduledTime.toLocaleString()}</p>
           <p><a href="${portalUrl}?token=${sessionData.join_token}" style="background-color: #3b82f6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; margin: 16px 0;">Join Session Portal</a></p>
-          <p style="font-size: 14px; color: #6b7280;">You can join the session using your secure token. The session details and video room will be available when you access the portal.</p>
+          <p style="font-size: 14px; color: #6b7280;">Click the link above to join your session at the scheduled time. The video room will be available when the session starts.</p>
         `;
 
         break;

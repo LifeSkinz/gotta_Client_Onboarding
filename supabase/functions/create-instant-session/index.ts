@@ -59,8 +59,8 @@ serve(async (req) => {
       );
     }
 
-    // Create session immediately (15 minutes from now to allow for quick response)
-    const scheduledTime = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes from now
+    // Create session with 5-minute buffer for immediate coaching
+    const scheduledTime = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes from now
     const joinToken = crypto.randomUUID();
     
     const { data: session, error: sessionError } = await supabase

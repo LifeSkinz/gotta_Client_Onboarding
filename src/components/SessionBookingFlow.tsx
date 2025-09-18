@@ -50,8 +50,9 @@ export const SessionBookingFlow = ({ isOpen, onClose, coach, userGoal }: Session
       for (let minute = 0; minute < 60; minute += 15) {
         const slotTime = setMinutes(setHours(selectedDate, hour), minute);
         
-        // Only show future slots
-        if (isAfter(slotTime, addDays(today, 0))) {
+        // Show slots starting from now + 5 minutes (immediate booking)
+        const earliestSlot = new Date(Date.now() + 5 * 60 * 1000);
+        if (isAfter(slotTime, earliestSlot)) {
           slots.push(format(slotTime, 'HH:mm'));
         }
       }
@@ -188,6 +189,45 @@ export const SessionBookingFlow = ({ isOpen, onClose, coach, userGoal }: Session
                     </Button>
                   );
                 })}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Quick Booking Options */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Quick Booking</CardTitle>
+              <CardDescription>Get started immediately with our express options</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 gap-3 mb-4">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    const nextSlot = new Date(Date.now() + 5 * 60 * 1000);
+                    setSelectedDate(nextSlot);
+                    setSelectedTime(format(nextSlot, 'HH:mm'));
+                  }}
+                  className="h-auto p-4 flex flex-col items-center gap-1"
+                >
+                  <span className="font-medium">Next Available</span>
+                  <span className="text-xs opacity-75">In ~5 minutes</span>
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    const nextSlot = new Date(Date.now() + 15 * 60 * 1000);
+                    setSelectedDate(nextSlot);
+                    setSelectedTime(format(nextSlot, 'HH:mm'));
+                  }}
+                  className="h-auto p-4 flex flex-col items-center gap-1"
+                >
+                  <span className="font-medium">Quick Start</span>
+                  <span className="text-xs opacity-75">In ~15 minutes</span>
+                </Button>
+              </div>
+              <div className="text-center text-sm text-muted-foreground">
+                Or choose a specific time below
               </div>
             </CardContent>
           </Card>

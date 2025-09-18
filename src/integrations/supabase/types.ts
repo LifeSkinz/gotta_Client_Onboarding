@@ -74,6 +74,7 @@ export type Database = {
           hourly_rate_amount: number | null
           hourly_rate_currency: string | null
           id: string
+          immediate_availability: boolean | null
           is_active: boolean | null
           max_session_duration: number | null
           min_session_duration: number | null
@@ -82,6 +83,7 @@ export type Database = {
           notification_phone: string | null
           personal_experiences: string | null
           rating: number | null
+          response_preference_minutes: number | null
           similar_experiences: string[]
           social_links: Json | null
           specialties: string[]
@@ -106,6 +108,7 @@ export type Database = {
           hourly_rate_amount?: number | null
           hourly_rate_currency?: string | null
           id?: string
+          immediate_availability?: boolean | null
           is_active?: boolean | null
           max_session_duration?: number | null
           min_session_duration?: number | null
@@ -114,6 +117,7 @@ export type Database = {
           notification_phone?: string | null
           personal_experiences?: string | null
           rating?: number | null
+          response_preference_minutes?: number | null
           similar_experiences: string[]
           social_links?: Json | null
           specialties: string[]
@@ -138,6 +142,7 @@ export type Database = {
           hourly_rate_amount?: number | null
           hourly_rate_currency?: string | null
           id?: string
+          immediate_availability?: boolean | null
           is_active?: boolean | null
           max_session_duration?: number | null
           min_session_duration?: number | null
@@ -146,6 +151,7 @@ export type Database = {
           notification_phone?: string | null
           personal_experiences?: string | null
           rating?: number | null
+          response_preference_minutes?: number | null
           similar_experiences?: string[]
           social_links?: Json | null
           specialties?: string[]
@@ -1188,6 +1194,7 @@ export type Database = {
           hourly_rate_amount: number | null
           hourly_rate_currency: string | null
           id: string
+          immediate_availability: boolean | null
           is_active: boolean | null
           max_session_duration: number | null
           min_session_duration: number | null
@@ -1196,6 +1203,7 @@ export type Database = {
           notification_phone: string | null
           personal_experiences: string | null
           rating: number | null
+          response_preference_minutes: number | null
           similar_experiences: string[]
           social_links: Json | null
           specialties: string[]
