@@ -1206,6 +1206,18 @@ export type Database = {
           years_experience: number
         }[]
       }
+      process_coin_purchase: {
+        Args: {
+          p_coin_amount: number
+          p_stripe_session_id: string
+          p_user_id: string
+        }
+        Returns: Json
+      }
+      spend_coins: {
+        Args: { p_amount: number; p_session_id?: string; p_user_id: string }
+        Returns: boolean
+      }
       track_user_activity: {
         Args: {
           p_action_details?: Json

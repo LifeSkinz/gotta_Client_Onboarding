@@ -1,13 +1,13 @@
 project_id = "nqoysxjjimvihcvfpesr"
 
 [functions.ai-coach-matching]
-verify_jwt = false
+verify_jwt = true
 
 [functions.send-connection-notification]
 verify_jwt = false
 
 [functions.generate-video-link]
-verify_jwt = false
+verify_jwt = true
 
 [functions.handle-coach-response]
 verify_jwt = false
@@ -16,10 +16,22 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.update-session-status]
-verify_jwt = false
+verify_jwt = true
 
 [functions.daily-transcription-webhook]
 verify_jwt = false
 
 [functions.create-daily-room]
+verify_jwt = true
+
+[functions.create-coin-purchase]
+verify_jwt = true
+
+[functions.verify-coin-purchase]
+verify_jwt = false
+
+[functions.create-instant-session]
+verify_jwt = true
+
+[functions.join-session]
 verify_jwt = false

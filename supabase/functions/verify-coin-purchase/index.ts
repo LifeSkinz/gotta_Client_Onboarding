@@ -51,67 +51,22 @@ serve(async (req) => {
       throw new Error("Invalid session metadata");
     }
 
-    // Update transaction status
-    const { error: transactionError } = await supabaseService
-      .from("transactions")
-      .update({ status: "completed" })
-      .eq("stripe_session_id", sessionId)
-      .eq("status", "pending");
+    // Use atomic function to process coin purchase
+    const { data: result, error: processError } = await supabaseService
+      .rpc('process_coin_purchase', {
+        p_user_id: userId,
+        p_coin_amount: coinAmount,
+        p_stripe_session_id: sessionId
+      });
 
-    if (transactionError) {
-      logStep("Transaction update error", transactionError);
-      throw new Error("Failed to update transaction");
+    if (processError) {
+      logStep("Process coin purchase error", processError);
+      throw new Error("Failed to process coin purchase: " + processError.message);
     }
 
-    // Get or create user wallet
-    let { data: wallet, error: walletError } = await supabaseService
-      .from("user_wallets")
-      .select("*")
-      .eq("user_id", userId)
-      .single();
+    logStep("Coin purchase processed successfully", result);
 
-    if (walletError && walletError.code !== "PGRST116") {
-      throw new Error("Failed to fetch wallet");
-    }
-
-    if (!wallet) {
-      // Create new wallet
-      const { data: newWallet, error: createError } = await supabaseService
-        .from("user_wallets")
-        .insert({
-          user_id: userId,
-          coin_balance: coinAmount,
-          total_coins_purchased: coinAmount,
-        })
-        .select()
-        .single();
-
-      if (createError) {
-        throw new Error("Failed to create wallet");
-      }
-      wallet = newWallet;
-    } else {
-      // Update existing wallet
-      const { error: updateError } = await supabaseService
-        .from("user_wallets")
-        .update({
-          coin_balance: wallet.coin_balance + coinAmount,
-          total_coins_purchased: wallet.total_coins_purchased + coinAmount,
-        })
-        .eq("user_id", userId);
-
-      if (updateError) {
-        throw new Error("Failed to update wallet");
-      }
-    }
-
-    logStep("Wallet updated successfully", { coinAmount, newBalance: wallet.coin_balance + coinAmount });
-
-    return new Response(JSON.stringify({ 
-      success: true, 
-      coinAmount,
-      newBalance: wallet.coin_balance + coinAmount 
-    }), {
+    return new Response(JSON.stringify(result), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
     });

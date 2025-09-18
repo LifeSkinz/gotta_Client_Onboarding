@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
+import { z } from "https://esm.sh/zod@3.23.8";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -16,8 +17,26 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { coachId, clientId, userGoal, clientBio } = await req.json();
-
+    // Validate request body
+    const requestSchema = z.object({
+      coachId: z.string().uuid("Coach ID must be a valid UUID"),
+      clientId: z.string().uuid("Client ID must be a valid UUID"),
+      userGoal: z.string().min(1, "User goal is required"),
+      clientBio: z.string().optional()
+    });
+    
+    const body = await req.json();
+    const validation = requestSchema.safeParse(body);
+    
+    if (!validation.success) {
+      console.error("Validation failed:", validation.error.issues);
+      return new Response(
+        JSON.stringify({ error: "Invalid request: " + validation.error.issues[0].message }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
+    const { coachId, clientId, userGoal, clientBio } = validation.data;
     console.log('Creating instant session for:', { coachId, clientId });
 
     // First, get coach details for scheduling
