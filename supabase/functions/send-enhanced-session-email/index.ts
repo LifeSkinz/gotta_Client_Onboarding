@@ -46,13 +46,7 @@ Preparation Notes:
       name: coach?.name || 'Coaching Platform',
       email: 'sessions@coaching-platform.com'
     },
-    attendees: [
-      {
-        email: session.client_email,
-        name: session.client_name || 'Client',
-        rsvp: true
-      }
-    ]
+    // Note: Attendees field removed to fix calendar generation issue
   });
   
   return calendar.toString();
@@ -279,16 +273,16 @@ serve(async (req) => {
       .eq('session_id', sessionId)
       .order('created_at', { ascending: false });
 
-    // Prepare email data
+    // Prepare email data with proper client email handling
     const emailData = {
       session: {
         ...session,
         client_email: clientEmail,
-        client_name: clientName
+        client_name: clientName || 'Client'
       },
       coach: session.coaches,
       goals: goals || [],
-      clientName,
+      clientName: clientName || 'Client',
       customMessage
     };
 

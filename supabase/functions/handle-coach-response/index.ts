@@ -16,10 +16,10 @@ serve(async (req) => {
   try {
     const url = new URL(req.url);
     const action = url.searchParams.get('action'); // accept, decline, reschedule
-    const requestId = url.searchParams.get('requestId');
+    const sessionId = url.searchParams.get('sessionId');
 
-    if (!action || !requestId) {
-      throw new Error('Missing required parameters: action and requestId');
+    if (!action || !sessionId) {
+      throw new Error('Missing required parameters: action and sessionId');
     }
 
     // Initialize Supabase client
@@ -30,38 +30,38 @@ serve(async (req) => {
     // Initialize Resend
     const resend = new Resend(Deno.env.get('RESEND_API_KEY'));
 
-    // Get connection request details with proper joins and client insights
-    const { data: requestData, error: requestError } = await supabase
-      .from('connection_requests')
+    // Get session details with proper joins and client insights
+    const { data: sessionData, error: sessionError } = await supabase
+      .from('sessions')
       .select(`
         *,
         coach:coaches(*)
       `)
-      .eq('id', requestId)
+      .eq('id', sessionId)
       .single();
 
-    if (requestError || !requestData) {
-      throw new Error(`Connection request not found: ${requestError?.message}`);
+    if (sessionError || !sessionData) {
+      throw new Error(`Session not found: ${sessionError?.message}`);
     }
 
     // Get comprehensive client data including responses and AI analysis
     const { data: clientInsights, error: insightsError } = await supabase
       .from('user_responses')
       .select('selected_goal, responses, ai_analysis')
-      .eq('user_id', requestData.client_id)
+      .eq('user_id', sessionData.client_id)
       .order('created_at', { ascending: false })
       .limit(1)
       .maybeSingle();
 
 
     // Get client details from auth.users and profiles
-    console.log('Fetching client details for client_id:', requestData.client_id);
+    console.log('Fetching client details for client_id:', sessionData.client_id);
     
     let clientEmail = null;
     let clientName = 'Client';
     
     try {
-      const { data: clientAuthData, error: authError } = await supabase.auth.admin.getUserById(requestData.client_id);
+      const { data: clientAuthData, error: authError } = await supabase.auth.admin.getUserById(sessionData.client_id);
       if (authError) {
         console.error('Error fetching auth user:', authError);
       } else {
@@ -76,7 +76,7 @@ serve(async (req) => {
       const { data: clientProfile, error: profileError } = await supabase
         .from('profiles')
         .select('full_name')
-        .eq('user_id', requestData.client_id)
+        .eq('user_id', sessionData.client_id)
         .maybeSingle();
         
       if (profileError) {
@@ -91,7 +91,7 @@ serve(async (req) => {
       console.error('Exception fetching profile:', profileError);
     }
 
-    const coachName = requestData.coach?.name || 'Coach';
+    const coachName = sessionData.coach?.name || 'Coach';
     console.log('Final client details - Email:', clientEmail, 'Name:', clientName, 'Coach:', coachName);
 
     // Generate comprehensive coach email content
@@ -195,103 +195,39 @@ serve(async (req) => {
 
     switch (action) {
       case 'accept':
-        // Update connection request status
+        // Update session status
         await supabase
-          .from('connection_requests')
+          .from('sessions')
           .update({ 
-            status: 'accepted',
+            status: 'confirmed',
+            session_state: 'ready',
             updated_at: new Date().toISOString()
           })
-          .eq('id', requestId);
+          .eq('id', sessionId);
 
-        // Create session and send portal access
-        try {
-          let sessionData;
-          if (requestData.request_type === 'instant') {
-            // For instant sessions, create session without video room (lazy creation)
-            const { data: newSession } = await supabase
-              .from('sessions')
-              .insert({
-                session_id: `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-                client_id: requestData.client_id,
-                coach_id: requestData.coach_id,
-                scheduled_time: new Date(Date.now() + 5 * 60 * 1000).toISOString(), // 5 minutes from now
-                duration_minutes: 60,
-                status: 'ready'
-              })
-              .select()
-              .single();
-            
-            sessionData = newSession;
-            
-            clientNotificationSubject = 'Session Accepted - Ready to Join!';
-            clientNotificationContent = `
-              <h2>🎉 Great news!</h2>
-              <p>${coachName} has accepted your instant session request.</p>
-              <p><strong>Status:</strong> ✅ Session ready</p>
-              <p><a href="${portalUrl}/${sessionData?.id}" style="background-color: #3b82f6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; margin: 16px 0;">Join Session Portal</a></p>
-              <p style="font-size: 14px; color: #6b7280;">You can join up to 5 minutes early. The video room will be created when you click "Join Session".</p>
-            `;
-          } else {
-            // For scheduled sessions, create session record
-            const sessionTime = new Date(requestData.scheduled_time);
-            const { data: newSession } = await supabase
-              .from('sessions')
-              .insert({
-                session_id: `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-                client_id: requestData.client_id,
-                coach_id: requestData.coach_id,
-                scheduled_time: sessionTime.toISOString(),
-                duration_minutes: 60,
-                status: 'scheduled'
-              })
-              .select()
-              .single();
-            
-            sessionData = newSession;
-            
-            clientNotificationSubject = 'Session Request Accepted';
-            clientNotificationContent = `
-              <h2>🎯 Session Confirmed!</h2>
-              <p>${coachName} has accepted your session request.</p>
-              <p><strong>📅 Scheduled Time:</strong> ${sessionTime.toLocaleString()}</p>
-              <p><strong>⏱️ Duration:</strong> 60 minutes</p>
-              <p><a href="${portalUrl}/${sessionData?.id}" style="background-color: #3b82f6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; margin: 16px 0;">Access Session Portal</a></p>
-              <p style="font-size: 14px; color: #6b7280;">You can access your session portal anytime. The video room will be created when the session begins.</p>
-            `;
-          }
-
-          // Update connection request with session reference
-          if (sessionData) {
-            await supabase
-              .from('connection_requests')
-              .update({ 
-                status: 'accepted',
-                session_id: sessionData.id,
-                updated_at: new Date().toISOString()
-              })
-              .eq('id', requestId);
-          }
-        } catch (sessionError) {
-          console.error('Error creating session:', sessionError);
-          clientNotificationSubject = 'Session Request Accepted';
-          clientNotificationContent = `
-            <h2>Session Accepted!</h2>
-            <p>${coachName} has accepted your session request.</p>
-            <p>We're setting up your session details. You'll receive a follow-up email shortly with access information.</p>
-          `;
-        }
+        // Send portal access notification
+        const portalUrl = 'https://nqoysxjjimvihcvfpesr.lovable.app/join-session';
+        
+        clientNotificationSubject = 'Session Accepted - Ready to Join!';
+        clientNotificationContent = `
+          <h2>🎉 Great news!</h2>
+          <p>${coachName} has accepted your session request.</p>
+          <p><strong>Status:</strong> ✅ Session confirmed and ready</p>
+          <p><a href="${portalUrl}?token=${sessionData.join_token}" style="background-color: #3b82f6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; margin: 16px 0;">Join Session Portal</a></p>
+          <p style="font-size: 14px; color: #6b7280;">You can join the session using your secure token. The session details and video room will be available when you access the portal.</p>
+        `;
 
         break;
 
       case 'decline':
         await supabase
-          .from('connection_requests')
+          .from('sessions')
           .update({ 
             status: 'declined',
+            session_state: 'cancelled',
             updated_at: new Date().toISOString()
           })
-          .eq('id', requestId);
+          .eq('id', sessionId);
 
         clientNotificationSubject = 'Session Request Update';
         clientNotificationContent = `
@@ -305,12 +241,13 @@ serve(async (req) => {
 
       case 'reschedule':
         await supabase
-          .from('connection_requests')
+          .from('sessions')
           .update({ 
             status: 'reschedule_requested',
+            session_state: 'pending_reschedule',
             updated_at: new Date().toISOString()
           })
-          .eq('id', requestId);
+          .eq('id', sessionId);
 
         clientNotificationSubject = 'Coach Would Like to Reschedule';
         clientNotificationContent = `
@@ -344,17 +281,17 @@ serve(async (req) => {
     }
 
     // Send coach confirmation email
-    if (requestData.coach?.notification_email) {
+    if (sessionData.coach?.notification_email) {
       try {
         const coachEmailContent = generateCoachEmailContent(action);
         if (coachEmailContent) {
           const coachEmailResult = await resend.emails.send({
             from: 'Lovable Coach <onboarding@resend.dev>',
-            to: [requestData.coach.notification_email],
+            to: [sessionData.coach.notification_email],
             subject: `Session Request ${action.charAt(0).toUpperCase() + action.slice(1)} - Client: ${clientName}`,
             html: coachEmailContent,
           });
-          console.log('Coach confirmation email sent successfully to:', requestData.coach.notification_email, coachEmailResult);
+          console.log('Coach confirmation email sent successfully to:', sessionData.coach.notification_email, coachEmailResult);
         }
       } catch (emailError) {
         console.error('Error sending coach email:', emailError);
