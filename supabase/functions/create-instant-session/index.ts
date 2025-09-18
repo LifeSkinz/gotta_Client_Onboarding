@@ -108,7 +108,7 @@ serve(async (req) => {
           type: 'instant'
         }
       });
-      console.log('Coach notification sent');
+      console.log('Coach notification sent successfully');
     } catch (notificationError) {
       console.error('Failed to send coach notification:', notificationError);
       // Don't fail the request - session was created successfully

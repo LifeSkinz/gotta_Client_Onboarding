@@ -81,9 +81,9 @@ function generateFallbackEmail(context: any) {
 }
 
 function generatePremiumEmailTemplate(context: any, personalizedContent: string) {
-  const acceptUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/handle-coach-response?action=accept&requestId=${context.connectionRequestId}`;
-  const declineUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/handle-coach-response?action=decline&requestId=${context.connectionRequestId}`;
-  const rescheduleUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/handle-coach-response?action=reschedule&requestId=${context.connectionRequestId}`;
+  const acceptUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/handle-coach-response?action=accept&sessionId=${context.sessionId}`;
+  const declineUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/handle-coach-response?action=decline&sessionId=${context.sessionId}`;
+  const rescheduleUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/handle-coach-response?action=reschedule&sessionId=${context.sessionId}`;
   
   return `<!DOCTYPE html>
 <html lang="en">
@@ -406,11 +406,13 @@ serve(async (req) => {
   }
 
   try {
-    const { connectionRequestId } = await req.json();
+    const { sessionId, coachId, clientId, userGoal, clientBio, type } = await req.json();
 
-    if (!connectionRequestId) {
-      throw new Error('Connection request ID is required');
+    if (!sessionId) {
+      throw new Error('Session ID is required');
     }
+
+    console.log('Processing coach notification for session:', sessionId);
 
     // Initialize Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
@@ -418,32 +420,34 @@ serve(async (req) => {
     
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Get connection request details with coach info
-    const { data: requestData, error: requestError } = await supabase
-      .from('connection_requests')
+    // Get session details with coach info
+    const { data: sessionData, error: sessionError } = await supabase
+      .from('sessions')
       .select(`
         *,
         coach:coaches(*)
       `)
-      .eq('id', connectionRequestId)
+      .eq('id', sessionId)
       .single();
 
-    if (requestError) {
-      throw new Error(`Failed to fetch connection request: ${requestError.message}`);
+    if (sessionError) {
+      throw new Error(`Failed to fetch session: ${sessionError.message}`);
     }
 
-    // Get client profile data separately
+    console.log('Session data retrieved:', { sessionId, coachId: sessionData.coach_id });
+
+    // Get client profile data
     const { data: clientProfile } = await supabase
       .from('profiles')
       .select('*')
-      .eq('user_id', requestData.client_id)
+      .eq('user_id', clientId)
       .single();
 
-    // Get client responses and AI analysis for better email content
+    // Get client responses for better email content
     const { data: clientResponses } = await supabase
       .from('user_responses')
       .select('selected_goal, responses, ai_analysis')
-      .eq('user_id', requestData.client_id)
+      .eq('user_id', clientId)
       .order('created_at', { ascending: false })
       .limit(1)
       .single();
@@ -454,36 +458,38 @@ serve(async (req) => {
 
     // Generate AI-powered email content
     const clientName = clientProfile?.full_name || 'A client';
-    const clientBio = requestData.client_bio || clientProfile?.bio || 'No additional information provided';
-    const goalTitle = requestData.client_goal?.title || clientResponses?.selected_goal?.title || 'their goals';
+    const clientBioData = clientBio || clientProfile?.bio || 'No additional information provided';
+    const goalTitle = userGoal || clientResponses?.selected_goal?.title || 'their goals';
     
     // Get coach notification preferences
-    const coachEmail = requestData.coach.notification_email || requestData.coach.name.toLowerCase().replace(/\s+/g, '.') + '@example.com';
-    const coachPhone = requestData.coach.notification_phone;
+    const coachEmail = sessionData.coach.notification_email || sessionData.coach.name.toLowerCase().replace(/\s+/g, '.') + '@example.com';
+    const coachPhone = sessionData.coach.notification_phone;
+    
+    console.log('Sending email to coach:', coachEmail);
     
     // Prepare context for AI email generation
     const emailContext = {
-      connectionRequestId: connectionRequestId,
-      coachName: requestData.coach.name,
-      coachSpecialties: requestData.coach.specialties || [],
+      sessionId: sessionId,
+      coachName: sessionData.coach.name,
+      coachSpecialties: sessionData.coach.specialties || [],
       coachEmail,
       clientName,
-      clientBio,
+      clientBio: clientBioData,
       goalTitle,
-      goalDescription: requestData.client_goal?.description || clientResponses?.selected_goal?.description || '',
+      goalDescription: clientResponses?.selected_goal?.description || '',
       clientResponses: clientResponses?.responses || {},
       aiAnalysis: clientResponses?.ai_analysis || {},
-      sessionType: requestData.request_type,
-      scheduledTime: requestData.scheduled_time,
-      isInstant: requestData.request_type === 'instant'
+      sessionType: type,
+      scheduledTime: sessionData.scheduled_time,
+      isInstant: type === 'instant'
     };
 
     const aiEmailContent = await generateAIEmail(emailContext);
 
     // Create action URLs for coach responses
-    const acceptUrl = `${supabaseUrl}/functions/v1/handle-coach-response?action=accept&requestId=${connectionRequestId}`;
-    const declineUrl = `${supabaseUrl}/functions/v1/handle-coach-response?action=decline&requestId=${connectionRequestId}`;
-    const rescheduleUrl = `${supabaseUrl}/functions/v1/handle-coach-response?action=reschedule&requestId=${connectionRequestId}`;
+    const acceptUrl = `${supabaseUrl}/functions/v1/handle-coach-response?action=accept&sessionId=${sessionId}`;
+    const declineUrl = `${supabaseUrl}/functions/v1/handle-coach-response?action=decline&sessionId=${sessionId}`;
+    const rescheduleUrl = `${supabaseUrl}/functions/v1/handle-coach-response?action=reschedule&sessionId=${sessionId}`;
 
     const emailSubject = `${aiEmailContent.subject} - ${clientName}`;
     
