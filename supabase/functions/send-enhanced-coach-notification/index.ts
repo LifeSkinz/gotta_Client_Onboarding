@@ -145,13 +145,13 @@ const generateCoachEmailTemplate = (session: any, client: any, coach: any, goals
           </div>
 
           <div class="action-buttons">
-            <a href="${Deno.env.get('SUPABASE_URL')}/functions/v1/handle-coach-response?action=accept&requestId=${session.id}" class="btn btn-primary">
+            <a href="https://nqoysxjjimvihcvfpesr.supabase.co/functions/v1/handle-coach-response?action=accept&sessionId=${session.id}" class="btn btn-primary">
               ✅ Accept Session
             </a>
-            <a href="${Deno.env.get('SUPABASE_URL')}/functions/v1/handle-coach-response?action=reschedule&requestId=${session.id}" class="btn btn-secondary">
+            <a href="https://nqoysxjjimvihcvfpesr.supabase.co/functions/v1/handle-coach-response?action=reschedule&sessionId=${session.id}" class="btn btn-secondary">
               📅 Request Reschedule
             </a>
-            <a href="${Deno.env.get('SUPABASE_URL')}/functions/v1/handle-coach-response?action=decline&requestId=${session.id}" class="btn btn-danger">
+            <a href="https://nqoysxjjimvihcvfpesr.supabase.co/functions/v1/handle-coach-response?action=decline&sessionId=${session.id}" class="btn btn-danger">
               ❌ Decline Session
             </a>
           </div>
