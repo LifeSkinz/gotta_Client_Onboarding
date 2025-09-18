@@ -21,7 +21,12 @@ serve(async (req) => {
     const requestSchema = z.object({
       coachId: z.string().uuid("Coach ID must be a valid UUID"),
       clientId: z.string().uuid("Client ID must be a valid UUID"),
-      userGoal: z.string().min(1, "User goal is required"),
+      userGoal: z.object({
+        id: z.string(),
+        title: z.string(),
+        description: z.string(),
+        icon: z.string()
+      }),
       clientBio: z.string().optional()
     });
     
@@ -71,7 +76,7 @@ serve(async (req) => {
         status: 'scheduled',
         session_state: 'pending_coach_response',
         join_token: joinToken,
-        notes: JSON.stringify({ userGoal, clientBio, type: 'instant' })
+        notes: JSON.stringify({ userGoal: userGoal.title, clientBio, type: 'instant' })
       })
       .select()
       .single();
@@ -103,7 +108,7 @@ serve(async (req) => {
           sessionId: session.id,
           coachId,
           clientId,
-          userGoal,
+          userGoal: userGoal.title,
           clientBio,
           type: 'instant'
         }
