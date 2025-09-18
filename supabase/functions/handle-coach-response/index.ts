@@ -158,12 +158,12 @@ serve(async (req) => {
             <div style="background: #f1f5f9; border-radius: 8px; padding: 20px; margin: 24px 0; text-align: center;">
               <h3 style="margin: 0 0 12px 0; color: #334155;">🎥 Session Access</h3>
               <p style="margin: 0 0 16px 0; color: #64748b; font-size: 14px;">
-                ${requestData.request_type === 'instant' 
+                ${sessionData.status === 'confirmed' 
                   ? 'The client will receive their session link shortly. You can access your session portal here:'
-                  : `Session scheduled for ${new Date(requestData.scheduled_time).toLocaleString()}. Both you and the client will receive session links closer to the appointment time.`
+                  : `Session scheduled for ${new Date(sessionData.scheduled_time).toLocaleString()}. Both you and the client will receive session links closer to the appointment time.`
                 }
               </p>
-              ${requestData.request_type === 'instant' ? `
+              ${sessionData.status === 'confirmed' ? `
                 <a href="${portalUrl}" style="background: #3b82f6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; display: inline-block; font-weight: 600;">Access Session Portal</a>
               ` : ''}
             </div>
@@ -254,7 +254,7 @@ serve(async (req) => {
           <h2>Reschedule Request</h2>
           <p>${coachName} is interested in working with you but would like to propose a different time.</p>
           <p>Please check your calendar and respond with your availability.</p>
-          <p><a href="https://nqoysxjjimvihcvfpesr.lovable.app/reschedule/${requestId}" style="background-color: #f59e0b; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px;">View Available Times</a></p>
+          <p><a href="https://nqoysxjjimvihcvfpesr.lovable.app/reschedule/${sessionId}" style="background-color: #f59e0b; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px;">View Available Times</a></p>
         `;
 
         break;
