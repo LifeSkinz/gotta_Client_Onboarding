@@ -8,11 +8,11 @@ export function JoinSessionRedirect() {
   useEffect(() => {
     const token = searchParams.get('token');
     if (token) {
-      // Redirect to the edge function that handles the actual logic
-      window.location.href = `/join-session?token=${token}`;
+      // Call the edge function that handles the actual join logic
+      window.location.href = `https://nqoysxjjimvihcvfpesr.supabase.co/functions/v1/join-session?token=${token}`;
     } else {
       // No token provided, redirect to error page
-      window.location.href = '/error?code=missing-token';
+      window.location.href = '/?error=missing-token';
     }
   }, [searchParams]);
 
