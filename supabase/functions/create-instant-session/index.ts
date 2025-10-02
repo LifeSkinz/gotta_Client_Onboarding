@@ -91,6 +91,38 @@ serve(async (req) => {
 
     console.log('Session created successfully:', session.id);
 
+    // Create Daily.co video room immediately
+    let videoJoinUrl = null;
+    let videoRoomId = null;
+    
+    try {
+      const { data: roomData, error: roomError } = await supabase.functions.invoke('create-daily-room', {
+        body: { sessionId: session.id }
+      });
+
+      if (!roomError && roomData) {
+        videoJoinUrl = roomData.videoJoinUrl;
+        videoRoomId = roomData.videoRoomId;
+        
+        // Update session with video details
+        await supabase
+          .from('sessions')
+          .update({
+            video_join_url: videoJoinUrl,
+            video_room_id: videoRoomId,
+            session_state: 'ready'
+          })
+          .eq('id', session.id);
+        
+        console.log('Video room created and session updated');
+      } else {
+        console.error('Failed to create video room:', roomError);
+      }
+    } catch (videoError) {
+      console.error('Error creating video room:', videoError);
+      // Continue - video room can be created later via join-session
+    }
+
     // Get client email for confirmation email
     const { data: clientProfile } = await supabase
       .from('profiles')
