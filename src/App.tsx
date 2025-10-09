@@ -8,7 +8,6 @@ import { AuthGuard } from "@/components/AuthGuard";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import AuthPage from "./pages/AuthPage";
-import DashboardPage from "./pages/DashboardPage";
 import CoachProfilePage from "./pages/CoachProfilePage";
 import CoachesPage from "./pages/CoachesPage";
 import PreviewPage from "./pages/PreviewPage";
@@ -32,8 +31,7 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <Routes>
-            <Route path="/" element={<AuthGuard requireAuth><DashboardPage /></AuthGuard>} />
-            <Route path="/welcome" element={<Index />} />
+            <Route path="/" element={<Index />} />
             <Route path="/auth" element={<AuthGuard><AuthPage /></AuthGuard>} />
             <Route path="/coaches" element={<AuthGuard requireAuth><CoachesPage /></AuthGuard>} />
             <Route path="/coach/:id" element={<AuthGuard requireAuth><CoachProfilePage /></AuthGuard>} />
