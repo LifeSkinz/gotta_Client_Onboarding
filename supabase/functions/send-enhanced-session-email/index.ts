@@ -249,7 +249,7 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
     const resend = new Resend(Deno.env.get('RESEND_API_KEY'));
 
-    // Fetch session details with coach info
+    // Fetch session details with coach info and video details
     const { data: session, error: sessionError } = await supabase
       .from('sessions')
       .select(`
@@ -257,6 +257,10 @@ serve(async (req) => {
         coaches (
           id, name, title, bio, avatar_url, years_experience, 
           specialties, coaching_expertise, coaching_style
+        ),
+        session_video_details (
+          video_join_url,
+          video_room_id
         )
       `)
       .eq('id', sessionId)
@@ -273,10 +277,12 @@ serve(async (req) => {
       .eq('session_id', sessionId)
       .order('created_at', { ascending: false });
 
-    // Prepare email data with proper client email handling
+    // Prepare email data with video URL from joined table
+    const videoUrl = session.session_video_details?.[0]?.video_join_url;
     const emailData = {
       session: {
         ...session,
+        video_join_url: videoUrl, // Use the joined video URL
         client_email: clientEmail,
         client_name: clientName || 'Client'
       },
@@ -301,7 +307,7 @@ serve(async (req) => {
       const calendarEvent = generateSessionCalendarEvent(session, session.coaches, goals || []);
       attachments.push({
         filename: 'session.ics',
-        content: Buffer.from(calendarEvent).toString('base64'),
+        content: btoa(calendarEvent), // Use btoa instead of Buffer (Deno compatible)
         type: 'text/calendar',
         disposition: 'attachment'
       });

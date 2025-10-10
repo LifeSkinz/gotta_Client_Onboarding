@@ -53,21 +53,25 @@ serve(async (req) => {
     let roomName = '';
 
     if (dailyApiKey) {
-      // Create Daily.co room with transcription enabled
+      // Create Daily.co room with proper config
       console.log('Creating Daily.co room for session:', sessionId);
+      console.log('Daily API Key present:', dailyApiKey ? 'Yes' : 'No');
       
       const roomConfig = {
         name: `session-${sessionId}-${Date.now()}`,
-        properties: {
-          enable_recording: true,
+        config: {
+          exp: Math.floor(Date.now() / 1000) + (4 * 60 * 60), // 4 hours from now
+          nbf: Math.floor(Date.now() / 1000), // not before (now)
           max_participants: 2,
+          enable_recording: "cloud",
           start_video_off: false,
           start_audio_off: false,
           enable_screenshare: true,
-          enable_chat: true,
-          exp: Math.floor(Date.now() / 1000) + (4 * 60 * 60), // 4 hours from now
+          enable_chat: true
         }
       };
+
+      console.log('Sending request to Daily.co API with config:', JSON.stringify(roomConfig, null, 2));
 
       const dailyResponse = await fetch('https://api.daily.co/v1/rooms', {
         method: 'POST',
@@ -81,19 +85,41 @@ serve(async (req) => {
       if (!dailyResponse.ok) {
         const errorText = await dailyResponse.text();
         console.error('Daily.co API error:', errorText);
-        throw new Error(`Failed to create Daily.co room: ${dailyResponse.status}`);
+        console.error('Daily.co API status:', dailyResponse.status);
+        console.error('Daily.co API headers:', Object.fromEntries(dailyResponse.headers.entries()));
+        
+        if (dailyResponse.status === 401) {
+          console.error('AUTHENTICATION ERROR: Daily API key is invalid or expired');
+          console.error('Please verify the DAILY_API_KEY secret in Supabase');
+        }
+        
+        // Fall back to VideoSDK on Daily.co failure
+        console.log('Falling back to VideoSDK due to Daily.co error');
+        roomName = `fallback-room-${sessionId}-${Date.now()}`;
+        roomUrl = `https://meet.videosdk.live/${roomName}`;
+      } else {
+        const roomData = await dailyResponse.json();
+        roomUrl = roomData.url;
+        roomName = roomData.name;
+        console.log('Created Daily.co room:', roomName, 'URL:', roomUrl);
       }
-
-      const roomData = await dailyResponse.json();
-      roomUrl = roomData.url;
-      roomName = roomData.name;
-
-      console.log('Created Daily.co room:', roomName);
     } else {
-      // Fallback to simple meet room
-      console.log('Using fallback video room for session:', sessionId);
+      // Fallback to VideoSDK when no Daily API key
+      console.log('No Daily API key found, using VideoSDK fallback for session:', sessionId);
       roomName = `fallback-room-${sessionId}-${Date.now()}`;
       roomUrl = `https://meet.videosdk.live/${roomName}`;
+      console.log('Generated fallback URL:', roomUrl);
+      
+      // Validate fallback URL is reachable
+      try {
+        const testResponse = await fetch(roomUrl, { method: 'HEAD' });
+        console.log('Fallback URL validation response:', testResponse.status);
+        if (!testResponse.ok) {
+          console.warn('Warning: Fallback URL may not be reachable:', roomUrl);
+        }
+      } catch (err) {
+        console.warn('Could not validate fallback URL:', err.message);
+      }
     }
 
     // Update session state

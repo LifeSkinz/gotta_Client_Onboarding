@@ -35,7 +35,11 @@ serve(async (req) => {
       .from('sessions')
       .select(`
         *,
-        coach:coaches(*)
+        coach:coaches(*),
+        session_video_details (
+          video_join_url,
+          video_room_id
+        )
       `)
       .eq('id', sessionId)
       .single();
@@ -316,7 +320,10 @@ serve(async (req) => {
     // Send coach confirmation email with session link
     if (sessionData.coach?.notification_email) {
       try {
-        const sessionUrl = `https://nqoysxjjimvihcvfpesr.lovable.app/session-portal/${sessionId}`;
+        const baseUrl = 'https://nqoysxjjimvihcvfpesr.lovable.app';
+        const videoUrl = sessionData.session_video_details?.[0]?.video_join_url;
+        const sessionUrl = videoUrl || `${baseUrl}/session-portal/${sessionId}`;
+        console.log('Coach email session URL:', sessionUrl);
         const coachEmailContent = generateCoachEmailContent(action, sessionData, sessionUrl);
         if (coachEmailContent) {
           const coachEmailResult = await resend.emails.send({
