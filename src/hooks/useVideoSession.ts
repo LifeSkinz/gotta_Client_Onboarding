@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 import { useSessionManager } from './useSessionManager';
 import { logger } from '@/services/logger';
 import { config } from '@/config';
@@ -17,27 +18,18 @@ export const useVideoSession = (
   const [isRecording, setIsRecording] = useState(false);
   const [connectionQuality, setConnectionQuality] = useState<'good' | 'fair' | 'poor'>('good');
 
-  const {
-    loading,
-    error,
-    updateSessionState,
-    createVideoRoom,
-    cleanupSession
-  } = useSessionManager(sessionId, {
-    onStateChange: (state) => {
-      if (state === 'ended') {
-        handleSessionEnd();
-      }
-    },
-    onError: options.onError
-  });
+  const sessionManagerHook = useSessionManager();
 
   const handleSessionEnd = useCallback(async () => {
     if (!sessionId) return;
 
     try {
-      await updateSessionState('ended', {
-        endTime: new Date().toISOString()
+      await sessionManagerHook.updateSessionState({
+        sessionId,
+        newState: 'ended',
+        metadata: {
+          endTime: new Date().toISOString()
+        }
       });
 
       if (isRecording) {
@@ -46,23 +38,27 @@ export const useVideoSession = (
         });
       }
 
-      await cleanupSession(sessionId);
+      await sessionManagerHook.cleanupSession(sessionId);
       options.onSessionEnd?.();
     } catch (error) {
       logger.error('Error ending session', { sessionId, error });
       options.onError?.(error);
     }
-  }, [sessionId, isRecording]);
+  }, [sessionId, isRecording, sessionManagerHook, options]);
 
   const initializeVideoSession = async () => {
     if (!sessionId) return;
 
     try {
-      const result = await createVideoRoom(sessionId);
+      const result = await sessionManagerHook.createVideoRoom(sessionId);
       if (result.success && result.videoJoinUrl) {
         setVideoUrl(result.videoJoinUrl);
-        await updateSessionState('in_progress', {
-          startTime: new Date().toISOString()
+        await sessionManagerHook.updateSessionState({
+          sessionId,
+          newState: 'in_progress',
+          metadata: {
+            startTime: new Date().toISOString()
+          }
         });
       }
     } catch (error) {
@@ -110,8 +106,7 @@ export const useVideoSession = (
   }, [sessionId, isConnected, handleSessionEnd]);
 
   return {
-    loading,
-    error,
+    loading: sessionManagerHook.loading,
     videoUrl,
     isConnected,
     isRecording,

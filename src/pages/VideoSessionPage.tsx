@@ -27,6 +27,16 @@ interface Session {
   };
 }
 
+interface SessionData {
+  id: string;
+  client_id: string;
+  coach_id: string;
+  scheduled_time: string;
+  duration_minutes: number;
+  status: string;
+  video_join_url?: string;
+}
+
 export default function VideoSessionPage() {
   const { sessionId } = useParams();
   const navigate = useNavigate();
@@ -59,7 +69,15 @@ export default function VideoSessionPage() {
   const fetchSession = async () => {
     try {
       const data = await sessionManager.initializeSession(sessionId!);
-      setSession(data);
+      // Add coaches data with proper structure
+      const sessionWithCoaches: Session = {
+        ...data,
+        coaches: {
+          name: 'Coach', // This should come from the DB join
+          title: 'Life Coach'
+        }
+      };
+      setSession(sessionWithCoaches);
 
       // Validate session security
       const isValid = await securityService.validateSession(

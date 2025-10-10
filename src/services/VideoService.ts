@@ -20,7 +20,7 @@ interface VideoRoomOptions {
 // Cache for video room data
 const roomCache = new LRUCache<string, VideoRoomResult>({
   max: 500,
-  maxAge: 1000 * 60 * 5, // 5 minutes
+  ttl: 1000 * 60 * 5, // 5 minutes
 });
 
 export class VideoService {
@@ -128,7 +128,7 @@ export class VideoService {
 
   async cleanupRoom(sessionId: string): Promise<void> {
     try {
-      roomCache.del(sessionId);
+      roomCache.delete(sessionId);
       await this.supabase.functions.invoke('cleanup-video-room', {
         body: {
           sessionId,
