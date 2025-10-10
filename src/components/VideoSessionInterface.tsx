@@ -6,7 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { Video, VideoOff, Mic, MicOff, Phone, Clock, Target, FileText, Save, AlertCircle, CheckCircle } from "lucide-react";
+import { Video, VideoOff, Mic, MicOff, Phone, Clock, Target, FileText, Save, AlertCircle, CheckCircle, Home } from "lucide-react";
 import { format, addMinutes } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -340,6 +340,19 @@ export const VideoSessionInterface = ({
 
   return (
     <div className="min-h-screen bg-background p-4">
+      {/* Top Navigation Bar */}
+      <div className="max-w-7xl mx-auto mb-4">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={onSessionEnd}
+          className="gap-2"
+        >
+          <Home className="h-4 w-4" />
+          Return to Dashboard
+        </Button>
+      </div>
+
       <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
         
         {/* Video Area - Main Column */}
