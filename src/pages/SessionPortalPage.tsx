@@ -162,29 +162,41 @@ export default function SessionPortalPage() {
 
     setCreatingRoom(true);
     try {
-      // Call generate-video-link to create the actual video room
-      const { data, error } = await supabase.functions.invoke('generate-video-link', {
+      // First try the Daily.co room creation
+      const { data: dailyData, error: dailyError } = await supabase.functions.invoke('create-daily-room', {
         body: { 
           sessionId: session.id,
-          justInTime: true 
+          retryOnFailure: true
         }
       });
 
-      if (error) throw error;
-
-      if (data?.success && data?.videoLink) {
-        // Update local session state
-        setSession(prev => prev ? { ...prev, video_join_url: data.videoLink } : null);
-        
-        toast({
-          title: "Video Room Ready",
-          description: "Your session room has been created. Joining now...",
+      if (dailyError || !dailyData?.room_url) {
+        // If Daily.co fails, try fallback to VideoSDK
+        const { data: fallbackData, error: fallbackError } = await supabase.functions.invoke('generate-video-link', {
+          body: { 
+            sessionId: session.id,
+            justInTime: true,
+            useFallback: true
+          }
         });
-        
-        setInSession(true);
+
+        if (fallbackError) throw fallbackError;
+        if (!fallbackData?.videoLink) throw new Error('Failed to create video room with both providers');
+
+        // Update local session state with fallback video link
+        setSession(prev => prev ? { ...prev, video_join_url: fallbackData.videoLink } : null);
       } else {
-        throw new Error('Failed to create video room');
+        // Update local session state with Daily.co room
+        setSession(prev => prev ? { ...prev, video_join_url: dailyData.room_url } : null);
       }
+
+      toast({
+        title: "Video Room Ready",
+        description: "Your session room has been created. Joining now...",
+      });
+      
+      setInSession(true);
+    }
     } catch (error) {
       console.error('Error creating video room:', error);
       toast({

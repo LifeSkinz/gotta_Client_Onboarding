@@ -11,7 +11,9 @@ import { format, addMinutes } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useSessionManager } from "@/hooks/useSessionManager";
+import { useConnectionQuality } from "@/hooks/useConnectionQuality";
 import { SessionFeedbackDialog } from "./SessionFeedbackDialog";
+import { logger } from "@/services/logger";
 
 interface VideoSessionInterfaceProps {
   sessionId: string;
@@ -21,6 +23,7 @@ interface VideoSessionInterfaceProps {
   duration: number;
   videoUrl: string;
   onSessionEnd: () => void;
+  onError?: (error: any) => void;
 }
 
 interface SessionGoal {
@@ -37,8 +40,9 @@ export const VideoSessionInterface = ({
   clientId,
   scheduledTime,
   duration,
-  videoUrl,
-  onSessionEnd
+  videoUrl: initialVideoUrl,
+  onSessionEnd,
+  onError
 }: VideoSessionInterfaceProps) => {
   const [sessionStarted, setSessionStarted] = useState(false);
   const [sessionEnded, setSessionEnded] = useState(false);
@@ -47,9 +51,19 @@ export const VideoSessionInterface = ({
   const [isRecording, setIsRecording] = useState(false);
   const [videoEnabled, setVideoEnabled] = useState(true);
   const [audioEnabled, setAudioEnabled] = useState(true);
-  const [currentVideoUrl, setCurrentVideoUrl] = useState(videoUrl);
+  const [currentVideoUrl, setCurrentVideoUrl] = useState(initialVideoUrl);
   const [sessionStatus, setSessionStatus] = useState<'pending' | 'ready' | 'in_progress' | 'completed'>('pending');
-  const [connectionQuality, setConnectionQuality] = useState<'good' | 'fair' | 'poor'>('good');
+  const { quality: connectionQuality } = useConnectionQuality(sessionStarted, {
+    onQualityChange: (quality) => {
+      if (quality === 'poor') {
+        toast({
+          title: "Poor Connection",
+          description: "Your connection quality is poor. This may affect video quality.",
+          variant: "default",
+        });
+      }
+    }
+  });
   
   // Session goals
   const [goals, setGoals] = useState<SessionGoal[]>([]);
@@ -100,12 +114,15 @@ export const VideoSessionInterface = ({
     try {
       // If video URL is a placeholder, create the actual video room
       if (currentVideoUrl?.startsWith('pending://')) {
-        const roomResult = await createVideoRoom(sessionId);
-        if (roomResult?.success && roomResult.videoJoinUrl) {
-          setCurrentVideoUrl(roomResult.videoJoinUrl);
-        } else {
-          throw new Error('Failed to create video room');
-        }
+        const { data: roomResult, error } = await supabase.functions.invoke('create-daily-room', {
+          body: { sessionId }
+        });
+
+        if (error) throw error;
+        if (!roomResult?.room_url) throw new Error('Invalid room creation response');
+
+        setCurrentVideoUrl(roomResult.room_url);
+        logger.info('Video room created successfully', { sessionId });
       }
 
       setSessionStarted(true);
@@ -239,12 +256,13 @@ export const VideoSessionInterface = ({
 
       setShowFeedbackDialog(true);
     } catch (error) {
-      console.error('Error ending session:', error);
+      logger.error('Error ending session:', { sessionId, error });
       toast({
         title: "Error",
         description: "There was an issue ending the session.",
         variant: "destructive",
       });
+      onError?.(error);
     }
   };
 

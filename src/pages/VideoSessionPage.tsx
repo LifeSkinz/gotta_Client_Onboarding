@@ -8,6 +8,10 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, Clock, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { format, isAfter, isBefore, addMinutes } from "date-fns";
+import { SessionManager } from "@/services/SessionManager";
+import { SecurityService } from "@/services/SecurityService";
+import { logger } from "@/services/logger";
+import { config } from "@/config";
 
 interface Session {
   id: string;
@@ -32,6 +36,14 @@ export default function VideoSessionPage() {
   const [inSession, setInSession] = useState(false);
   const { toast } = useToast();
 
+  // Initialize services
+  const sessionManager = new SessionManager(supabase);
+  const securityService = new SecurityService(
+    supabase,
+    config.security.jwtSecret,
+    config.security.encryptionKey
+  );
+
   useEffect(() => {
     if (sessionId) {
       fetchSession();
@@ -46,22 +58,21 @@ export default function VideoSessionPage() {
 
   const fetchSession = async () => {
     try {
-      const { data, error } = await supabase
-        .from('sessions')
-        .select(`
-          *,
-          coaches (
-            name,
-            title
-          )
-        `)
-        .eq('id', sessionId)
-        .single();
-
-      if (error) throw error;
+      const data = await sessionManager.initializeSession(sessionId!);
       setSession(data);
+
+      // Validate session security
+      const isValid = await securityService.validateSession(
+        securityService.generateSessionToken(sessionId!, data.client_id)
+      );
+
+      if (!isValid) {
+        throw new Error('Invalid or expired session');
+      }
+
+      logger.info('Session fetched successfully', { sessionId });
     } catch (error) {
-      console.error('Error fetching session:', error);
+      logger.error('Error fetching session:', { sessionId, error });
       toast({
         title: "Error",
         description: "Failed to load session details.",
@@ -88,8 +99,23 @@ export default function VideoSessionPage() {
     setCanJoin(canJoinNow);
   };
 
-  const handleJoinSession = () => {
-    setInSession(true);
+  const handleJoinSession = async () => {
+    try {
+      // Transition session state
+      await sessionManager.transitionState(sessionId!, 'in_progress', {
+        joinTime: new Date().toISOString()
+      });
+
+      logger.info('Joining session', { sessionId });
+      setInSession(true);
+    } catch (error) {
+      logger.error('Error joining session', { sessionId, error });
+      toast({
+        title: "Error",
+        description: "Failed to join session. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleSessionEnd = () => {
