@@ -38,7 +38,7 @@ const App = () => (
             <Route path="/preview" element={<PreviewPage />} />
             <Route path="/sessions" element={<AuthGuard requireAuth><UserSessionsPage /></AuthGuard>} />
             <Route path="/profile" element={<AuthGuard requireAuth><ProfilePage /></AuthGuard>} />
-            <Route path="/session/:sessionId" element={<AuthGuard requireAuth><VideoSessionPage /></AuthGuard>} />
+            <Route path="/session/:sessionId" element={<SessionPortalPage />} />
             <Route path="/session-portal/:sessionId" element={<SessionPortalPage />} />
             <Route path="/session-portal" element={<SessionPortalFallbackPage />} />
             <Route path="/coach-response-success" element={<CoachResponseSuccessPage />} />
