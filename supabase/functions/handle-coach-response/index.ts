@@ -95,7 +95,12 @@ serve(async (req) => {
     console.log('Final client details - Email:', clientEmail, 'Name:', clientName, 'Coach:', coachName);
 
     // Generate comprehensive coach email content
-    const generateCoachEmailContent = (action: string) => {
+    const generateCoachEmailContent = (action: string, session: any, sessionUrl: string) => {
+      const scheduledTime = new Date(session.scheduled_time);
+      const now = new Date();
+      const minutesUntilSession = Math.floor((scheduledTime.getTime() - now.getTime()) / (1000 * 60));
+      const isImmediate = minutesUntilSession <= 30;
+
       const clientGoal = clientInsights?.selected_goal;
       const responses = clientInsights?.responses || [];
       const analysis = clientInsights?.ai_analysis?.analysis || '';
@@ -139,10 +144,7 @@ serve(async (req) => {
         </div>
       ` : '';
 
-      // Use the actual React app URL for the portal
-      const portalUrl = 'https://nqoysxjjimvihcvfpesr.lovable.app/session-portal';
-
-      if (action === 'accept') {
+      if (action === 'accept' || action.startsWith('accept_')) {
         return `
           <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
             <div style="text-align: center; margin-bottom: 30px;">
@@ -155,18 +157,28 @@ serve(async (req) => {
             ${insightsSection}
             ${starterQuestions}
 
-            <div style="background: #f1f5f9; border-radius: 8px; padding: 20px; margin: 24px 0; text-align: center;">
-              <h3 style="margin: 0 0 12px 0; color: #334155;">🎥 Session Access</h3>
-              <p style="margin: 0 0 16px 0; color: #64748b; font-size: 14px;">
-                ${sessionData.status === 'confirmed' 
-                  ? 'The client will receive their session link shortly. You can access your session portal here:'
-                  : `Session scheduled for ${new Date(sessionData.scheduled_time).toLocaleString()}. Both you and the client will receive session links closer to the appointment time.`
-                }
+            ${isImmediate ? `
+            <div style="background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%); border-radius: 12px; padding: 30px; margin: 24px 0; text-align: center; box-shadow: 0 4px 20px rgba(220, 38, 38, 0.3);">
+              <h2 style="color: white; margin: 0 0 10px 0; font-size: 24px;">🔴 IMMEDIATE SESSION</h2>
+              <p style="color: rgba(255,255,255,0.95); margin: 0 0 16px 0; font-size: 14px;">
+                Client is waiting online • Session ID: ${session.id.slice(0, 8)}...
               </p>
-              ${sessionData.status === 'confirmed' ? `
-                <a href="${portalUrl}" style="background: #3b82f6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; display: inline-block; font-weight: 600;">Access Session Portal</a>
-              ` : ''}
+              <a href="${sessionUrl}" style="display: inline-block; padding: 16px 40px; background: white; color: #dc2626; text-decoration: none; border-radius: 8px; font-weight: 700; font-size: 18px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);">
+                🎥 Join Session Now
+              </a>
             </div>
+            ` : `
+            <div style="background: #f1f5f9; border-radius: 8px; padding: 20px; margin: 24px 0; text-align: center;">
+              <h3 style="margin: 0 0 12px 0; color: #334155;">🎥 Session Link</h3>
+              <p style="margin: 0 0 8px 0; color: #64748b; font-size: 14px;">
+                Session ID: ${session.id.slice(0, 8)}...
+              </p>
+              <p style="margin: 0 0 16px 0; color: #64748b; font-size: 14px;">
+                You'll receive a reminder email 10 minutes before the session
+              </p>
+              <a href="${sessionUrl}" style="background: #3b82f6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; display: inline-block; font-weight: 600;">View Session Details →</a>
+            </div>
+            `}
 
             <div style="background: #f8fafc; border-radius: 8px; padding: 16px; margin: 16px 0;">
               <h4 style="margin: 0 0 8px 0; color: #374151;">💡 Coaching Tips</h4>
@@ -301,10 +313,11 @@ serve(async (req) => {
       }
     }
 
-    // Send coach confirmation email
+    // Send coach confirmation email with session link
     if (sessionData.coach?.notification_email) {
       try {
-        const coachEmailContent = generateCoachEmailContent(action);
+        const sessionUrl = `https://nqoysxjjimvihcvfpesr.lovable.app/session-portal/${sessionId}`;
+        const coachEmailContent = generateCoachEmailContent(action, sessionData, sessionUrl);
         if (coachEmailContent) {
           const coachEmailResult = await resend.emails.send({
             from: 'Lovable Coach <onboarding@resend.dev>',

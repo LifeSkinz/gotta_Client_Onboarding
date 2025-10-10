@@ -145,6 +145,11 @@ const generateCoachEmailTemplate = (session: any, client: any, coach: any, goals
             </div>
           </div>
 
+          <div style="background: #e6fffa; border-radius: 8px; padding: 20px; margin: 20px 0;">
+            <p style="margin: 0 0 10px 0; color: #2c7a7b; font-weight: 600;">📧 After You Accept:</p>
+            <p style="margin: 0; color: #2d3748;">You'll receive a confirmation email with the session link immediately. For scheduled sessions, you'll also get a reminder 10 minutes before the session starts.</p>
+          </div>
+
           <div class="action-buttons">
             <a href="https://nqoysxjjimvihcvfpesr.supabase.co/functions/v1/handle-coach-response?action=accept&sessionId=${session.id}" class="btn btn-primary">
               ✅ Accept - Ready Now

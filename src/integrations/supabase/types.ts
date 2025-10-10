@@ -803,6 +803,7 @@ export type Database = {
           participant_status: Json | null
           price_amount: number | null
           price_currency: string | null
+          reminder_sent_at: string | null
           resource_usage: Json | null
           retry_count: number | null
           scheduled_time: string
@@ -829,6 +830,7 @@ export type Database = {
           participant_status?: Json | null
           price_amount?: number | null
           price_currency?: string | null
+          reminder_sent_at?: string | null
           resource_usage?: Json | null
           retry_count?: number | null
           scheduled_time: string
@@ -855,6 +857,7 @@ export type Database = {
           participant_status?: Json | null
           price_amount?: number | null
           price_currency?: string | null
+          reminder_sent_at?: string | null
           resource_usage?: Json | null
           retry_count?: number | null
           scheduled_time?: string
@@ -1030,6 +1033,48 @@ export type Database = {
         }
         Relationships: []
       }
+      user_goals: {
+        Row: {
+          category: string
+          created_at: string
+          description: string | null
+          id: string
+          progress_percentage: number | null
+          source_session_id: string | null
+          status: string
+          target_date: string | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          progress_percentage?: number | null
+          source_session_id?: string | null
+          status?: string
+          target_date?: string | null
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          progress_percentage?: number | null
+          source_session_id?: string | null
+          status?: string
+          target_date?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_responses: {
         Row: {
           ai_analysis: Json | null
@@ -1068,6 +1113,59 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      user_tasks: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          description: string | null
+          due_date: string | null
+          goal_id: string | null
+          id: string
+          is_completed: boolean | null
+          priority: string
+          session_id: string | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          goal_id?: string | null
+          id?: string
+          is_completed?: boolean | null
+          priority?: string
+          session_id?: string | null
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          goal_id?: string | null
+          id?: string
+          is_completed?: boolean | null
+          priority?: string
+          session_id?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_tasks_goal_id_fkey"
+            columns: ["goal_id"]
+            isOneToOne: false
+            referencedRelation: "user_goals"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_wallets: {
         Row: {
