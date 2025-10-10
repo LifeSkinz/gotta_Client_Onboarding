@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useSessionManager } from './useSessionManager';
 import { logger } from '@/services/logger';
 import { config } from '@/config';
+import { getStats } from 'webrtc-stats-gatherer';
 
 interface UseVideoSessionOptions {
   onSessionEnd?: () => void;
@@ -83,18 +84,34 @@ export const useVideoSession = (
     }
   };
 
+  // Map WebRTC stats to connection quality levels
+  const mapConnectionQuality = (stats: any): 'good' | 'fair' | 'poor' => {
+    if (stats.connectionQuality === 'excellent' || stats.connectionQuality === 'good') {
+      return 'good';
+    } else if (stats.connectionQuality === 'fair') {
+      return 'fair';
+    } else {
+      return 'poor';
+    }
+  };
+
   // Monitor connection quality
   useEffect(() => {
-    if (!isConnected) return;
+    if (!isConnected || !videoUrl) return;
 
-    const monitor = setInterval(() => {
-      // This is a simplified example - implement actual connection quality monitoring
-      const quality = Math.random() > 0.8 ? 'fair' : 'good';
-      setConnectionQuality(quality);
+    const monitor = setInterval(async () => {
+      try {
+        const stats = await getStats();
+        const quality = mapConnectionQuality(stats);
+        setConnectionQuality(quality);
+      } catch (error) {
+        logger.error('Failed to gather connection stats', { error });
+        setConnectionQuality('poor');
+      }
     }, 10000);
 
     return () => clearInterval(monitor);
-  }, [isConnected]);
+  }, [isConnected, videoUrl]);
 
   // Auto-cleanup on unmount
   useEffect(() => {

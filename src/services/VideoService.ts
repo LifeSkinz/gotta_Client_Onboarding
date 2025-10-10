@@ -2,6 +2,7 @@ import { createClient } from '@supabase/supabase-js';
 import { LRUCache } from 'lru-cache';
 import { v4 as uuidv4 } from 'uuid';
 import { logger } from './logger';
+import dns from 'dns/promises';
 
 interface VideoRoomResult {
   success: boolean;
@@ -91,10 +92,28 @@ export class VideoService {
     }
   }
 
+  private async isDomainReachable(domain: string): Promise<boolean> {
+    try {
+      const addresses = await dns.resolve(domain);
+      return addresses && addresses.length > 0;
+    } catch (error) {
+      logger.error('Domain resolution failed', { domain, error });
+      return false;
+    }
+  }
+
   private async createFallbackRoom(sessionId: string, options: VideoRoomOptions): Promise<VideoRoomResult> {
     try {
       const fallbackRoomId = `fallback-${sessionId}-${Date.now()}`;
-      const fallbackRoomUrl = `https://meet.videosdk.live/${fallbackRoomId}`;
+      const fallbackDomain = 'meet.videosdk.live';
+
+      // Validate fallback domain
+      const isReachable = await this.isDomainReachable(fallbackDomain);
+      if (!isReachable) {
+        throw new Error(`Fallback domain ${fallbackDomain} is not reachable`);
+      }
+
+      const fallbackRoomUrl = `https://${fallbackDomain}/${fallbackRoomId}`;
 
       // Update session with fallback room details
       await this.supabase
