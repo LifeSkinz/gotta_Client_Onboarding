@@ -87,6 +87,7 @@ export default function SessionPortalPage() {
         .from('sessions')
         .select(`
           *,
+          session_video_details(video_join_url, video_room_id),
           coaches (
             name,
             title,
@@ -196,7 +197,6 @@ export default function SessionPortalPage() {
       });
       
       setInSession(true);
-    }
     } catch (error) {
       console.error('Error creating video room:', error);
       toast({

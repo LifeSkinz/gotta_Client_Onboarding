@@ -79,18 +79,32 @@ serve(async (req) => {
     const videoRoomId = `room_${sessionData.id}_${Date.now()}`;
     const videoLink = `https://meet.videosdk.live/${videoRoomId}`;
 
-    // Update session with video details
-    const { error: updateError } = await supabase
+    // Update session status
+    const { error: statusError } = await supabase
       .from('sessions')
       .update({
-        video_room_id: videoRoomId,
-        video_join_url: videoLink,
         status: 'ready'
       })
       .eq('id', sessionData.id);
 
-    if (updateError) {
-      throw new Error(`Failed to update session with video details: ${updateError.message}`);
+    if (statusError) {
+      console.error('Warning: Failed to update session status:', statusError);
+    }
+
+    // Upsert video details into session_video_details table
+    const { error: videoDetailsError } = await supabase
+      .from('session_video_details')
+      .upsert({
+        session_id: sessionData.id,
+        video_room_id: videoRoomId,
+        video_join_url: videoLink,
+        updated_at: new Date().toISOString()
+      }, {
+        onConflict: 'session_id'
+      });
+
+    if (videoDetailsError) {
+      throw new Error(`Failed to save video details: ${videoDetailsError.message}`);
     }
 
     // Update connection request if applicable

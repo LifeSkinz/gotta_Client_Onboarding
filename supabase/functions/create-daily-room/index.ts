@@ -60,11 +60,6 @@ serve(async (req) => {
         name: `session-${sessionId}-${Date.now()}`,
         properties: {
           enable_recording: true,
-          enable_transcription: true,
-          transcription: {
-            tier: 'basic',
-            language: 'en'
-          },
           max_participants: 2,
           start_video_off: false,
           start_audio_off: false,
@@ -101,19 +96,33 @@ serve(async (req) => {
       roomUrl = `https://meet.videosdk.live/${roomName}`;
     }
 
-    // Update session with video details
-    const { error: updateError } = await supabase
+    // Update session state
+    const { error: stateUpdateError } = await supabase
       .from('sessions')
       .update({
-        video_room_id: roomName,
-        video_join_url: roomUrl,
         session_state: 'ready',
         updated_at: new Date().toISOString()
       })
       .eq('id', sessionId);
 
-    if (updateError) {
-      throw new Error(`Failed to update session: ${updateError.message}`);
+    if (stateUpdateError) {
+      console.error('Warning: Failed to update session state:', stateUpdateError);
+    }
+
+    // Upsert video details into session_video_details table
+    const { error: videoDetailsError } = await supabase
+      .from('session_video_details')
+      .upsert({
+        session_id: sessionId,
+        video_room_id: roomName,
+        video_join_url: roomUrl,
+        updated_at: new Date().toISOString()
+      }, {
+        onConflict: 'session_id'
+      });
+
+    if (videoDetailsError) {
+      throw new Error(`Failed to save video details: ${videoDetailsError.message}`);
     }
 
     // Initialize transcription status
