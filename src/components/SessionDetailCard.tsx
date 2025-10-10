@@ -142,7 +142,7 @@ export const SessionDetailCard = ({ session }: SessionDetailCardProps) => {
 
   const handlePortalAccess = () => {
     // Always allow portal access for better UX
-    window.location.href = `/session/${session.id}`;
+    window.location.href = `/session-portal/${session.id}`;
   };
 
   const getSessionTitle = () => {
