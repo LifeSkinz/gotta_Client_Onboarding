@@ -20,6 +20,10 @@ interface Session {
   status: string;
   video_join_url?: string;
   video_room_id?: string;
+  session_video_details?: {
+    video_join_url?: string;
+    video_room_id?: string;
+  };
   coaches: {
     name: string;
     title: string;
@@ -210,10 +214,31 @@ export default function SessionPortalPage() {
   };
 
   const handleJoinSession = async () => {
-    if (session?.video_join_url) {
-      setInSession(true);
-    } else {
+    try {
+      setCreatingRoom(true);
+      
+      // Check if video URL already exists - extract from nested structure
+      const existingVideoUrl = session?.session_video_details?.video_join_url || session?.video_join_url;
+      
+      if (existingVideoUrl) {
+        console.log('Using existing video room', { sessionId, videoUrl: existingVideoUrl });
+        setSession(prev => prev ? { ...prev, video_join_url: existingVideoUrl } : null);
+        setInSession(true);
+        return;
+      }
+      
+      // Only create new room if no URL exists
+      console.log('Creating new video room', { sessionId });
       await createVideoRoom();
+    } catch (error) {
+      console.error('Failed to join session', { error, sessionId });
+      toast({
+        title: "Error",
+        description: "Failed to join session. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setCreatingRoom(false);
     }
   };
 
@@ -275,7 +300,10 @@ export default function SessionPortalPage() {
   }
 
   // If user is in session, show video interface
-  if (inSession && session.video_join_url) {
+  // Extract video URL from nested structure or direct property
+  const videoUrl = session?.session_video_details?.video_join_url || session?.video_join_url;
+  
+  if (inSession && videoUrl) {
     return (
       <VideoSessionInterface
         sessionId={session.id}
@@ -283,7 +311,7 @@ export default function SessionPortalPage() {
         clientId={session.client_id}
         scheduledTime={session.scheduled_time}
         duration={session.duration_minutes}
-        videoUrl={session.video_join_url}
+        videoUrl={videoUrl}
         onSessionEnd={handleSessionEnd}
       />
     );

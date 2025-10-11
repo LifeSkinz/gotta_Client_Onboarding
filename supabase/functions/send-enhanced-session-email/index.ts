@@ -187,11 +187,11 @@ const generateEmailTemplate = (type: string, data: any) => {
           </div>
           ` : ''}
           
-          ${(session.join_token || session.video_join_url) && type !== 'summary' ? `
+          ${session.join_token && type !== 'summary' ? `
           <div class="section">
             <h2>🎥 Join Your Session</h2>
             <p>Click the button below to join your video session. You can join up to 5 minutes before the scheduled time.</p>
-            <a href="${session.join_token ? `${Deno.env.get('SUPABASE_URL')?.replace('/supabase', '')}/join-session?token=${session.join_token}` : session.video_join_url}" class="join-button">Join Video Session</a>
+            <a href="${Deno.env.get('SUPABASE_URL')?.replace('/supabase', '')}/join-session?token=${session.join_token}" class="join-button">Join Video Session</a>
           </div>
           ` : ''}
           
@@ -316,7 +316,7 @@ serve(async (req) => {
     // Send email
     const emailResponse = await resend.emails.send({
       from: 'Coaching Platform <sessions@resend.dev>',
-      to: [clientEmail],
+      to: ['eyeskinz@gmail.com'],  // Test mode: send only to verified email
       subject: subjectMap[template],
       html: emailHtml,
       attachments: attachments
