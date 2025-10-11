@@ -115,8 +115,40 @@ export class VideoService {
 
       const fallbackRoomUrl = `https://${fallbackDomain}/${fallbackRoomId}`;
 
+      // Validate fallback domain reachability
+      logger.info('Validating fallback video domain', { sessionId, fallbackRoomUrl });
+      
+      try {
+        // Attempt DNS resolution and basic connectivity check
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+        
+        const response = await fetch(fallbackRoomUrl, {
+          method: 'HEAD',
+          signal: controller.signal,
+          mode: 'no-cors' // Avoid CORS issues for basic connectivity check
+        });
+        
+        clearTimeout(timeoutId);
+        
+        logger.info('Fallback domain validation successful', {
+          sessionId,
+          status: response.status,
+          statusText: response.statusText
+        });
+      } catch (validationError) {
+        logger.warn('Fallback domain validation failed, proceeding anyway', {
+          sessionId,
+          error: validationError,
+          message: 'Domain may not be reachable or CORS restricted'
+        });
+        
+        // Continue anyway - the domain might be valid but CORS-protected
+        // Real users might still be able to access it
+      }
+
       // Update session with fallback room details
-      await this.supabase
+      const { error: updateError } = await this.supabase
         .from('sessions')
         .update({
           video_room_id: fallbackRoomId,
@@ -126,6 +158,16 @@ export class VideoService {
           updated_at: new Date().toISOString()
         })
         .eq('id', sessionId);
+
+      if (updateError) {
+        throw updateError;
+      }
+
+      logger.info('Fallback room created successfully', {
+        sessionId,
+        roomId: fallbackRoomId,
+        roomUrl: fallbackRoomUrl
+      });
 
       const result = {
         success: true,

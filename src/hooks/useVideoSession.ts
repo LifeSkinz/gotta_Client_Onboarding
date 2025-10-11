@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useSessionManager } from './useSessionManager';
 import { logger } from '@/services/logger';
 import { config } from '@/config';
-import { getStats } from 'webrtc-stats-gatherer';
+import StatsGatherer from 'webrtc-stats-gatherer';
 
 interface UseVideoSessionOptions {
   onSessionEnd?: () => void;
@@ -84,6 +84,28 @@ export const useVideoSession = (
     }
   };
 
+  // Update StatsGatherer instantiation to include RTCPeerConnection
+  const statsGatherer = new StatsGatherer(new RTCPeerConnection(), {
+    session: sessionId,
+    logger: console,
+  });
+
+  // Add event listeners for StatsGatherer
+  useEffect(() => {
+    if (!statsGatherer) return;
+
+    const handleStats = (statsEvent) => {
+      const quality = mapConnectionQuality(statsEvent);
+      setConnectionQuality(quality);
+    };
+
+    statsGatherer.on('stats', handleStats);
+
+    return () => {
+      statsGatherer.off('stats', handleStats);
+    };
+  }, [statsGatherer]);
+
   // Map WebRTC stats to connection quality levels
   const mapConnectionQuality = (stats: any): 'good' | 'fair' | 'poor' => {
     if (stats.connectionQuality === 'excellent' || stats.connectionQuality === 'good') {
@@ -99,15 +121,8 @@ export const useVideoSession = (
   useEffect(() => {
     if (!isConnected || !videoUrl) return;
 
-    const monitor = setInterval(async () => {
-      try {
-        const stats = await getStats();
-        const quality = mapConnectionQuality(stats);
-        setConnectionQuality(quality);
-      } catch (error) {
-        logger.error('Failed to gather connection stats', { error });
-        setConnectionQuality('poor');
-      }
+    const monitor = setInterval(() => {
+      // Connection quality updates are now handled via the stats event
     }, 10000);
 
     return () => clearInterval(monitor);
