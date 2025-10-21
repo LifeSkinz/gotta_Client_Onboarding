@@ -14,7 +14,7 @@ import {
   Phone,
   PhoneOff,
   Users,
-  Recording,
+  Circle,
   MessageSquare
 } from 'lucide-react';
 
@@ -316,7 +316,7 @@ export const DailyCoVideoCall: React.FC<DailyCoVideoCallProps> = ({
               size="sm"
               onClick={handleToggleRecording}
             >
-              <Recording className="h-4 w-4" />
+              <Circle className="h-4 w-4" fill={isRecording ? "currentColor" : "none"} />
             </Button>
             
             <Button
