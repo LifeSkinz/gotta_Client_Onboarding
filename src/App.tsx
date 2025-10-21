@@ -19,6 +19,8 @@ import { PaymentCancelledPage } from "./pages/PaymentCancelledPage";
 import CoachResponseSuccessPage from "./pages/CoachResponseSuccessPage";
 import SessionPortalFallbackPage from "./pages/SessionPortalFallbackPage";
 import ProfilePage from "./pages/ProfilePage";
+import CoachResponsePage from "./pages/CoachResponsePage";
+import CoachSessionLandingPage from "./pages/CoachSessionLandingPage";
 import { JoinSessionRedirect } from "./components/JoinSessionRedirect";
 
 const queryClient = new QueryClient();
@@ -42,6 +44,8 @@ const App = () => (
             <Route path="/session-portal/:sessionId" element={<SessionPortalPage />} />
             <Route path="/session-portal" element={<SessionPortalFallbackPage />} />
             <Route path="/coach-response-success" element={<CoachResponseSuccessPage />} />
+            <Route path="/coach-response" element={<CoachResponsePage />} />
+            <Route path="/coach-session/:sessionId" element={<CoachSessionLandingPage />} />
             <Route path="/payment-success" element={<PaymentSuccessPage />} />
             <Route path="/payment-cancelled" element={<PaymentCancelledPage />} />
             <Route path="/join-session" element={<JoinSessionRedirect />} />

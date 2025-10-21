@@ -320,7 +320,7 @@ serve(async (req) => {
     // Send coach confirmation email with session link
     if (sessionData.coach?.notification_email) {
       try {
-        const baseUrl = 'https://nqoysxjjimvihcvfpesr.lovable.app';
+        const baseUrl = 'https://your-actual-website.com'; // Replace with your actual website URL
         const videoUrl = sessionData.session_video_details?.[0]?.video_join_url;
         const sessionUrl = videoUrl || `${baseUrl}/session-portal/${sessionId}`;
         console.log('Coach email session URL:', sessionUrl);
@@ -343,7 +343,7 @@ serve(async (req) => {
     return new Response(null, {
       status: 302,
       headers: {
-        'Location': `https://nqoysxjjimvihcvfpesr.lovable.app/coach-response-success?action=${action}`,
+        'Location': `https://your-actual-website.com/coach-response-success?action=${action}`,
         ...corsHeaders
       }
     });

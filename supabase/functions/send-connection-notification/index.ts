@@ -81,9 +81,10 @@ function generateFallbackEmail(context: any) {
 }
 
 function generatePremiumEmailTemplate(context: any, personalizedContent: string) {
-  const acceptUrl = `https://nqoysxjjimvihcvfpesr.supabase.co/functions/v1/handle-coach-response?action=accept&sessionId=${context.sessionId}`;
-  const declineUrl = `https://nqoysxjjimvihcvfpesr.supabase.co/functions/v1/handle-coach-response?action=decline&sessionId=${context.sessionId}`;
-  const rescheduleUrl = `https://nqoysxjjimvihcvfpesr.supabase.co/functions/v1/handle-coach-response?action=reschedule&sessionId=${context.sessionId}`;
+  const baseUrl = 'https://your-actual-website.com'; // Replace with your actual website URL
+  const acceptUrl = `${baseUrl}/coach-response?action=accept&sessionId=${context.sessionId}`;
+  const declineUrl = `${baseUrl}/coach-response?action=decline&sessionId=${context.sessionId}`;
+  const rescheduleUrl = `${baseUrl}/coach-response?action=reschedule&sessionId=${context.sessionId}`;
   
   return `<!DOCTYPE html>
 <html lang="en">
@@ -487,9 +488,10 @@ serve(async (req) => {
     const aiEmailContent = await generateAIEmail(emailContext);
 
     // Create action URLs for coach responses
-    const acceptUrl = `https://nqoysxjjimvihcvfpesr.supabase.co/functions/v1/handle-coach-response?action=accept&sessionId=${sessionId}`;
-    const declineUrl = `https://nqoysxjjimvihcvfpesr.supabase.co/functions/v1/handle-coach-response?action=decline&sessionId=${sessionId}`;
-    const rescheduleUrl = `https://nqoysxjjimvihcvfpesr.supabase.co/functions/v1/handle-coach-response?action=reschedule&sessionId=${sessionId}`;
+    const baseUrl = 'https://your-actual-website.com'; // Replace with your actual website URL
+    const acceptUrl = `${baseUrl}/coach-response?action=accept&sessionId=${sessionId}`;
+    const declineUrl = `${baseUrl}/coach-response?action=decline&sessionId=${sessionId}`;
+    const rescheduleUrl = `${baseUrl}/coach-response?action=reschedule&sessionId=${sessionId}`;
 
     const emailSubject = `${aiEmailContent.subject} - ${clientName}`;
     

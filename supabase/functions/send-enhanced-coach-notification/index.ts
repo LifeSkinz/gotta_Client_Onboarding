@@ -151,19 +151,19 @@ const generateCoachEmailTemplate = (session: any, client: any, coach: any, goals
           </div>
 
           <div class="action-buttons">
-            <a href="https://nqoysxjjimvihcvfpesr.supabase.co/functions/v1/handle-coach-response?action=accept&sessionId=${session.id}" class="btn btn-primary">
+            <a href="https://your-actual-website.com/coach-response?action=accept&sessionId=${session.id}" class="btn btn-primary">
               ✅ Accept - Ready Now
             </a>
-            <a href="https://nqoysxjjimvihcvfpesr.supabase.co/functions/v1/handle-coach-response?action=accept_5min&sessionId=${session.id}" class="btn btn-primary" style="background: #22c55e;">
+            <a href="https://your-actual-website.com/coach-response?action=accept_5min&sessionId=${session.id}" class="btn btn-primary" style="background: #22c55e;">
               ✅ Accept - Ready in 5 min
             </a>
-            <a href="https://nqoysxjjimvihcvfpesr.supabase.co/functions/v1/handle-coach-response?action=accept_10min&sessionId=${session.id}" class="btn btn-primary" style="background: #f59e0b;">
+            <a href="https://your-actual-website.com/coach-response?action=accept_10min&sessionId=${session.id}" class="btn btn-primary" style="background: #f59e0b;">
               ✅ Accept - Ready in 10 min
             </a>
-            <a href="https://nqoysxjjimvihcvfpesr.supabase.co/functions/v1/handle-coach-response?action=reschedule&sessionId=${session.id}" class="btn btn-secondary">
+            <a href="https://your-actual-website.com/coach-response?action=reschedule&sessionId=${session.id}" class="btn btn-secondary">
               📅 Request Reschedule
             </a>
-            <a href="https://nqoysxjjimvihcvfpesr.supabase.co/functions/v1/handle-coach-response?action=decline&sessionId=${session.id}" class="btn btn-danger">
+            <a href="https://your-actual-website.com/coach-response?action=decline&sessionId=${session.id}" class="btn btn-danger">
               ❌ Decline Session
             </a>
           </div>

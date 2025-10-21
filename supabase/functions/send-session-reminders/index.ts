@@ -163,7 +163,7 @@ serve(async (req) => {
 
     for (const session of sessions) {
       try {
-        const sessionUrl = `https://nqoysxjjimvihcvfpesr.lovable.app/session-portal/${session.id}`;
+        const sessionUrl = `https://your-actual-website.com/session-portal/${session.id}`;
 
         // Fetch client profile
         const { data: clientProfile } = await supabase
