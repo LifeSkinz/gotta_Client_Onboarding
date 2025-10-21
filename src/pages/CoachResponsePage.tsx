@@ -27,19 +27,19 @@ interface SessionData {
   session_state: string;
   client_id: string;
   coach_id: string;
-  clients: {
-    id: string;
-    full_name: string;
-    email: string;
+  notes?: string;
+  client_profile?: {
+    user_id: string;
+    full_name: string | null;
   };
-  coaches: {
+  coaches?: {
     id: string;
     name: string;
     specialties: string[];
   };
-  session_video_details: Array<{
-    video_join_url: string;
-    video_room_id: string;
+  session_video_details?: Array<{
+    video_join_url: string | null;
+    video_room_id: string | null;
   }>;
 }
 
@@ -75,11 +75,6 @@ export default function CoachResponsePage() {
         .from('sessions')
         .select(`
           *,
-          clients:client_id (
-            id,
-            full_name,
-            email
-          ),
           coaches:coach_id (
             id,
             name,
@@ -91,7 +86,19 @@ export default function CoachResponsePage() {
         .single();
 
       if (sessionError) throw sessionError;
-      setSession(sessionData);
+
+      // Fetch client profile separately
+      const { data: clientProfileData } = await supabase
+        .from('profiles')
+        .select('user_id, full_name')
+        .eq('user_id', sessionData.client_id)
+        .maybeSingle();
+
+      setSession({
+        ...sessionData,
+        client_profile: clientProfileData || undefined,
+        session_video_details: sessionData.session_video_details ? [sessionData.session_video_details].flat() : []
+      } as SessionData);
 
     } catch (err: any) {
       console.error('Error fetching session data:', err);
@@ -286,7 +293,7 @@ export default function CoachResponsePage() {
             <div className="flex items-center gap-2">
               <User className="h-4 w-4 text-muted-foreground" />
               <span className="font-medium">Client:</span>
-              <span>{session.clients?.full_name || 'Unknown'}</span>
+              <span>{session.client_profile?.full_name || 'Unknown'}</span>
             </div>
             
             <div className="flex items-center gap-2">
@@ -309,12 +316,11 @@ export default function CoachResponsePage() {
           </div>
 
           {/* Client Information */}
-          {session.clients && (
+          {session.client_profile && (
             <div className="border rounded-lg p-4">
               <h3 className="font-medium mb-2">Client Information</h3>
               <div className="space-y-1 text-sm text-muted-foreground">
-                <p><strong>Name:</strong> {session.clients.full_name}</p>
-                <p><strong>Email:</strong> {session.clients.email}</p>
+                <p><strong>Name:</strong> {session.client_profile.full_name}</p>
               </div>
             </div>
           )}

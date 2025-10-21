@@ -35,20 +35,23 @@ interface SessionData {
   price_amount: number;
   price_currency: string;
   coin_cost: number;
-  clients: {
-    id: string;
-    full_name: string;
-    email: string;
+  actual_start_time?: string;
+  actual_end_time?: string;
+  notes?: string;
+  client_profile?: {
+    user_id: string;
+    full_name: string | null;
   };
-  coaches: {
+  coaches?: {
     id: string;
     name: string;
     specialties: string[];
-    notification_email: string;
+    notification_email?: string;
   };
-  session_video_details: Array<{
-    video_join_url: string;
-    video_room_id: string;
+  session_video_details?: Array<{
+    video_join_url: string | null;
+    video_room_id: string | null;
+    recording_url?: string | null;
   }>;
 }
 
@@ -91,11 +94,6 @@ export default function CoachSessionLandingPage() {
         .from('sessions')
         .select(`
           *,
-          clients:client_id (
-            id,
-            full_name,
-            email
-          ),
           coaches:coach_id (
             id,
             name,
@@ -128,16 +126,24 @@ export default function CoachSessionLandingPage() {
       }
 
       setIsCoach(true);
-      setSession(sessionData);
 
       // Fetch client profile for additional context
-      const { data: profileData } = await supabase
+      const { data: clientProfileData } = await supabase
         .from('profiles')
         .select('*')
         .eq('user_id', sessionData.client_id)
-        .single();
+        .maybeSingle();
 
-      setClientProfile(profileData);
+      setClientProfile(clientProfileData);
+
+      setSession({
+        ...sessionData,
+        client_profile: clientProfileData ? {
+          user_id: clientProfileData.user_id,
+          full_name: clientProfileData.full_name
+        } : undefined,
+        session_video_details: sessionData.session_video_details ? [sessionData.session_video_details].flat() : []
+      } as SessionData);
 
       // Fetch client responses if available
       const { data: responsesData } = await supabase
@@ -165,15 +171,9 @@ export default function CoachSessionLandingPage() {
       setSavingNotes(true);
       
       const { error } = await supabase
-        .from('session_notes')
-        .upsert({
-          session_id: sessionId,
-          coach_id: session?.coach_id,
-          notes: sessionNotes.trim(),
-          updated_at: new Date().toISOString()
-        }, {
-          onConflict: 'session_id,coach_id'
-        });
+        .from('sessions')
+        .update({ notes: sessionNotes.trim() })
+        .eq('id', sessionId);
 
       if (error) throw error;
 
@@ -185,8 +185,8 @@ export default function CoachSessionLandingPage() {
     } catch (err: any) {
       console.error('Error saving notes:', err);
       toast({
-        title: "Error",
-        description: "Failed to save notes. Please try again.",
+        title: "Save Failed",
+        description: err.message,
         variant: "destructive",
       });
     } finally {
@@ -288,7 +288,7 @@ export default function CoachSessionLandingPage() {
           <div>
             <h1 className="text-3xl font-bold">Coach Session Dashboard</h1>
             <p className="text-muted-foreground">
-              Session with {session.clients?.full_name || 'Client'}
+              Session with {session.client_profile?.full_name || 'Client'}
             </p>
           </div>
           {getSessionStatusBadge(session.status, session.session_state)}
@@ -342,11 +342,7 @@ export default function CoachSessionLandingPage() {
               <CardContent className="space-y-4">
                 <div>
                   <label className="text-sm font-medium text-muted-foreground">Name</label>
-                  <p className="text-lg">{session.clients?.full_name || 'Not provided'}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">Email</label>
-                  <p className="text-lg">{session.clients?.email || 'Not provided'}</p>
+                  <p className="text-lg">{session.client_profile?.full_name || 'Not provided'}</p>
                 </div>
                 
                 {clientProfile?.bio && (
