@@ -17,7 +17,12 @@ import {
   Brain,
   Play,
   CheckCircle,
-  AlertCircle
+  AlertCircle,
+  Lightbulb,
+  TrendingUp,
+  ArrowRight,
+  MessageSquare,
+  Sparkles
 } from "lucide-react";
 import { format, isAfter, isBefore, addMinutes } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
@@ -45,11 +50,20 @@ interface SessionDetailCardProps {
 
 interface SessionExtendedData {
   goalTitle?: string;
+  goalDescription?: string;
   aiAnalysis?: any;
   transcript?: string;
   actionItems?: string[];
   insights?: any;
   sessionOutcome?: any;
+  // New fields from session analytics
+  keyBreakthroughs?: string[];
+  challengesFaced?: string[];
+  followUpNotes?: string;
+  progressNotes?: string;
+  nextSteps?: string;
+  barriersIdentified?: string[];
+  successFactors?: string[];
 }
 
 export const SessionDetailCard = ({ session }: SessionDetailCardProps) => {
@@ -92,6 +106,10 @@ export const SessionDetailCard = ({ session }: SessionDetailCardProps) => {
         goalTitle: responseData?.selected_goal && typeof responseData.selected_goal === 'object' 
           ? (responseData.selected_goal as any)?.title 
           : 'Coaching Session',
+        goalDescription: analyticsData?.goal_description || 
+          (responseData?.selected_goal && typeof responseData.selected_goal === 'object' 
+            ? (responseData.selected_goal as any)?.description 
+            : undefined),
         aiAnalysis: responseData?.ai_analysis,
         transcript: recordingData?.transcript,
         actionItems: analyticsData?.action_items || [],
@@ -100,7 +118,15 @@ export const SessionDetailCard = ({ session }: SessionDetailCardProps) => {
           keyTopics: recordingData?.key_topics || [],
           personalityInsights: recordingData?.personality_insights
         },
-        sessionOutcome: analyticsData
+        sessionOutcome: analyticsData,
+        // New fields from session analytics
+        keyBreakthroughs: analyticsData?.key_breakthroughs || [],
+        challengesFaced: analyticsData?.challenges_faced || [],
+        followUpNotes: analyticsData?.follow_up_notes,
+        progressNotes: analyticsData?.progress_notes,
+        nextSteps: analyticsData?.next_steps,
+        barriersIdentified: analyticsData?.barriers_identified || [],
+        successFactors: analyticsData?.success_factors || []
       });
     } catch (error) {
       console.error('Error fetching extended session data:', error);
@@ -252,7 +278,7 @@ export const SessionDetailCard = ({ session }: SessionDetailCardProps) => {
                   </div>
                 ) : (
                   <>
-                    {/* Session Goal */}
+                    {/* Session Focus */}
                     {extendedData.goalTitle && (
                       <div className="space-y-2">
                         <div className="flex items-center gap-2 font-medium text-sm">
@@ -263,57 +289,26 @@ export const SessionDetailCard = ({ session }: SessionDetailCardProps) => {
                       </div>
                     )}
 
-                    {/* Action Items */}
-                    {extendedData.actionItems && extendedData.actionItems.length > 0 && (
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-2 font-medium text-sm">
-                          <CheckCircle className="h-4 w-4" />
-                          Action Items
-                        </div>
-                        <ul className="text-sm pl-6 space-y-1">
-                          {extendedData.actionItems.map((item, index) => (
-                            <li key={index} className="flex items-start gap-2">
-                              <span className="text-muted-foreground">•</span>
-                              {item}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-
-                    {/* Key Topics */}
-                    {extendedData.insights?.keyTopics && extendedData.insights.keyTopics.length > 0 && (
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-2 font-medium text-sm">
-                          <Brain className="h-4 w-4" />
-                          Key Topics Discussed
-                        </div>
-                        <div className="pl-6 flex flex-wrap gap-2">
-                          {extendedData.insights.keyTopics.map((topic: string, index: number) => (
-                            <Badge key={index} variant="secondary" className="text-xs">
-                              {topic}
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* AI Summary */}
-                    {extendedData.insights?.summary && (
+                    {/* Goal Description */}
+                    {extendedData.goalDescription && extendedData.goalDescription !== extendedData.goalTitle && (
                       <div className="space-y-2">
                         <div className="flex items-center gap-2 font-medium text-sm">
                           <FileText className="h-4 w-4" />
-                          Session Summary
+                          Goal Description
                         </div>
                         <p className="text-sm pl-6 text-muted-foreground">
-                          {extendedData.insights.summary}
+                          {extendedData.goalDescription}
                         </p>
                       </div>
                     )}
 
-                    {/* Session Rating */}
+                    {/* Session Ratings - Prominent Display */}
                     {extendedData.sessionOutcome && (
                       <div className="space-y-2 pt-2 border-t">
+                        <div className="flex items-center gap-2 font-medium text-sm mb-3">
+                          <CheckCircle className="h-4 w-4" />
+                          Session Ratings
+                        </div>
                         <div className="grid grid-cols-3 gap-4 text-center">
                           {extendedData.sessionOutcome.session_satisfaction_rating && (
                             <div>
@@ -340,6 +335,167 @@ export const SessionDetailCard = ({ session }: SessionDetailCardProps) => {
                             </div>
                           )}
                         </div>
+                      </div>
+                    )}
+
+                    <Separator />
+
+                    {/* What Was Discussed Section */}
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2 font-medium text-sm">
+                        <Brain className="h-4 w-4" />
+                        What Was Discussed
+                      </div>
+
+                      {/* AI Summary */}
+                      {extendedData.insights?.summary && (
+                        <div className="pl-6">
+                          <p className="text-sm text-muted-foreground">
+                            {extendedData.insights.summary}
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Key Topics */}
+                      {extendedData.insights?.keyTopics && extendedData.insights.keyTopics.length > 0 && (
+                        <div className="pl-6">
+                          <div className="flex flex-wrap gap-2">
+                            {extendedData.insights.keyTopics.map((topic: string, index: number) => (
+                              <Badge key={index} variant="secondary" className="text-xs">
+                                {topic}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Key Breakthroughs */}
+                    {extendedData.keyBreakthroughs && extendedData.keyBreakthroughs.length > 0 && (
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2 font-medium text-sm">
+                          <Sparkles className="h-4 w-4 text-yellow-500" />
+                          Key Breakthroughs
+                        </div>
+                        <ul className="text-sm pl-6 space-y-1">
+                          {extendedData.keyBreakthroughs.map((breakthrough, index) => (
+                            <li key={index} className="flex items-start gap-2">
+                              <span className="text-yellow-500">✨</span>
+                              {breakthrough}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {/* Challenges Faced */}
+                    {extendedData.challengesFaced && extendedData.challengesFaced.length > 0 && (
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2 font-medium text-sm">
+                          <AlertCircle className="h-4 w-4 text-orange-500" />
+                          Challenges Faced
+                        </div>
+                        <ul className="text-sm pl-6 space-y-1">
+                          {extendedData.challengesFaced.map((challenge, index) => (
+                            <li key={index} className="flex items-start gap-2">
+                              <span className="text-orange-500">⚠️</span>
+                              {challenge}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {/* Action Items */}
+                    {extendedData.actionItems && extendedData.actionItems.length > 0 && (
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2 font-medium text-sm">
+                          <CheckCircle className="h-4 w-4 text-green-500" />
+                          Action Items
+                        </div>
+                        <ul className="text-sm pl-6 space-y-1">
+                          {extendedData.actionItems.map((item, index) => (
+                            <li key={index} className="flex items-start gap-2">
+                              <span className="text-green-500">✓</span>
+                              {item}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {/* Progress Notes */}
+                    {extendedData.progressNotes && (
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2 font-medium text-sm">
+                          <TrendingUp className="h-4 w-4 text-blue-500" />
+                          Progress Notes
+                        </div>
+                        <p className="text-sm pl-6 text-muted-foreground">
+                          {extendedData.progressNotes}
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Next Steps */}
+                    {extendedData.nextSteps && (
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2 font-medium text-sm">
+                          <ArrowRight className="h-4 w-4 text-purple-500" />
+                          Next Steps
+                        </div>
+                        <p className="text-sm pl-6 text-muted-foreground">
+                          {extendedData.nextSteps}
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Session Notes/Comments */}
+                    {extendedData.followUpNotes && (
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2 font-medium text-sm">
+                          <MessageSquare className="h-4 w-4 text-gray-500" />
+                          Session Notes
+                        </div>
+                        <p className="text-sm pl-6 text-muted-foreground">
+                          {extendedData.followUpNotes}
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Success Factors */}
+                    {extendedData.successFactors && extendedData.successFactors.length > 0 && (
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2 font-medium text-sm">
+                          <Lightbulb className="h-4 w-4 text-green-600" />
+                          Success Factors
+                        </div>
+                        <ul className="text-sm pl-6 space-y-1">
+                          {extendedData.successFactors.map((factor, index) => (
+                            <li key={index} className="flex items-start gap-2">
+                              <span className="text-green-600">💡</span>
+                              {factor}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {/* Barriers Identified */}
+                    {extendedData.barriersIdentified && extendedData.barriersIdentified.length > 0 && (
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2 font-medium text-sm">
+                          <AlertCircle className="h-4 w-4 text-red-500" />
+                          Barriers Identified
+                        </div>
+                        <ul className="text-sm pl-6 space-y-1">
+                          {extendedData.barriersIdentified.map((barrier, index) => (
+                            <li key={index} className="flex items-start gap-2">
+                              <span className="text-red-500">🚧</span>
+                              {barrier}
+                            </li>
+                          ))}
+                        </ul>
                       </div>
                     )}
 
