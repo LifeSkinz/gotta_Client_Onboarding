@@ -40,10 +40,6 @@ export const useDailyCo = (config: DailyCoConfig, events?: DailyCoEvents) => {
       showParticipantsBar: true,
       userName: config.userName || 'Anonymous',
       userData: config.userData || {},
-      startVideoOff: config.startVideoOff || false,
-      startAudioOff: config.startAudioOff || false,
-      enableScreenShare: config.enableScreenShare || true,
-      enableChat: config.enableChat || true,
     });
 
     callObjectRef.current = callObject;
