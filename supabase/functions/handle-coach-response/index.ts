@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { Resend } from 'npm:resend@2.0.0';
+import { CONFIG } from '../_shared/config.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -343,7 +344,7 @@ serve(async (req) => {
     return new Response(null, {
       status: 302,
       headers: {
-        'Location': `https://your-actual-website.com/coach-response-success?action=${action}`,
+        'Location': `${CONFIG.WEBSITE_URL}/coach-response-success?action=${action}`,
         ...corsHeaders
       }
     });

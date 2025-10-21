@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 import { 
   Calendar, 
   Clock, 
@@ -55,6 +56,7 @@ export default function CoachSessionLandingPage() {
   const { sessionId } = useParams<{ sessionId: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user } = useAuth();
   
   const [session, setSession] = useState<SessionData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -63,12 +65,22 @@ export default function CoachSessionLandingPage() {
   const [savingNotes, setSavingNotes] = useState(false);
   const [clientProfile, setClientProfile] = useState<any>(null);
   const [clientResponses, setClientResponses] = useState<any>(null);
+  const [isCoach, setIsCoach] = useState(false);
 
   useEffect(() => {
-    if (sessionId) {
-      fetchSessionData();
-    }
-  }, [sessionId]);
+    const checkCoachAccess = async () => {
+      if (!user) {
+        navigate('/auth?redirect=/coach-session/' + sessionId);
+        return;
+      }
+
+      if (sessionId) {
+        await fetchSessionData();
+      }
+    };
+
+    checkCoachAccess();
+  }, [sessionId, user, navigate]);
 
   const fetchSessionData = async () => {
     try {
@@ -97,6 +109,25 @@ export default function CoachSessionLandingPage() {
 
       if (sessionError) throw sessionError;
 
+      // Verify user is the coach for this session
+      const { data: coachCheck } = await supabase
+        .from('coaches')
+        .select('id')
+        .eq('user_id', user?.id)
+        .eq('id', sessionData.coach_id)
+        .single();
+
+      if (!coachCheck) {
+        toast({
+          title: "Access Denied",
+          description: "You don't have permission to view this session.",
+          variant: "destructive"
+        });
+        navigate('/');
+        return;
+      }
+
+      setIsCoach(true);
       setSession(sessionData);
 
       // Fetch client profile for additional context

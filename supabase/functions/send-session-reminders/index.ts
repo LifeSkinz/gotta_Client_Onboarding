@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { Resend } from 'npm:resend@2.0.0';
+import { CONFIG } from '../_shared/config.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -163,7 +164,7 @@ serve(async (req) => {
 
     for (const session of sessions) {
       try {
-        const sessionUrl = `https://your-actual-website.com/session-portal/${session.id}`;
+        const sessionUrl = `${CONFIG.WEBSITE_URL}/session-portal/${session.id}`;
 
         // Fetch client profile
         const { data: clientProfile } = await supabase

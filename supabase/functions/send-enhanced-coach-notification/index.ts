@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { Resend } from 'npm:resend@2.0.0';
+import { CONFIG } from '../_shared/config.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -151,19 +152,19 @@ const generateCoachEmailTemplate = (session: any, client: any, coach: any, goals
           </div>
 
           <div class="action-buttons">
-            <a href="https://your-actual-website.com/coach-response?action=accept&sessionId=${session.id}" class="btn btn-primary">
+            <a href="${CONFIG.WEBSITE_URL}/coach-response?action=accept&sessionId=${session.id}" class="btn btn-primary">
               ✅ Accept - Ready Now
             </a>
-            <a href="https://your-actual-website.com/coach-response?action=accept_5min&sessionId=${session.id}" class="btn btn-primary" style="background: #22c55e;">
+            <a href="${CONFIG.WEBSITE_URL}/coach-response?action=accept_5min&sessionId=${session.id}" class="btn btn-primary" style="background: #22c55e;">
               ✅ Accept - Ready in 5 min
             </a>
-            <a href="https://your-actual-website.com/coach-response?action=accept_10min&sessionId=${session.id}" class="btn btn-primary" style="background: #f59e0b;">
+            <a href="${CONFIG.WEBSITE_URL}/coach-response?action=accept_10min&sessionId=${session.id}" class="btn btn-primary" style="background: #f59e0b;">
               ✅ Accept - Ready in 10 min
             </a>
-            <a href="https://your-actual-website.com/coach-response?action=reschedule&sessionId=${session.id}" class="btn btn-secondary">
+            <a href="${CONFIG.WEBSITE_URL}/coach-response?action=reschedule&sessionId=${session.id}" class="btn btn-secondary">
               📅 Request Reschedule
             </a>
-            <a href="https://your-actual-website.com/coach-response?action=decline&sessionId=${session.id}" class="btn btn-danger">
+            <a href="${CONFIG.WEBSITE_URL}/coach-response?action=decline&sessionId=${session.id}" class="btn btn-danger">
               ❌ Decline Session
             </a>
           </div>

@@ -2,6 +2,7 @@ import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { Resend } from 'npm:resend@2.0.0';
+import { CONFIG } from '../_shared/config.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -81,10 +82,9 @@ function generateFallbackEmail(context: any) {
 }
 
 function generatePremiumEmailTemplate(context: any, personalizedContent: string) {
-  const baseUrl = 'https://your-actual-website.com'; // Replace with your actual website URL
-  const acceptUrl = `${baseUrl}/coach-response?action=accept&sessionId=${context.sessionId}`;
-  const declineUrl = `${baseUrl}/coach-response?action=decline&sessionId=${context.sessionId}`;
-  const rescheduleUrl = `${baseUrl}/coach-response?action=reschedule&sessionId=${context.sessionId}`;
+  const acceptUrl = `${CONFIG.WEBSITE_URL}/coach-response?action=accept&sessionId=${context.sessionId}`;
+  const declineUrl = `${CONFIG.WEBSITE_URL}/coach-response?action=decline&sessionId=${context.sessionId}`;
+  const rescheduleUrl = `${CONFIG.WEBSITE_URL}/coach-response?action=reschedule&sessionId=${context.sessionId}`;
   
   return `<!DOCTYPE html>
 <html lang="en">
@@ -488,10 +488,9 @@ serve(async (req) => {
     const aiEmailContent = await generateAIEmail(emailContext);
 
     // Create action URLs for coach responses
-    const baseUrl = 'https://your-actual-website.com'; // Replace with your actual website URL
-    const acceptUrl = `${baseUrl}/coach-response?action=accept&sessionId=${sessionId}`;
-    const declineUrl = `${baseUrl}/coach-response?action=decline&sessionId=${sessionId}`;
-    const rescheduleUrl = `${baseUrl}/coach-response?action=reschedule&sessionId=${sessionId}`;
+    const acceptUrl = `${CONFIG.WEBSITE_URL}/coach-response?action=accept&sessionId=${sessionId}`;
+    const declineUrl = `${CONFIG.WEBSITE_URL}/coach-response?action=decline&sessionId=${sessionId}`;
+    const rescheduleUrl = `${CONFIG.WEBSITE_URL}/coach-response?action=reschedule&sessionId=${sessionId}`;
 
     const emailSubject = `${aiEmailContent.subject} - ${clientName}`;
     

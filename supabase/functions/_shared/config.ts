@@ -1,7 +1,7 @@
 // Shared configuration for Supabase functions
 export const CONFIG = {
-  // Website URLs - Update these with your actual domain
-  WEBSITE_URL: 'https://your-actual-website.com', // Replace with your actual website URL
+  // Website URLs - Get from environment or use Lovable preview URL
+  WEBSITE_URL: Deno.env.get('WEBSITE_URL') || 'https://4b7834f2-ec53-4d7f-b416-1d71f04d1c73.lovableproject.com',
   
   // Supabase URLs
   SUPABASE_URL: Deno.env.get('SUPABASE_URL')!,
@@ -9,7 +9,7 @@ export const CONFIG = {
   // Email configuration
   EMAIL: {
     FROM: 'Coaching Platform <onboarding@resend.dev>',
-    REPLY_TO: 'support@your-actual-website.com', // Replace with your actual support email
+    REPLY_TO: Deno.env.get('SUPPORT_EMAIL') || 'support@coaching-platform.com',
   },
   
   // Daily.co configuration
