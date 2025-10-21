@@ -42,6 +42,16 @@ export default function SessionPortalPage() {
   const { sessionId } = useParams();
   const navigate = useNavigate();
 
+  const [session, setSession] = useState<Session | null>(null);
+  const [goals, setGoals] = useState<SessionGoal[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [canJoin, setCanJoin] = useState(false);
+  const [inSession, setInSession] = useState(false);
+  const [timeToSession, setTimeToSession] = useState<string>("");
+  const [preparationNotes, setPreparationNotes] = useState("");
+  const [creatingRoom, setCreatingRoom] = useState(false);
+  const { toast } = useToast();
+
   // Handle missing sessionId
   if (!sessionId) {
     return (
@@ -61,15 +71,6 @@ export default function SessionPortalPage() {
       </div>
     );
   }
-  const [session, setSession] = useState<Session | null>(null);
-  const [goals, setGoals] = useState<SessionGoal[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [canJoin, setCanJoin] = useState(false);
-  const [inSession, setInSession] = useState(false);
-  const [timeToSession, setTimeToSession] = useState<string>("");
-  const [preparationNotes, setPreparationNotes] = useState("");
-  const [creatingRoom, setCreatingRoom] = useState(false);
-  const { toast } = useToast();
 
   useEffect(() => {
     if (sessionId) {
@@ -190,9 +191,11 @@ export default function SessionPortalPage() {
 
         // Update local session state with fallback video link
         setSession(prev => prev ? { ...prev, video_join_url: fallbackData.videoLink } : null);
+        console.log('Fallback video link:', fallbackData.videoLink);
       } else {
         // Update local session state with Daily.co room
         setSession(prev => prev ? { ...prev, video_join_url: dailyData.room_url } : null);
+        console.log('Daily.co video link:', dailyData.room_url);
       }
 
       toast({

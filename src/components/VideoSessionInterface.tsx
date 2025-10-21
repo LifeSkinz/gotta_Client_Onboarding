@@ -13,6 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useSessionManager } from "@/hooks/useSessionManager";
 import { useConnectionQuality } from "@/hooks/useConnectionQuality";
 import { SessionFeedbackDialog } from "./SessionFeedbackDialog";
+import { DailyCoVideoCall } from "./DailyCoVideoCall";
 import { logger } from "@/services/logger";
 
 interface VideoSessionInterfaceProps {
@@ -379,25 +380,56 @@ export const VideoSessionInterface = ({
               </div>
             </CardHeader>
             <CardContent>
-              {/* Video iframe */}
-              <div className="aspect-video bg-black rounded-lg mb-4 flex items-center justify-center relative">
+              {/* Daily.co Video Call */}
+              <div className="mb-4">
                 {currentVideoUrl?.startsWith('pending://') ? (
-                  <div className="text-white text-center">
-                    <AlertCircle className="h-12 w-12 mx-auto mb-4 text-yellow-500" />
-                    <p className="text-lg">Preparing video room...</p>
-                    <p className="text-sm text-gray-300">Video link will be available when session starts</p>
+                  <div className="aspect-video bg-black rounded-lg flex items-center justify-center relative">
+                    <div className="text-white text-center">
+                      <AlertCircle className="h-12 w-12 mx-auto mb-4 text-yellow-500" />
+                      <p className="text-lg">Preparing video room...</p>
+                      <p className="text-sm text-gray-300">Video link will be available when session starts</p>
+                    </div>
                   </div>
                 ) : currentVideoUrl ? (
-                  <iframe
-                    src={currentVideoUrl}
-                    className="w-full h-full rounded-lg"
-                    allow="camera; microphone; fullscreen"
-                    title="Video Session"
+                  <DailyCoVideoCall
+                    roomUrl={currentVideoUrl}
+                    userName={`Client ${clientId.slice(0, 8)}`}
+                    userData={{
+                      sessionId,
+                      clientId,
+                      coachId,
+                      role: 'client'
+                    }}
+                    onSessionStart={() => {
+                      logger.info('Daily.co session started', { sessionId });
+                    }}
+                    onSessionEnd={() => {
+                      logger.info('Daily.co session ended', { sessionId });
+                      endSession();
+                    }}
+                    onParticipantJoined={(participant) => {
+                      logger.info('Participant joined Daily.co session', { 
+                        sessionId, 
+                        participantId: participant.user_id,
+                        participantName: participant.user_name 
+                      });
+                    }}
+                    onParticipantLeft={(participant) => {
+                      logger.info('Participant left Daily.co session', { 
+                        sessionId, 
+                        participantId: participant.user_id,
+                        participantName: participant.user_name 
+                      });
+                    }}
+                    autoJoin={sessionStarted}
+                    enableControls={true}
                   />
                 ) : (
-                  <div className="text-white text-center">
-                    <Video className="h-12 w-12 mx-auto mb-4 text-gray-500" />
-                    <p className="text-lg">No video room available</p>
+                  <div className="aspect-video bg-black rounded-lg flex items-center justify-center relative">
+                    <div className="text-white text-center">
+                      <Video className="h-12 w-12 mx-auto mb-4 text-gray-500" />
+                      <p className="text-lg">No video room available</p>
+                    </div>
                   </div>
                 )}
                 
