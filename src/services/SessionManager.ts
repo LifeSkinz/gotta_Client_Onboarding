@@ -43,16 +43,22 @@ export class SessionManager {
     try {
       const { data, error } = await this.supabase
         .from('sessions')
-        .select('*')
+        .select('*, session_video_details ( video_join_url, video_room_id )')
         .eq('id', sessionId)
         .single();
 
       if (error) throw error;
 
+      const mergedData = {
+        ...data,
+        video_join_url: (data as any)?.video_join_url ?? (data as any)?.session_video_details?.video_join_url ?? undefined,
+        video_room_id: (data as any)?.video_room_id ?? (data as any)?.session_video_details?.video_room_id ?? undefined,
+      } as any;
+
       // Subscribe to session updates
       this.subscribeToSessionUpdates(sessionId);
 
-      return data;
+      return mergedData;
     } catch (error) {
       logger.error('Failed to initialize session', { sessionId, error });
       throw error;

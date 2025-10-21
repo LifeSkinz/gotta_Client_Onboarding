@@ -43,6 +43,8 @@ serve(async (req) => {
           success: true, 
           room_url: session.video_join_url,
           room_name: session.video_room_id || 'existing-room',
+          videoJoinUrl: session.video_join_url,
+          videoRoomId: session.video_room_id || 'existing-room',
           message: 'Room already exists'
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -59,7 +61,7 @@ serve(async (req) => {
       
       const roomConfig = {
         name: `session-${sessionId}-${Date.now()}`,
-        config: {
+        properties: {
           exp: Math.floor(Date.now() / 1000) + (4 * 60 * 60), // 4 hours from now
           nbf: Math.floor(Date.now() / 1000), // not before (now)
           max_participants: 2,
@@ -71,7 +73,7 @@ serve(async (req) => {
         }
       };
 
-      console.log('Sending request to Daily.co API with config:', JSON.stringify(roomConfig, null, 2));
+      console.log('Sending request to Daily.co API with properties:', JSON.stringify(roomConfig, null, 2));
 
       const dailyResponse = await fetch('https://api.daily.co/v1/rooms', {
         method: 'POST',
@@ -178,6 +180,8 @@ serve(async (req) => {
         success: true, 
         room_url: roomUrl,
         room_name: roomName,
+        videoJoinUrl: roomUrl,
+        videoRoomId: roomName,
         session_id: sessionId,
         transcription_enabled: !!dailyApiKey,
         message: 'Room created successfully'
