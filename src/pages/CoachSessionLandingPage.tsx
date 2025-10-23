@@ -89,19 +89,10 @@ export default function CoachSessionLandingPage() {
     try {
       setLoading(true);
       
-      // Fetch session with related data
+      // Fetch session with basic details
       const { data: sessionData, error: sessionError } = await supabase
         .from('sessions')
-        .select(`
-          *,
-          coaches:coach_id (
-            id,
-            name,
-            specialties,
-            notification_email
-          ),
-          session_video_details (*)
-        `)
+        .select('*')
         .eq('id', sessionId)
         .single();
 
@@ -127,22 +118,35 @@ export default function CoachSessionLandingPage() {
 
       setIsCoach(true);
 
-      // Fetch client profile for additional context
-      const { data: clientProfileData } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('user_id', sessionData.client_id)
-        .maybeSingle();
+      // Fetch related data separately to avoid type recursion
+      const [coachResult, videoResult, clientProfileData] = await Promise.all([
+        supabase
+          .from('coaches')
+          .select('id, name, specialties, notification_email')
+          .eq('id', sessionData.coach_id)
+          .single(),
+        supabase
+          .from('session_video_details')
+          .select('*')
+          .eq('session_id', sessionId)
+          .maybeSingle(),
+        supabase
+          .from('profiles')
+          .select('*')
+          .eq('user_id', sessionData.client_id)
+          .maybeSingle()
+      ]);
 
-      setClientProfile(clientProfileData);
+      setClientProfile(clientProfileData.data);
 
       setSession({
         ...sessionData,
-        client_profile: clientProfileData ? {
-          user_id: clientProfileData.user_id,
-          full_name: clientProfileData.full_name
+        coaches: coachResult.data || undefined,
+        client_profile: clientProfileData.data ? {
+          user_id: clientProfileData.data.user_id,
+          full_name: clientProfileData.data.full_name
         } : undefined,
-        session_video_details: sessionData.session_video_details ? [sessionData.session_video_details].flat() : []
+        session_video_details: videoResult.data ? [videoResult.data] : []
       } as SessionData);
 
       // Fetch client responses if available

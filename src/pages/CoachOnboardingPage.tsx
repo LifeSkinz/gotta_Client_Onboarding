@@ -170,7 +170,7 @@ export default function CoachOnboardingPage() {
     try {
       const { data, error } = await supabase.rpc('validate_invitation_token', {
         _token: token
-      });
+      }) as { data: InvitationData | null; error: any };
 
       if (error) {
         console.error('Error validating token:', error);
@@ -183,8 +183,8 @@ export default function CoachOnboardingPage() {
         return;
       }
 
-      if (data && data.length > 0) {
-        const invitation = data[0];
+      if (data) {
+        const invitation = data;
         setInvitationData(invitation);
         setFormData(prev => ({ ...prev, email: invitation.email }));
         
@@ -326,7 +326,7 @@ export default function CoachOnboardingPage() {
       const { error: roleError } = await supabase.rpc('assign_coach_role', {
         _user_id: authData.user.id,
         _coach_id: coachData.id
-      });
+      } as any);
 
       if (roleError) {
         console.error('Error assigning coach role:', roleError);
@@ -337,7 +337,7 @@ export default function CoachOnboardingPage() {
         await supabase.rpc('mark_invitation_used', {
           _token: token,
           _coach_id: coachData.id
-        });
+        } as any);
       }
 
       toast({

@@ -58,6 +58,50 @@ export type Database = {
           },
         ]
       }
+      coach_onboarding_invitations: {
+        Row: {
+          coach_id: string | null
+          created_at: string | null
+          email: string
+          expires_at: string
+          id: string
+          invitation_token: string
+          invited_by: string | null
+          updated_at: string | null
+          used_at: string | null
+        }
+        Insert: {
+          coach_id?: string | null
+          created_at?: string | null
+          email: string
+          expires_at?: string
+          id?: string
+          invitation_token?: string
+          invited_by?: string | null
+          updated_at?: string | null
+          used_at?: string | null
+        }
+        Update: {
+          coach_id?: string | null
+          created_at?: string | null
+          email?: string
+          expires_at?: string
+          id?: string
+          invitation_token?: string
+          invited_by?: string | null
+          updated_at?: string | null
+          used_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coach_onboarding_invitations_coach_id_fkey"
+            columns: ["coach_id"]
+            isOneToOne: false
+            referencedRelation: "coaches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       coaches: {
         Row: {
           availability_hours: string | null
@@ -91,6 +135,7 @@ export type Database = {
           title: string
           total_reviews: number | null
           updated_at: string
+          user_id: string | null
           years_experience: number
         }
         Insert: {
@@ -125,6 +170,7 @@ export type Database = {
           title: string
           total_reviews?: number | null
           updated_at?: string
+          user_id?: string | null
           years_experience: number
         }
         Update: {
@@ -159,6 +205,7 @@ export type Database = {
           title?: string
           total_reviews?: number | null
           updated_at?: string
+          user_id?: string | null
           years_experience?: number
         }
         Relationships: []
@@ -1114,6 +1161,30 @@ export type Database = {
         }
         Relationships: []
       }
+      user_roles: {
+        Row: {
+          assigned_at: string | null
+          assigned_by: string | null
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          assigned_at?: string | null
+          assigned_by?: string | null
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          assigned_at?: string | null
+          assigned_by?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_tasks: {
         Row: {
           completed_at: string | null
@@ -1254,29 +1325,24 @@ export type Database = {
     Views: {
       table_sizes: {
         Row: {
-          schemaname: unknown | null
+          schemaname: unknown
           size: string | null
           size_bytes: number | null
-          tablename: unknown | null
+          tablename: unknown
         }
         Relationships: []
       }
     }
     Functions: {
-      cleanup_expired_guest_sessions: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
+      assign_coach_role: {
+        Args: { _coach_id: string; _user_id: string }
+        Returns: boolean
       }
-      cleanup_expired_session_locks: {
-        Args: Record<PropertyKey, never>
-        Returns: number
-      }
-      cleanup_old_activity_logs: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
+      cleanup_expired_guest_sessions: { Args: never; Returns: undefined }
+      cleanup_expired_session_locks: { Args: never; Returns: number }
+      cleanup_old_activity_logs: { Args: never; Returns: undefined }
       get_public_coaches: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           availability_hours: string | null
           available_now: boolean | null
@@ -1309,8 +1375,30 @@ export type Database = {
           title: string
           total_reviews: number | null
           updated_at: string
+          user_id: string | null
           years_experience: number
         }[]
+        SetofOptions: {
+          from: "*"
+          to: "coaches"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      get_user_roles: {
+        Args: { _user_id: string }
+        Returns: Database["public"]["Enums"]["app_role"][]
+      }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      mark_invitation_used: {
+        Args: { _coach_id: string; _token: string }
+        Returns: boolean
       }
       process_coin_purchase: {
         Args: {
@@ -1366,13 +1454,19 @@ export type Database = {
         }
         Returns: boolean
       }
-      update_system_capacity: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
+      update_system_capacity: { Args: never; Returns: undefined }
+      validate_invitation_token: {
+        Args: { _token: string }
+        Returns: {
+          email: string
+          expires_at: string
+          is_valid: boolean
+          used_at: string
+        }[]
       }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "coach" | "client"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1499,6 +1593,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "coach", "client"],
+    },
   },
 } as const
