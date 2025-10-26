@@ -15,9 +15,29 @@ serve(async (req) => {
   }
 
   try {
+    // Support both GET (query params) and POST (JSON body)
     const url = new URL(req.url);
-    const action = url.searchParams.get('action'); // accept, decline, reschedule
-    const sessionId = url.searchParams.get('sessionId');
+    let action: string | null = null;
+    let sessionId: string | null = null;
+
+    // Try JSON body first (from CoachResponsePage)
+    if (req.method === 'POST') {
+      try {
+        const body = await req.json();
+        action = body.action;
+        sessionId = body.sessionId;
+        console.log('Received POST request:', { action, sessionId });
+      } catch {
+        // Fall back to query params
+      }
+    }
+
+    // Fall back to query params if POST didn't work
+    if (!action || !sessionId) {
+      action = url.searchParams.get('action');
+      sessionId = url.searchParams.get('sessionId');
+      console.log('Using query params:', { action, sessionId });
+    }
 
     if (!action || !sessionId) {
       throw new Error('Missing required parameters: action and sessionId');
@@ -236,7 +256,7 @@ serve(async (req) => {
           .eq('id', sessionId);
 
         // Send portal access notification with timing details
-        const portalUrl = 'https://nqoysxjjimvihcvfpesr.lovable.app/join-session';
+        const portalUrl = `${CONFIG.WEBSITE_URL}/join-session`;
         
         let timingMessage = 'Ready now!';
         if (action === 'accept_5min') {
@@ -272,7 +292,7 @@ serve(async (req) => {
           <h2>Session Request Update</h2>
           <p>Unfortunately, ${coachName} is not available for your requested session.</p>
           <p>Don't worry! We'll help you find another excellent coach who matches your needs.</p>
-          <p><a href="https://nqoysxjjimvihcvfpesr.lovable.app/coaches" style="background-color: #667eea; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px;">Browse Other Coaches</a></p>
+          <p><a href="${CONFIG.WEBSITE_URL}/coaches" style="background-color: #667eea; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px;">Browse Other Coaches</a></p>
         `;
 
         break;
@@ -292,7 +312,7 @@ serve(async (req) => {
           <h2>Reschedule Request</h2>
           <p>${coachName} is interested in working with you but would like to propose a different time.</p>
           <p>Please check your calendar and respond with your availability.</p>
-          <p><a href="https://nqoysxjjimvihcvfpesr.lovable.app/reschedule/${sessionId}" style="background-color: #f59e0b; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px;">View Available Times</a></p>
+          <p><a href="${CONFIG.WEBSITE_URL}/reschedule/${sessionId}" style="background-color: #f59e0b; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px;">View Available Times</a></p>
         `;
 
         break;
@@ -321,10 +341,9 @@ serve(async (req) => {
     // Send coach confirmation email with session link
     if (sessionData.coach?.notification_email) {
       try {
-        const baseUrl = 'https://your-actual-website.com'; // Replace with your actual website URL
         const videoUrl = sessionData.session_video_details?.[0]?.video_join_url;
-        const sessionUrl = videoUrl || `${baseUrl}/session-portal/${sessionId}`;
-        console.log('Coach email session URL:', sessionUrl);
+        const sessionUrl = videoUrl || `${CONFIG.WEBSITE_URL}/coach-session/${sessionId}`;
+        console.log('Coach email session URL:', sessionUrl, 'Video URL:', videoUrl);
         const coachEmailContent = generateCoachEmailContent(action, sessionData, sessionUrl);
         if (coachEmailContent) {
           const coachEmailResult = await resend.emails.send({

@@ -41,7 +41,6 @@ serve(async (req) => {
       .from('session_recordings')
       .upsert({
         session_id: sessionId,
-        started_at: startTime,
         duration_seconds: 0,
         sentiment_analysis: {},
         personality_insights: {},
@@ -49,7 +48,8 @@ serve(async (req) => {
         key_topics: [],
         ai_summary: null,
         transcript: null,
-        recording_url: null
+        recording_url: null,
+        updated_at: new Date().toISOString()
       }, {
         onConflict: 'session_id'
       })

@@ -130,7 +130,6 @@ ${goals ? JSON.stringify(goals) : 'No specific goals recorded'}
     const { error: recordingUpdateError } = await supabase
       .from('session_recordings')
       .update({
-        ended_at: endTime,
         duration_seconds: durationSeconds,
         ai_summary: aiAnalysis.summary || 'Session completed successfully',
         key_topics: keyTopics,
@@ -143,30 +142,6 @@ ${goals ? JSON.stringify(goals) : 'No specific goals recorded'}
 
     if (recordingUpdateError) {
       console.error('Failed to update recording:', recordingUpdateError);
-    }
-
-    // Store comprehensive session insights
-    const { error: insightsError } = await supabase
-      .from('session_insights')
-      .insert({
-        session_id: sessionId,
-        insight_type: 'comprehensive_analysis',
-        insight_data: {
-          ...aiAnalysis,
-          session_metadata: {
-            duration_seconds: durationSeconds,
-            client_notes: clientNotes,
-            coach_notes: coachNotes,
-            goals_count: goals?.length || 0,
-            transcript_length: recording?.transcript?.length || 0
-          }
-        },
-        confidence_score: 0.85,
-        ai_model_version: 'gpt-4o-mini'
-      });
-
-    if (insightsError) {
-      console.error('Failed to store insights:', insightsError);
     }
 
     // Trigger behavioral pattern analysis

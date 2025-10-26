@@ -57,6 +57,7 @@ export const DailyCoVideoCall: React.FC<DailyCoVideoCallProps> = ({
     startAudioOff: !isAudioEnabled,
     enableScreenShare: true,
     enableChat: true,
+    container: containerRef.current,
   };
 
   const events: DailyCoEvents = {
@@ -149,21 +150,6 @@ export const DailyCoVideoCall: React.FC<DailyCoVideoCallProps> = ({
       joinRoom();
     }
   }, [autoJoin, roomUrl, isJoined, isLoading, joinRoom]);
-
-  // Set up the Daily.co iframe
-  useEffect(() => {
-    if (callObject && containerRef.current && isJoined) {
-      // Create the iframe and append it to the container
-      const iframe = callObject.iframe();
-      if (iframe && containerRef.current) {
-        containerRef.current.appendChild(iframe);
-        iframe.style.width = '100%';
-        iframe.style.height = '100%';
-        iframe.style.border = 'none';
-        iframe.style.borderRadius = '8px';
-      }
-    }
-  }, [callObject, isJoined]);
 
   const handleToggleVideo = () => {
     toggleVideo();

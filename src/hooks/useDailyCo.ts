@@ -9,6 +9,7 @@ export interface DailyCoConfig {
   startAudioOff?: boolean;
   enableScreenShare?: boolean;
   enableChat?: boolean;
+  container?: HTMLDivElement | null;
 }
 
 export interface DailyCoEvents {
@@ -35,12 +36,18 @@ export const useDailyCo = (config: DailyCoConfig, events?: DailyCoEvents) => {
       callObjectRef.current.destroy();
     }
 
-    const callObject = DailyIframe.createCallObject({
-      showLocalVideo: true,
-      showParticipantsBar: true,
-      userName: config.userName || 'Anonymous',
-      userData: config.userData || {},
-    });
+    let callObject;
+    
+    // If container is provided, use iframe mode with prebuilt UI
+    if (config.container) {
+      callObject = DailyIframe.createFrame(config.container, {
+        showLocalVideo: true,
+        showParticipantsBar: true,
+      });
+    } else {
+      // Otherwise create call object without UI
+      callObject = DailyIframe.createCallObject();
+    }
 
     callObjectRef.current = callObject;
 
