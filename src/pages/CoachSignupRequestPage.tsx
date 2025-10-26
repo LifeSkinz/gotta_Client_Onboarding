@@ -27,18 +27,24 @@ export const CoachSignupRequestPage = () => {
     setLoading(true);
 
     try {
-      // Store the request in a pending_coach_applications table (would need to be created)
-      // For now, we'll just send a notification email to admin
-      
-      const { error } = await supabase.functions.invoke('send-coach-signup-request', {
-        body: formData,
+      // Parse specialties from comma-separated string
+      const specialtiesArray = formData.specialties
+        .split(',')
+        .map(s => s.trim())
+        .filter(s => s.length > 0);
+
+      const { data, error } = await supabase.functions.invoke('send-coach-signup-request', {
+        body: {
+          ...formData,
+          specialties: specialtiesArray,
+        },
       });
 
       if (error) throw error;
 
       toast({
-        title: 'Request Submitted!',
-        description: 'We\'ll review your application and contact you soon.',
+        title: 'Application Submitted!',
+        description: 'We\'ll review your application and send you an invitation if you\'re a good fit.',
       });
 
       navigate('/');
@@ -46,7 +52,7 @@ export const CoachSignupRequestPage = () => {
       console.error('Error submitting request:', error);
       toast({
         title: 'Error',
-        description: 'Failed to submit request. Please try again or contact us directly.',
+        description: error.message || 'Failed to submit request. Please try again or contact us directly.',
         variant: 'destructive',
       });
     } finally {

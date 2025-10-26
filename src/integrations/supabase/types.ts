@@ -424,6 +424,63 @@ export type Database = {
         }
         Relationships: []
       }
+      email_outbox: {
+        Row: {
+          attempts: number | null
+          created_at: string | null
+          dedup_key: string
+          expires_at: string | null
+          id: string
+          last_attempt_at: string | null
+          last_error: string | null
+          max_attempts: number | null
+          payload: Json
+          recipient_email: string
+          recipient_name: string | null
+          scheduled_for: string | null
+          sent_at: string | null
+          status: string | null
+          subject: string
+          template_name: string
+        }
+        Insert: {
+          attempts?: number | null
+          created_at?: string | null
+          dedup_key: string
+          expires_at?: string | null
+          id?: string
+          last_attempt_at?: string | null
+          last_error?: string | null
+          max_attempts?: number | null
+          payload: Json
+          recipient_email: string
+          recipient_name?: string | null
+          scheduled_for?: string | null
+          sent_at?: string | null
+          status?: string | null
+          subject: string
+          template_name: string
+        }
+        Update: {
+          attempts?: number | null
+          created_at?: string | null
+          dedup_key?: string
+          expires_at?: string | null
+          id?: string
+          last_attempt_at?: string | null
+          last_error?: string | null
+          max_attempts?: number | null
+          payload?: Json
+          recipient_email?: string
+          recipient_name?: string | null
+          scheduled_for?: string | null
+          sent_at?: string | null
+          status?: string | null
+          subject?: string
+          template_name?: string
+        }
+        Relationships: []
+      }
       guest_sessions: {
         Row: {
           ai_analysis: Json | null
@@ -451,6 +508,51 @@ export type Database = {
           responses?: Json
           selected_goal?: Json
           session_id?: string
+        }
+        Relationships: []
+      }
+      pending_coach_applications: {
+        Row: {
+          created_at: string | null
+          email: string
+          experience: string
+          id: string
+          message: string
+          name: string
+          phone: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          specialties: string[]
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email: string
+          experience: string
+          id?: string
+          message: string
+          name: string
+          phone?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          specialties: string[]
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: string
+          experience?: string
+          id?: string
+          message?: string
+          name?: string
+          phone?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          specialties?: string[]
+          status?: string | null
+          updated_at?: string | null
         }
         Relationships: []
       }
@@ -1438,6 +1540,8 @@ export type Database = {
         Args: { _coach_id: string; _token: string }
         Returns: boolean
       }
+      pg_advisory_unlock: { Args: { lock_id: number }; Returns: boolean }
+      pg_try_advisory_lock: { Args: { lock_id: number }; Returns: boolean }
       process_coin_purchase: {
         Args: {
           p_coin_amount: number

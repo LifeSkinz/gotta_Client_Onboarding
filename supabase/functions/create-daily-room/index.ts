@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { withAdvisoryLock } from '../_shared/advisory-lock.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -26,186 +27,146 @@ serve(async (req) => {
 
     console.log(`Creating room for session ${sessionId}, idempotency key: ${idempotencyKey || 'none'}`);
 
-    // Get session details
-    const { data: session, error: sessionError } = await supabase
-      .from('sessions')
-      .select('*')
-      .eq('id', sessionId)
-      .single();
+    // Use advisory lock to prevent duplicate room creation
+    const lockKey = `daily_room_create:${sessionId}`;
+    
+    const result = await withAdvisoryLock(supabase, lockKey, async () => {
+      // IDEMPOTENCY: Check if room already exists
+      const { data: existingVideo } = await supabase
+        .from('session_video_details')
+        .select('video_room_id, video_join_url')
+        .eq('session_id', sessionId)
+        .single();
 
-    if (sessionError) {
-      throw new Error(`Session not found: ${sessionError.message}`);
-    }
-
-    // IDEMPOTENCY: Check if room already exists in session_video_details
-    const { data: existingVideo } = await supabase
-      .from('session_video_details')
-      .select('video_room_id, video_join_url')
-      .eq('session_id', sessionId)
-      .single();
-
-    if (existingVideo?.video_join_url) {
-      console.log('Room already exists for session (idempotent return):', sessionId);
-      return new Response(
-        JSON.stringify({ 
-          success: true, 
+      if (existingVideo?.video_join_url) {
+        console.log('Room already exists for session (idempotent return):', sessionId);
+        return {
+          success: true,
           room_url: existingVideo.video_join_url,
           room_name: existingVideo.video_room_id || 'existing-room',
           videoJoinUrl: existingVideo.video_join_url,
           videoRoomId: existingVideo.video_room_id || 'existing-room',
           idempotent: true,
           message: 'Room already exists'
-        }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
+        };
+      }
 
-    let roomUrl = '';
-    let roomName = '';
+      // Get session details
+      const { data: session, error: sessionError } = await supabase
+        .from('sessions')
+        .select('*')
+        .eq('id', sessionId)
+        .single();
 
-    if (dailyApiKey) {
-      // Create Daily.co room with proper config
-      console.log('Creating Daily.co room for session:', sessionId);
-      console.log('Daily API Key present:', dailyApiKey ? 'Yes' : 'No');
-      
-      const roomConfig = {
-        name: `session-${sessionId}-${Date.now()}`,
-        properties: {
-          exp: Math.floor(Date.now() / 1000) + (4 * 60 * 60), // 4 hours from now
-          nbf: Math.floor(Date.now() / 1000), // not before (now)
-          max_participants: 2,
-          enable_recording: "cloud",
-          start_video_off: false,
-          start_audio_off: false,
-          enable_screenshare: true,
-          enable_chat: true
-        }
-      };
+      if (sessionError) {
+        throw new Error(`Session not found: ${sessionError.message}`);
+      }
 
-      console.log('Sending request to Daily.co API with properties:', JSON.stringify(roomConfig, null, 2));
+      let roomUrl = '';
+      let roomName = '';
 
-      const dailyResponse = await fetch('https://api.daily.co/v1/rooms', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${dailyApiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(roomConfig),
-      });
-
-      if (!dailyResponse.ok) {
-        const errorText = await dailyResponse.text();
-        console.error('Daily.co API error:', errorText);
-        console.error('Daily.co API status:', dailyResponse.status);
-        console.error('Daily.co API headers:', Object.fromEntries(dailyResponse.headers.entries()));
+      if (dailyApiKey) {
+        // Create Daily.co room with proper config
+        console.log('Creating Daily.co room for session:', sessionId);
         
-        if (dailyResponse.status === 401) {
-          console.error('AUTHENTICATION ERROR: Daily API key is invalid or expired');
-          console.error('Please verify the DAILY_API_KEY secret in Supabase');
+        const roomConfig = {
+          name: `session-${sessionId}-${Date.now()}`,
+          properties: {
+            exp: Math.floor(Date.now() / 1000) + (4 * 60 * 60), // 4 hours from now
+            nbf: Math.floor(Date.now() / 1000), // not before (now)
+            max_participants: 2,
+            enable_recording: "cloud",
+            start_video_off: false,
+            start_audio_off: false,
+            enable_screenshare: true,
+            enable_chat: true
+          }
+        };
+
+        const dailyResponse = await fetch('https://api.daily.co/v1/rooms', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${dailyApiKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(roomConfig),
+        });
+
+        if (!dailyResponse.ok) {
+          const errorText = await dailyResponse.text();
+          console.error('Daily.co API error:', errorText);
+          throw new Error(`Failed to create Daily room: ${errorText}`);
         }
-        
-        // Fall back to VideoSDK on Daily.co failure
-        console.log('Falling back to VideoSDK due to Daily.co error');
-        roomName = `fallback-room-${sessionId}-${Date.now()}`;
-        roomUrl = `https://meet.videosdk.live/${roomName}`;
-      } else {
+
         const roomData = await dailyResponse.json();
         roomUrl = roomData.url;
         roomName = roomData.name;
-        console.log('Created Daily.co room:', roomName, 'URL:', roomUrl);
-      }
-    } else {
-      // Fallback to VideoSDK when no Daily API key
-      console.log('No Daily API key found, using VideoSDK fallback for session:', sessionId);
-      roomName = `fallback-room-${sessionId}-${Date.now()}`;
-      roomUrl = `https://meet.videosdk.live/${roomName}`;
-      console.log('Generated fallback URL:', roomUrl);
-      
-      // Validate fallback URL is reachable
-      try {
-        const testResponse = await fetch(roomUrl, { method: 'HEAD' });
-        console.log('Fallback URL validation response:', testResponse.status);
-        if (!testResponse.ok) {
-          console.warn('Warning: Fallback URL may not be reachable:', roomUrl);
+        console.log('Daily.co room created successfully:', roomName);
+      } else {
+        // Fallback to VideoSDK URL
+        console.log('No Daily API key, using VideoSDK fallback');
+        const videoSdkKey = Deno.env.get('VIDEOSDK_KEY');
+        if (!videoSdkKey) {
+          throw new Error('Neither DAILY_API_KEY nor VIDEOSDK_KEY is configured');
         }
-      } catch (err) {
-        console.warn('Could not validate fallback URL:', err.message);
+        roomName = `session-${sessionId}`;
+        roomUrl = `https://videosdk.live/room/${roomName}`;
       }
-    }
 
-    // Update session state
-    const { error: stateUpdateError } = await supabase
-      .from('sessions')
-      .update({
-        session_state: 'ready',
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', sessionId);
-
-    if (stateUpdateError) {
-      console.error('Warning: Failed to update session state:', stateUpdateError);
-    }
-
-    // Upsert video details into session_video_details table
-    const { error: videoDetailsError } = await supabase
-      .from('session_video_details')
-      .upsert({
-        session_id: sessionId,
-        video_room_id: roomName,
-        video_join_url: roomUrl,
-        updated_at: new Date().toISOString()
-      }, {
-        onConflict: 'session_id',
-        ignoreDuplicates: false  // Always update
+      // Update session state to 'ready' using RPC
+      await supabase.rpc('update_session_state', {
+        p_session_id: sessionId,
+        p_new_state: 'ready',
+        p_locked_by: 'create-daily-room',
+        p_reason: 'Video room created',
+        p_metadata: { videoRoomId: roomName }
       });
 
-    if (videoDetailsError) {
-      throw new Error(`Failed to save video details: ${videoDetailsError.message}`);
-    }
+      // Store video details
+      await supabase
+        .from('session_video_details')
+        .upsert({
+          session_id: sessionId,
+          video_room_id: roomName,
+          video_join_url: roomUrl,
+          video_provider: dailyApiKey ? 'daily' : 'videosdk'
+        });
 
-    // Initialize transcription status
-    const { error: recordingError } = await supabase
-      .from('session_recordings')
-      .upsert({
-        session_id: sessionId,
-        transcription_status: 'inactive',
-        transcription_paused_segments: [],
-        privacy_settings: {
-          auto_redact_pauses: true,
-          retain_original: false,
-          redaction_method: 'silence'
-        }
-      }, {
-        onConflict: 'session_id'
-      });
+      // Initialize recording settings
+      await supabase
+        .from('session_recordings')
+        .upsert({
+          session_id: sessionId,
+          recording_status: 'initialized',
+          transcription_enabled: true
+        });
 
-    if (recordingError) {
-      console.error('Warning: Failed to initialize recording:', recordingError);
-    }
+      console.log(`Room created successfully for session ${sessionId}: ${roomUrl}`);
 
-    console.log('Successfully created room for session:', sessionId);
-
-    return new Response(
-      JSON.stringify({ 
-        success: true, 
+      return {
+        success: true,
         room_url: roomUrl,
         room_name: roomName,
         videoJoinUrl: roomUrl,
-        videoRoomId: roomName,
-        session_id: sessionId,
-        transcription_enabled: !!dailyApiKey,
-        message: 'Room created successfully'
-      }),
+        videoRoomId: roomName
+      };
+    });
+
+    return new Response(
+      JSON.stringify(result),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
-  } catch (error) {
-    console.error('Error creating Daily room:', error);
+  } catch (error: any) {
+    console.error('Error in create-daily-room:', error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        success: false, 
+        error: error.message 
+      }),
       { 
         status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
       }
     );
   }

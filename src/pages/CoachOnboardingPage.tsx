@@ -270,83 +270,65 @@ export default function CoachOnboardingPage() {
   const handleSubmit = async () => {
     setLoading(true);
     try {
-      // Create Supabase auth account
-      const { data: authData, error: authError } = await supabase.auth.signUp({
+      // Validate passwords match
+      if (formData.password !== formData.confirmPassword) {
+        toast({
+          title: "Password Mismatch",
+          description: "Passwords do not match. Please try again.",
+          variant: "destructive"
+        });
+        setLoading(false);
+        return;
+      }
+
+      // Validate required fields
+      if (!formData.name || !formData.password || !token) {
+        toast({
+          title: "Missing Information",
+          description: "Please fill in all required fields.",
+          variant: "destructive"
+        });
+        setLoading(false);
+        return;
+      }
+
+      // Call the complete-coach-onboarding edge function
+      const { data, error } = await supabase.functions.invoke('complete-coach-onboarding', {
+        body: {
+          token,
+          password: formData.password,
+          name: formData.name,
+          title: formData.title,
+          bio: formData.bio,
+          specialties: formData.specialties,
+          hourlyRate: formData.hourly_rate_amount,
+          notificationEmail: formData.notification_email || formData.email,
+        },
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Welcome to the Platform!",
+        description: `Your coach profile has been created successfully!`,
+      });
+
+      // Sign in the user
+      const { error: signInError } = await supabase.auth.signInWithPassword({
         email: formData.email,
         password: formData.password,
       });
 
-      if (authError) {
-        throw authError;
+      if (signInError) {
+        console.error('Sign in error:', signInError);
+        toast({
+          title: "Please Sign In",
+          description: "Your account was created. Please sign in to continue.",
+        });
+        navigate('/auth');
+      } else {
+        navigate('/coach-dashboard');
       }
-
-      if (!authData.user) {
-        throw new Error('Failed to create user account');
-      }
-
-      // Create coach profile
-      const { data: coachData, error: coachError } = await supabase
-        .from('coaches')
-        .insert({
-          user_id: authData.user.id,
-          name: formData.name,
-          title: formData.title,
-          bio: formData.bio,
-          years_experience: formData.years_experience,
-          avatar_url: formData.avatar_url,
-          specialties: formData.specialties,
-          coaching_expertise: formData.coaching_expertise,
-          coaching_style: formData.coaching_style,
-          client_challenge_example: formData.client_challenge_example,
-          personal_experiences: formData.personal_experiences,
-          similar_experiences: formData.similar_experiences,
-          hourly_rate_amount: formData.hourly_rate_amount,
-          hourly_rate_currency: formData.hourly_rate_currency,
-          hourly_coin_cost: formData.hourly_coin_cost,
-          min_session_duration: formData.min_session_duration,
-          max_session_duration: formData.max_session_duration,
-          booking_buffer_minutes: formData.booking_buffer_minutes,
-          notification_email: formData.notification_email || formData.email,
-          notification_phone: formData.notification_phone,
-          social_links: formData.social_links,
-          availability_hours: formData.availability_hours,
-          timezone: formData.timezone,
-          immediate_availability: formData.immediate_availability,
-          response_preference_minutes: formData.response_preference_minutes,
-          is_active: true
-        })
-        .select()
-        .single();
-
-      if (coachError) {
-        throw coachError;
-      }
-
-      // Assign coach role
-      const { error: roleError } = await supabase.rpc('assign_coach_role', {
-        _user_id: authData.user.id,
-        _coach_id: coachData.id
-      } as any);
-
-      if (roleError) {
-        console.error('Error assigning coach role:', roleError);
-      }
-
-      // Mark invitation as used
-      if (token) {
-        await supabase.rpc('mark_invitation_used', {
-          _token: token,
-          _coach_id: coachData.id
-        } as any);
-      }
-
-      toast({
-        title: "Welcome to the Platform!",
-        description: `Your coach profile has been created successfully. Your Coach ID is: ${coachData.id}`,
-      });
-
-      // Redirect to coach dashboard or profile page
-      navigate('/coach-dashboard');
 
     } catch (error: any) {
       console.error('Error creating coach profile:', error);

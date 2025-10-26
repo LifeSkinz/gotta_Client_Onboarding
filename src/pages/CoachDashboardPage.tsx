@@ -91,10 +91,7 @@ export const CoachDashboardPage = () => {
         id,
         session_state,
         created_at,
-        client_id,
-        profiles:client_id (
-          full_name
-        )
+        client_id
       `)
       .eq('coach_id', coachId)
       .in('session_state', ['scheduled', 'ready', 'in_progress'])
@@ -106,7 +103,23 @@ export const CoachDashboardPage = () => {
       return;
     }
 
-    setSessions(data || []);
+    // Fetch client profiles separately
+    const sessionsWithProfiles = await Promise.all(
+      (data || []).map(async (session) => {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('full_name')
+          .eq('user_id', session.client_id)
+          .single();
+        
+        return {
+          ...session,
+          profiles: profile || { full_name: 'Unknown' }
+        };
+      })
+    );
+
+    setSessions(sessionsWithProfiles as Session[]);
   };
 
   const handleSignOut = async () => {

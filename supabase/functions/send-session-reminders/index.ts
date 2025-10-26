@@ -1,6 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { Resend } from 'npm:resend@2.0.0';
 import { CONFIG } from '../_shared/config.ts';
 
 const corsHeaders = {
@@ -123,7 +122,6 @@ serve(async (req) => {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
-    const resend = new Resend(Deno.env.get('RESEND_API_KEY'));
 
     const now = new Date();
     const reminderWindow = new Date(now.getTime() + 15 * 60 * 1000); // 15 minutes from now
@@ -136,7 +134,7 @@ serve(async (req) => {
       .from('sessions')
       .select(`
         *,
-        coaches (
+        coaches!sessions_coach_id_fkey (
           id, name, title, notification_email
         )
       `)
@@ -184,28 +182,46 @@ serve(async (req) => {
           continue;
         }
 
-        // Send reminder to coach
+        // Send reminder to coach via email outbox
         if (coachEmail) {
           const coachEmailHtml = generateReminderEmailTemplate('coach', session, clientProfile, sessionUrl);
-          await resend.emails.send({
-            from: 'Coaching Platform <sessions@resend.dev>',
-            to: [coachEmail],
-            subject: `🔔 Session Starting in 10 Minutes - ${clientProfile?.full_name || 'Client'}`,
-            html: coachEmailHtml,
-          });
-          console.log(`Reminder sent to coach: ${coachEmail}`);
+          const dedupKey = `session_reminder:coach:${session.id}:${coachEmail}`;
+          
+          await supabase
+            .from('email_outbox')
+            .insert({
+              dedup_key: dedupKey,
+              template_name: 'session_reminder_coach',
+              recipient_email: coachEmail,
+              recipient_name: session.coaches?.name || 'Coach',
+              subject: `🔔 Session Starting in 10 Minutes - ${clientProfile?.full_name || 'Client'}`,
+              payload: {
+                html: coachEmailHtml,
+                from: 'Coaching Platform <sessions@resend.dev>'
+              }
+            });
+          console.log(`Reminder queued for coach: ${coachEmail.replace(/(.{2}).*(@.*)/, '$1***$2')}`);
         }
 
-        // Send reminder to client
+        // Send reminder to client via email outbox
         if (clientEmail) {
           const clientEmailHtml = generateReminderEmailTemplate('client', session, clientProfile, sessionUrl);
-          await resend.emails.send({
-            from: 'Coaching Platform <sessions@resend.dev>',
-            to: [clientEmail],
-            subject: `🔔 Your Session Starts in 10 Minutes!`,
-            html: clientEmailHtml,
-          });
-          console.log(`Reminder sent to client: ${clientEmail}`);
+          const dedupKey = `session_reminder:client:${session.id}:${clientEmail}`;
+          
+          await supabase
+            .from('email_outbox')
+            .insert({
+              dedup_key: dedupKey,
+              template_name: 'session_reminder_client',
+              recipient_email: clientEmail,
+              recipient_name: clientProfile?.full_name || 'Client',
+              subject: `🔔 Your Session Starts in 10 Minutes!`,
+              payload: {
+                html: clientEmailHtml,
+                from: 'Coaching Platform <sessions@resend.dev>'
+              }
+            });
+          console.log(`Reminder queued for client: ${clientEmail.replace(/(.{2}).*(@.*)/, '$1***$2')}`);
         }
 
         // Mark reminder as sent
