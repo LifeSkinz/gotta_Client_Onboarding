@@ -844,6 +844,7 @@ export type Database = {
           duration_minutes: number | null
           estimated_end_time: string | null
           id: string
+          join_attempts: Json | null
           join_token: string
           last_error: string | null
           notes: string | null
@@ -858,6 +859,8 @@ export type Database = {
           state_locked_at: string | null
           state_locked_by: string | null
           status: string
+          token_expires_at: string | null
+          token_used_at: string | null
           updated_at: string
         }
         Insert: {
@@ -871,6 +874,7 @@ export type Database = {
           duration_minutes?: number | null
           estimated_end_time?: string | null
           id?: string
+          join_attempts?: Json | null
           join_token?: string
           last_error?: string | null
           notes?: string | null
@@ -885,6 +889,8 @@ export type Database = {
           state_locked_at?: string | null
           state_locked_by?: string | null
           status?: string
+          token_expires_at?: string | null
+          token_used_at?: string | null
           updated_at?: string
         }
         Update: {
@@ -898,6 +904,7 @@ export type Database = {
           duration_minutes?: number | null
           estimated_end_time?: string | null
           id?: string
+          join_attempts?: Json | null
           join_token?: string
           last_error?: string | null
           notes?: string | null
@@ -912,6 +919,8 @@ export type Database = {
           state_locked_at?: string | null
           state_locked_by?: string | null
           status?: string
+          token_expires_at?: string | null
+          token_used_at?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -1398,6 +1407,21 @@ export type Database = {
           isOneToOne: false
           isSetofReturn: true
         }
+      }
+      get_session_by_join_token: {
+        Args: { _join_token: string }
+        Returns: {
+          client_id: string
+          coach_id: string
+          duration_minutes: number
+          id: string
+          scheduled_time: string
+          session_state: string
+          status: string
+          token_expires_at: string
+          token_used_at: string
+          video_join_url: string
+        }[]
       }
       get_user_roles: {
         Args: { _user_id: string }

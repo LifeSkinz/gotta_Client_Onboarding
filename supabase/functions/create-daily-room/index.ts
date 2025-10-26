@@ -12,7 +12,7 @@ serve(async (req) => {
   }
 
   try {
-    const { sessionId } = await req.json();
+    const { sessionId, idempotencyKey } = await req.json();
 
     if (!sessionId) {
       throw new Error('Session ID is required');
@@ -23,6 +23,8 @@ serve(async (req) => {
     const dailyApiKey = Deno.env.get('DAILY_API_KEY');
     
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    console.log(`Creating room for session ${sessionId}, idempotency key: ${idempotencyKey || 'none'}`);
 
     // Get session details
     const { data: session, error: sessionError } = await supabase
@@ -35,16 +37,23 @@ serve(async (req) => {
       throw new Error(`Session not found: ${sessionError.message}`);
     }
 
-    // Check if room already exists
-    if (session.video_join_url) {
-      console.log('Room already exists for session:', sessionId);
+    // IDEMPOTENCY: Check if room already exists in session_video_details
+    const { data: existingVideo } = await supabase
+      .from('session_video_details')
+      .select('video_room_id, video_join_url')
+      .eq('session_id', sessionId)
+      .single();
+
+    if (existingVideo?.video_join_url) {
+      console.log('Room already exists for session (idempotent return):', sessionId);
       return new Response(
         JSON.stringify({ 
           success: true, 
-          room_url: session.video_join_url,
-          room_name: session.video_room_id || 'existing-room',
-          videoJoinUrl: session.video_join_url,
-          videoRoomId: session.video_room_id || 'existing-room',
+          room_url: existingVideo.video_join_url,
+          room_name: existingVideo.video_room_id || 'existing-room',
+          videoJoinUrl: existingVideo.video_join_url,
+          videoRoomId: existingVideo.video_room_id || 'existing-room',
+          idempotent: true,
           message: 'Room already exists'
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

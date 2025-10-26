@@ -88,19 +88,29 @@ export default function SessionPortalPage() {
 
   const fetchSessionData = async () => {
     try {
-      const { data, error } = await supabase
-        .from('sessions')
-        .select(`
-          *,
-          session_video_details(video_join_url, video_room_id),
-          coaches!fk_sessions_coach (
-            name,
-            title,
-            avatar_url
-          )
-        `)
-        .eq('id', sessionId)
+      // Use secure edge function instead of direct query
+      const { data, error } = await supabase.functions.invoke('get-session-by-token', {
+        body: { token: sessionId }
+      });
+
+      if (error || !data) {
+        console.error('Error fetching session:', error);
+        setSession(null);
+        setLoading(false);
+        return;
+      }
+
+      // Fetch coach details separately (public data)
+      const { data: coachData } = await supabase
+        .from('coaches')
+        .select('name, title, avatar_url')
+        .eq('id', data.coach_id)
         .single();
+
+      setSession({
+        ...data,
+        coaches: coachData || { name: 'Coach', title: '', avatar_url: null }
+      } as Session);
 
       if (error) throw error;
       setSession(data);
