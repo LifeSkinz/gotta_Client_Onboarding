@@ -71,21 +71,28 @@ export default function CoachResponsePage() {
     try {
       setLoading(true);
       
+      // Fetch base session data
       const { data: sessionData, error: sessionError } = await supabase
         .from('sessions')
-        .select(`
-          *,
-          coaches:coach_id (
-            id,
-            name,
-            specialties
-          ),
-          session_video_details (*)
-        `)
+        .select('*')
         .eq('id', sessionId)
         .single();
 
       if (sessionError) throw sessionError;
+
+      // Fetch coach data separately
+      const { data: coachData } = await supabase
+        .from('coaches')
+        .select('id, name, specialties')
+        .eq('id', sessionData.coach_id)
+        .maybeSingle();
+
+      // Fetch session video details separately
+      const { data: videoData } = await supabase
+        .from('session_video_details')
+        .select('*')
+        .eq('session_id', sessionId)
+        .maybeSingle();
 
       // Fetch client profile separately
       const { data: clientProfileData } = await supabase
@@ -96,8 +103,9 @@ export default function CoachResponsePage() {
 
       setSession({
         ...sessionData,
+        coaches: coachData || undefined,
         client_profile: clientProfileData || undefined,
-        session_video_details: sessionData.session_video_details ? [sessionData.session_video_details].flat() : []
+        session_video_details: videoData ? [videoData] : []
       } as SessionData);
 
     } catch (err: any) {
