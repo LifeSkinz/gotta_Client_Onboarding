@@ -1,78 +1,91 @@
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
+
 interface WelcomePageProps {
   onStart: () => void;
 }
-export const WelcomePage = ({
-  onStart
-}: WelcomePageProps) => {
+
+export const WelcomePage = ({ onStart }: WelcomePageProps) => {
   const navigate = useNavigate();
 
-  return <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      {/* Header with Client Login */}
-      <div className="absolute top-4 right-4">
-        <Button 
-          variant="outline" 
-          onClick={() => navigate('/auth')}
-          className="bg-gradient-card border-primary/20 text-foreground hover:bg-primary/10"
-        >
-          Client Login
-        </Button>
-      </div>
-      <div className="w-full max-w-2xl space-y-8">
-        {/* Header */}
-        <div className="text-center space-y-4">
-          <div className="flex items-center justify-center mb-6">
-            <div className="text-6xl">🎯</div>
-          </div>
-          <h1 className="text-4xl font-bold bg-gradient-primary bg-clip-text text-transparent">Connecting AI-power with people</h1>
-          <p className="text-xl text-muted-foreground">AI-power whatever you GOTTA DO!</p>
-        </div>
-
-        {/* Main Content */}
-        <Card className="p-8 bg-gradient-card border-border shadow-card">
-          <div className="text-center space-y-6">
-            <h2 className="text-2xl font-semibold text-foreground">Now lets set a Goal to begin! </h2>
-            <p className="text-lg text-muted-foreground leading-relaxed">Setting clear goals helps you achieve what matters most, and we will find you the perfect coaching support...... For Free!!</p>
-            
-            <div className="grid md:grid-cols-3 gap-4 my-8">
-              <div className="text-center p-4">
-                <div className="text-3xl mb-2">📝</div>
-                <h3 className="font-semibold text-foreground">Personalized</h3>
-                <p className="text-sm text-muted-foreground">Tailored questions based on your goals</p>
-              </div>
-              <div className="text-center p-4">
-                <div className="text-3xl mb-2">🎯</div>
-                <h3 className="font-semibold text-foreground">Focused</h3>
-                <p className="text-sm text-muted-foreground">Clear, actionable goal setting</p>
-              </div>
-              <div className="text-center p-4">
-                <div className="text-3xl mb-2">🚀</div>
-                <h3 className="font-semibold text-foreground">Results</h3>
-                <p className="text-sm text-muted-foreground">Connect with your ideal coach</p>
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-background to-secondary/20 flex items-center justify-center p-4">
+      <Card className="bg-card/50 backdrop-blur-sm border-primary/20 shadow-xl max-w-2xl w-full">
+        <CardHeader className="space-y-4 text-center pb-8">
+          <CardTitle className="text-4xl font-bold bg-gradient-to-r from-primary via-primary/80 to-primary bg-clip-text text-transparent">
+            Welcome to Your Journey
+          </CardTitle>
+          <CardDescription className="text-lg">
+            Discover personalized coaching tailored to your unique goals and aspirations
+          </CardDescription>
+        </CardHeader>
+        
+        <CardContent className="space-y-8">
+          <div className="grid gap-6">
+            <div className="flex gap-4 items-start p-4 rounded-lg bg-accent/50 hover:bg-accent transition-colors">
+              <div className="text-primary text-2xl">🎯</div>
+              <div>
+                <h3 className="font-semibold mb-1">Personalized Matching</h3>
+                <p className="text-sm text-muted-foreground">
+                  Connect with coaches who understand your specific needs and challenges
+                </p>
               </div>
             </div>
-
-            <div className="flex flex-col sm:flex-row gap-4 items-center justify-center">
-              <Button variant="gradient" size="lg" onClick={onStart} className="px-12">
-                Get Started
+            
+            <div className="flex gap-4 items-start p-4 rounded-lg bg-accent/50 hover:bg-accent transition-colors">
+              <div className="text-primary text-2xl">💡</div>
+              <div>
+                <h3 className="font-semibold mb-1">Expert Guidance</h3>
+                <p className="text-sm text-muted-foreground">
+                  Work with experienced coaches who are passionate about your growth
+                </p>
+              </div>
+            </div>
+            
+            <div className="flex gap-4 items-start p-4 rounded-lg bg-accent/50 hover:bg-accent transition-colors">
+              <div className="text-primary text-2xl">🚀</div>
+              <div>
+                <h3 className="font-semibold mb-1">Achieve Your Goals</h3>
+                <p className="text-sm text-muted-foreground">
+                  Transform your aspirations into actionable plans and measurable results
+                </p>
+              </div>
+            </div>
+          </div>
+          
+          <div className="flex flex-col gap-3 pt-4">
+            <div className="grid grid-cols-2 gap-3">
+              <Button 
+                onClick={() => navigate('/auth?type=client')}
+                variant="outline"
+              >
+                Client Login
               </Button>
               <Button 
-                variant="outline" 
-                size="lg" 
-                onClick={() => navigate('/preview')} 
-                className="px-8"
+                onClick={() => navigate('/auth?type=coach')}
+                variant="outline"
               >
-                View Email Preview
+                Coach Login
               </Button>
             </div>
-            
-            <p className="text-sm text-muted-foreground">
-              Takes only 3-5 minutes to complete
-            </p>
+            <Button 
+              onClick={onStart}
+              size="lg"
+              className="w-full text-lg py-6 shadow-lg hover:shadow-xl transition-all duration-300"
+            >
+              Get Started as Client
+            </Button>
+            <Button 
+              onClick={() => navigate('/coach-signup-request')}
+              variant="secondary"
+              className="w-full"
+            >
+              Become a Coach
+            </Button>
           </div>
-        </Card>
-      </div>
-    </div>;
+        </CardContent>
+      </Card>
+    </div>
+  );
 };

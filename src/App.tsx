@@ -22,6 +22,9 @@ import ProfilePage from "./pages/ProfilePage";
 import CoachResponsePage from "./pages/CoachResponsePage";
 import CoachSessionLandingPage from "./pages/CoachSessionLandingPage";
 import CoachOnboardingPage from "./pages/CoachOnboardingPage";
+import { AdminCoachesPage } from "./pages/AdminCoachesPage";
+import { CoachDashboardPage } from "./pages/CoachDashboardPage";
+import { CoachSignupRequestPage } from "./pages/CoachSignupRequestPage";
 import { JoinSessionRedirect } from "./components/JoinSessionRedirect";
 
 const queryClient = new QueryClient();
@@ -48,6 +51,9 @@ const App = () => (
             <Route path="/coach-response" element={<CoachResponsePage />} />
             <Route path="/coach-session/:sessionId" element={<CoachSessionLandingPage />} />
             <Route path="/coach-onboard" element={<CoachOnboardingPage />} />
+            <Route path="/coach-dashboard" element={<AuthGuard requireAuth><CoachDashboardPage /></AuthGuard>} />
+            <Route path="/admin/coaches" element={<AuthGuard requireAuth><AdminCoachesPage /></AuthGuard>} />
+            <Route path="/coach-signup-request" element={<CoachSignupRequestPage />} />
             <Route path="/payment-success" element={<PaymentSuccessPage />} />
             <Route path="/payment-cancelled" element={<PaymentCancelledPage />} />
             <Route path="/join-session" element={<JoinSessionRedirect />} />
