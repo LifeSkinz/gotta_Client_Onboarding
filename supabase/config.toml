@@ -48,8 +48,5 @@ verify_jwt = false
 [functions.send-coach-invitation]
 verify_jwt = true
 
-[functions.setup-daily-webhooks]
-verify_jwt = true
-
 [functions.daily-webhook-handler]
 verify_jwt = false
