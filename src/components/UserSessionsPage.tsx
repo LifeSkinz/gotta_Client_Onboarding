@@ -47,7 +47,7 @@ export const UserSessionsPage = () => {
         .select(`
           *,
           session_video_details(video_join_url, video_room_id),
-          coaches (
+          coaches!fk_sessions_coach (
             name,
             avatar_url,
             title

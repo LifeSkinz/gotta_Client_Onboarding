@@ -93,7 +93,7 @@ export default function SessionPortalPage() {
         .select(`
           *,
           session_video_details(video_join_url, video_room_id),
-          coaches (
+          coaches!fk_sessions_coach (
             name,
             title,
             avatar_url

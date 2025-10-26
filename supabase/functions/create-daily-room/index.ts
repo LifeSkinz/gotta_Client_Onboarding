@@ -146,7 +146,8 @@ serve(async (req) => {
         video_join_url: roomUrl,
         updated_at: new Date().toISOString()
       }, {
-        onConflict: 'session_id'
+        onConflict: 'session_id',
+        ignoreDuplicates: false  // Always update
       });
 
     if (videoDetailsError) {

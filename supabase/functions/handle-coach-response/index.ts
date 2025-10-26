@@ -51,12 +51,12 @@ serve(async (req) => {
     // Initialize Resend
     const resend = new Resend(Deno.env.get('RESEND_API_KEY'));
 
-    // Get session details with proper joins and client insights
+    // Get session details with proper joins using new foreign key
     const { data: sessionData, error: sessionError } = await supabase
       .from('sessions')
       .select(`
         *,
-        coach:coaches(*),
+        coach:coaches!fk_sessions_coach(*),
         session_video_details (
           video_join_url,
           video_room_id
@@ -339,7 +339,14 @@ serve(async (req) => {
     }
 
     // Send coach confirmation email with session link
+    console.log('Coach data check:', {
+      hasCoach: !!sessionData.coach,
+      coachEmail: sessionData.coach?.notification_email,
+      coachName: sessionData.coach?.name
+    });
+    
     if (sessionData.coach?.notification_email) {
+      console.log('✅ Sending coach email to:', sessionData.coach.notification_email);
       try {
         const videoUrl = sessionData.session_video_details?.[0]?.video_join_url;
         const sessionUrl = videoUrl || `${CONFIG.WEBSITE_URL}/coach-session/${sessionId}`;
@@ -352,11 +359,15 @@ serve(async (req) => {
             subject: `Session Request ${action.charAt(0).toUpperCase() + action.slice(1)} - Client: ${clientName}`,
             html: coachEmailContent,
           });
-          console.log('Coach confirmation email sent successfully to:', sessionData.coach.notification_email, coachEmailResult);
+          console.log('✅ Coach confirmation email sent successfully:', coachEmailResult);
+        } else {
+          console.warn('⚠️ No coach email content generated for action:', action);
         }
       } catch (emailError) {
-        console.error('Error sending coach email:', emailError);
+        console.error('❌ Error sending coach email:', emailError);
       }
+    } else {
+      console.warn('⚠️ Coach email skipped - no notification_email found');
     }
 
     // After sending emails, redirect to success page
