@@ -87,7 +87,7 @@ Deno.serve(async (req) => {
       .insert({
         dedup_key: dedupKey,
         template_name: 'coach_application_notification',
-        recipient_email: 'admin@aicoach.com', // Replace with actual admin email
+        recipient_email: 'eyeskinz@gmail.com',
         recipient_name: 'Admin',
         subject: `New Coach Application from ${body.name}`,
         payload: {
