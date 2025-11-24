@@ -63,6 +63,8 @@ serve(async (req) => {
     const scheduledTime = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes from now
     const joinToken = crypto.randomUUID();
     
+    const tokenExpiration = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours from now
+    
     const { data: session, error: sessionError } = await supabase
       .from('sessions')
       .insert({
@@ -76,6 +78,7 @@ serve(async (req) => {
         status: 'scheduled',
         session_state: 'pending_coach_response',
         join_token: joinToken,
+        token_expires_at: tokenExpiration.toISOString(),
         notes: JSON.stringify({ userGoal: userGoal.title, clientBio, type: 'instant' })
       })
       .select()

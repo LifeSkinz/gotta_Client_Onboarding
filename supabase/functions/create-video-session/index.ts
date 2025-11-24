@@ -127,6 +127,8 @@ serve(async (req) => {
     while (retryCount < maxRetries) {
       try {
         // Create the session in the database with enhanced state management
+        const tokenExpiration = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours from now
+        
         const { data: sessionData, error: sessionError } = await supabase
           .from('sessions')
           .insert({
@@ -141,6 +143,7 @@ serve(async (req) => {
             coin_cost: sessionCoinCost,
             status: 'scheduled',
             session_state: 'pending',
+            token_expires_at: tokenExpiration.toISOString(),
             participant_status: {
               client_booked: true,
               coach_notified: false,
