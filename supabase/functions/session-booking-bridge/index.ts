@@ -126,6 +126,8 @@ serve(async (req) => {
 
         // Create actual session
         const sessionUuid = crypto.randomUUID();
+        const tokenExpiration = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours from now
+        
         const { data: newSession, error: sessionError } = await supabase
           .from('sessions')
           .insert({
@@ -138,6 +140,7 @@ serve(async (req) => {
             price_amount: priceAmount,
             coin_cost: coinCost,
             session_state: 'scheduled',
+            token_expires_at: tokenExpiration.toISOString(),
             notes: `Converted from guest session ${guestSessionId}`,
             participant_status: {
               client_joined: false,
@@ -231,6 +234,8 @@ serve(async (req) => {
 
         // Create session from assessment
         const assessmentSessionUuid = crypto.randomUUID();
+        const assessmentTokenExpiration = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours from now
+        
         const { data: assessmentSession, error: assessmentSessionError } = await supabase
           .from('sessions')
           .insert({
@@ -243,6 +248,7 @@ serve(async (req) => {
             price_amount: assessmentPriceAmount,
             coin_cost: assessmentCoinCost,
             session_state: 'scheduled',
+            token_expires_at: assessmentTokenExpiration.toISOString(),
             notes: `Booked from assessment ${userResponseId}`,
             participant_status: {
               client_joined: false,
