@@ -88,35 +88,40 @@ export default function SessionPortalPage() {
 
   const fetchSessionData = async () => {
     try {
-      // Use secure edge function instead of direct query
-      const { data, error } = await supabase.functions.invoke('get-session-by-token', {
-        body: { token: sessionId }
-      });
+      // Fetch session directly by ID (user must be authenticated and authorized via RLS)
+      const { data: sessionData, error: sessionError } = await supabase
+        .from('sessions')
+        .select(`
+          *,
+          coaches!fk_sessions_coach (
+            name,
+            title,
+            avatar_url
+          ),
+          session_video_details (
+            video_join_url,
+            video_room_id
+          )
+        `)
+        .eq('id', sessionId)
+        .single();
 
-      if (error || !data) {
-        console.error('Error fetching session:', error);
+      if (sessionError || !sessionData) {
+        console.error('Error fetching session:', sessionError);
+        toast({
+          title: "Error",
+          description: "Session not found or you don't have access to it.",
+          variant: "destructive",
+        });
         setSession(null);
         setLoading(false);
         return;
       }
 
-      // Fetch coach details separately (public data)
-      const { data: coachData } = await supabase
-        .from('coaches')
-        .select('name, title, avatar_url')
-        .eq('id', data.coach_id)
-        .single();
-
-      setSession({
-        ...data,
-        coaches: coachData || { name: 'Coach', title: '', avatar_url: null }
-      } as Session);
-
-      if (error) throw error;
-      setSession(data);
+      setSession(sessionData as Session);
 
       // Fetch session goals
-      const { data: goalsData, error: goalsError } = await supabase
+      const { data: goalsData } = await supabase
         .from('session_analytics')
         .select('id, goal_description, initial_assessment, final_assessment')
         .eq('session_id', sessionId);
