@@ -125,6 +125,18 @@ export default function VideoSessionPage() {
       });
 
       logger.info('Joining session', { sessionId });
+
+      // Send session started notification emails
+      try {
+        await supabase.functions.invoke('send-session-started-notification', {
+          body: { sessionId: sessionId! }
+        });
+        logger.info('Session started notifications sent', { sessionId });
+      } catch (emailError) {
+        logger.error('Error sending session started notifications', { sessionId, error: emailError });
+        // Don't fail the session join if email notification fails
+      }
+
       setInSession(true);
     } catch (error) {
       logger.error('Error joining session', { sessionId, error });

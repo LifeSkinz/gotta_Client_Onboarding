@@ -134,8 +134,11 @@ serve(async (req) => {
       .from('sessions')
       .select(`
         *,
-        coaches!sessions_coach_id_fkey (
+        coaches!fk_sessions_coach (
           id, name, title, notification_email
+        ),
+        session_video_details (
+          video_join_url
         )
       `)
       .gte('scheduled_time', earliestReminder.toISOString())
@@ -162,7 +165,9 @@ serve(async (req) => {
 
     for (const session of sessions) {
       try {
-        const sessionUrl = `${CONFIG.WEBSITE_URL}/session-portal/${session.id}`;
+        // Use video URL if available, fallback to portal
+        const videoUrl = session.session_video_details?.[0]?.video_join_url;
+        const sessionUrl = videoUrl || `${CONFIG.WEBSITE_URL}/session-portal/${session.id}`;
 
         // Fetch client profile
         const { data: clientProfile } = await supabase

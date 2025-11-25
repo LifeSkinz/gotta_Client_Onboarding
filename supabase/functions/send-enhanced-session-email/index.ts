@@ -270,15 +270,21 @@ serve(async (req) => {
       throw new Error(`Session not found: ${sessionError.message}`);
     }
 
-    // Fetch session goals
+    // Fetch session goals and analytics
     const { data: goals } = await supabase
-      .from('session_goals_tracking')
-      .select('*')
+      .from('session_analytics')
+      .select('goal_description, goal_category, action_items, progress_notes')
       .eq('session_id', sessionId)
-      .order('created_at', { ascending: false });
+      .order('created_at', { ascending: false })
+      .maybeSingle();
 
     // Prepare email data with video URL from joined table
     const videoUrl = session.session_video_details?.[0]?.video_join_url;
+    const goalArray = goals ? [{
+      goal_category: goals.goal_category || 'General',
+      goal_description: goals.goal_description || 'Session coaching',
+      progress_notes: goals.progress_notes || ''
+    }] : [];
     const emailData = {
       session: {
         ...session,
@@ -287,7 +293,7 @@ serve(async (req) => {
         client_name: clientName || 'Client'
       },
       coach: session.coaches,
-      goals: goals || [],
+      goals: goalArray,
       clientName: clientName || 'Client',
       customMessage
     };
