@@ -1,6 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { Resend } from 'npm:resend@2.0.0';
 import { CONFIG } from '../_shared/config.ts';
 
 const corsHeaders = {
@@ -47,9 +46,6 @@ serve(async (req) => {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
-
-    // Initialize Resend
-    const resend = new Resend(Deno.env.get('RESEND_API_KEY'));
 
     // Get session details with proper joins using new foreign key
     const { data: sessionData, error: sessionError } = await supabase
@@ -321,24 +317,33 @@ serve(async (req) => {
         throw new Error('Invalid action');
     }
 
-    console.log('Attempting to send notification emails');
+    console.log('Attempting to send notification emails via email_outbox');
 
-    // Send notification emails (both coaches and clients)
+    // Queue client email via email_outbox for reliable delivery
     if (clientEmail) {
       try {
-        const clientEmailResult = await resend.emails.send({
-          from: 'Lovable Coach <onboarding@resend.dev>',
-          to: [clientEmail],
-          subject: clientNotificationSubject,
-          html: clientNotificationContent,
-        });
-        console.log('Client notification email sent successfully to:', clientEmail, clientEmailResult);
+        const clientDedupKey = `coach_response:client:${sessionId}:${action}:${clientEmail}`;
+        
+        await supabase
+          .from('email_outbox')
+          .insert({
+            dedup_key: clientDedupKey,
+            template_name: `coach_response_${action}_client`,
+            recipient_email: clientEmail,
+            recipient_name: 'Client',
+            subject: clientNotificationSubject,
+            payload: {
+              html: clientNotificationContent,
+              from: 'Coaching Platform <sessions@resend.dev>'
+            }
+          });
+        console.log('✅ Client notification queued in email_outbox:', clientEmail.replace(/(.{2}).*(@.*)/, '$1***$2'));
       } catch (emailError) {
-        console.error('Error sending client email:', emailError);
+        console.error('Error queuing client email:', emailError);
       }
     }
 
-    // Send coach confirmation email with session link
+    // Queue coach confirmation email with session link via email_outbox
     console.log('Coach data check:', {
       hasCoach: !!sessionData.coach,
       coachEmail: sessionData.coach?.notification_email,
@@ -346,25 +351,34 @@ serve(async (req) => {
     });
     
     if (sessionData.coach?.notification_email) {
-      console.log('✅ Sending coach email to:', sessionData.coach.notification_email);
+      console.log('✅ Queuing coach email to:', sessionData.coach.notification_email);
       try {
         const videoUrl = sessionData.session_video_details?.[0]?.video_join_url;
         const sessionUrl = videoUrl || `${CONFIG.WEBSITE_URL}/coach-session/${sessionId}`;
         console.log('Coach email session URL:', sessionUrl, 'Video URL:', videoUrl);
         const coachEmailContent = generateCoachEmailContent(action, sessionData, sessionUrl);
         if (coachEmailContent) {
-          const coachEmailResult = await resend.emails.send({
-            from: 'Lovable Coach <onboarding@resend.dev>',
-            to: [sessionData.coach.notification_email],
-            subject: `Session Request ${action.charAt(0).toUpperCase() + action.slice(1)} - Client: ${clientName}`,
-            html: coachEmailContent,
-          });
-          console.log('✅ Coach confirmation email sent successfully:', coachEmailResult);
+          const coachDedupKey = `coach_response:coach:${sessionId}:${action}:${sessionData.coach.notification_email}`;
+          
+          await supabase
+            .from('email_outbox')
+            .insert({
+              dedup_key: coachDedupKey,
+              template_name: `coach_response_${action}_coach`,
+              recipient_email: sessionData.coach.notification_email,
+              recipient_name: sessionData.coach.name || 'Coach',
+              subject: `Session Request ${action.charAt(0).toUpperCase() + action.slice(1)} - Client: ${clientName}`,
+              payload: {
+                html: coachEmailContent,
+                from: 'Coaching Platform <sessions@resend.dev>'
+              }
+            });
+          console.log('✅ Coach confirmation email queued in email_outbox:', sessionData.coach.notification_email.replace(/(.{2}).*(@.*)/, '$1***$2'));
         } else {
           console.warn('⚠️ No coach email content generated for action:', action);
         }
       } catch (emailError) {
-        console.error('❌ Error sending coach email:', emailError);
+        console.error('❌ Error queuing coach email:', emailError);
       }
     } else {
       console.warn('⚠️ Coach email skipped - no notification_email found');

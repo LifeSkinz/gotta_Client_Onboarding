@@ -43,6 +43,12 @@ export const useDailyCo = (config: DailyCoConfig, events?: DailyCoEvents) => {
       callObject = DailyIframe.createFrame(config.container, {
         showLocalVideo: true,
         showParticipantsBar: true,
+        iframeStyle: {
+          position: 'absolute',
+          width: '100%',
+          height: '100%',
+          border: 'none'
+        }
       });
     } else {
       // Otherwise create call object without UI
