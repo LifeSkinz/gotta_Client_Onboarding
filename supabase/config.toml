@@ -9,9 +9,6 @@ verify_jwt = false
 [functions.send-enhanced-session-email]
 verify_jwt = false
 
-[functions.generate-video-link]
-verify_jwt = true
-
 [functions.handle-coach-response]
 verify_jwt = false
 
