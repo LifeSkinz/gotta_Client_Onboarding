@@ -254,7 +254,7 @@ serve(async (req) => {
       .from('sessions')
       .select(`
         *,
-        coaches (
+        coaches!fk_sessions_coach (
           id, name, title, bio, avatar_url, years_experience, 
           specialties, coaching_expertise, coaching_style
         ),
