@@ -128,8 +128,7 @@ serve(async (req) => {
         .upsert({
           session_id: sessionId,
           video_room_id: roomName,
-          video_join_url: roomUrl,
-          video_provider: dailyApiKey ? 'daily' : 'videosdk'
+          video_join_url: roomUrl
         });
 
       // Initialize recording settings
@@ -137,8 +136,7 @@ serve(async (req) => {
         .from('session_recordings')
         .upsert({
           session_id: sessionId,
-          recording_status: 'initialized',
-          transcription_enabled: true
+          transcription_status: 'initialized'
         });
 
       console.log(`Room created successfully for session ${sessionId}: ${roomUrl}`);

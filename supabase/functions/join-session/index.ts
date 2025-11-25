@@ -16,12 +16,15 @@ serve(async (req) => {
   }
 
   try {
-    const url = new URL(req.url);
-    const token = url.searchParams.get('token');
+    // Get token from request body
+    const { token } = await req.json();
 
     if (!token) {
       console.log('No token provided in join request');
-      return Response.redirect('/error?code=missing-token', 302);
+      return new Response(JSON.stringify({ error: 'missing-token' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
     }
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
@@ -36,7 +39,10 @@ serve(async (req) => {
 
     if (sessionError || !sessions || sessions.length === 0) {
       console.log('Session not found or error:', sessionError);
-      return Response.redirect('/error?code=session-not-found', 302);
+      return new Response(JSON.stringify({ error: 'session-not-found' }), {
+        status: 404,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
     }
 
     const session = sessions[0];
@@ -48,13 +54,19 @@ serve(async (req) => {
     
     if (now > expiresAt) {
       console.log('Token expired for session:', session.id);
-      return Response.redirect('/error?code=token-expired', 302);
+      return new Response(JSON.stringify({ error: 'token-expired' }), {
+        status: 403,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
     }
 
     // Check if token already used (single-use enforcement)
     if (session.token_used_at) {
       console.log('Token already used for session:', session.id);
-      return Response.redirect('/error?code=token-already-used', 302);
+      return new Response(JSON.stringify({ error: 'token-already-used' }), {
+        status: 403,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
     }
 
     // Rate limiting check
@@ -72,7 +84,10 @@ serve(async (req) => {
 
     if (recentAttempts.length >= RATE_LIMIT_MAX_ATTEMPTS) {
       console.log('Rate limit exceeded for session:', session.id);
-      return Response.redirect('/error?code=rate-limit-exceeded', 302);
+      return new Response(JSON.stringify({ error: 'rate-limit-exceeded' }), {
+        status: 429,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
     }
 
     // Record this attempt
@@ -98,7 +113,9 @@ serve(async (req) => {
         .update({ token_used_at: now.toISOString() })
         .eq('id', session.id);
       
-      return Response.redirect(`/session-portal/${session.id}`, 302);
+      return new Response(JSON.stringify({ redirectUrl: `/session-portal/${session.id}` }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
     }
 
     // Create Daily.co room (JIT) with idempotency
@@ -113,7 +130,10 @@ serve(async (req) => {
 
       if (roomError) {
         console.error('Failed to create Daily.co room:', roomError);
-        return Response.redirect('/error?code=video-provider-down', 302);
+        return new Response(JSON.stringify({ error: 'video-provider-down' }), {
+          status: 503,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
       }
 
       console.log('Daily.co room created successfully');
@@ -129,22 +149,33 @@ serve(async (req) => {
 
       if (updateError) {
         console.error('Failed to update session:', updateError);
-        return Response.redirect('/error?code=database-error', 302);
+        return new Response(JSON.stringify({ error: 'database-error' }), {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
       }
 
       console.log('Session updated and token marked as used');
 
     } catch (error) {
       console.error('Error creating video room:', error);
-      return Response.redirect('/error?code=video-provider-down', 302);
+      return new Response(JSON.stringify({ error: 'video-provider-down' }), {
+        status: 503,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
     }
 
-    // Redirect to session portal page
-    console.log(`Redirecting to session portal: ${session.id}`);
-    return Response.redirect(`/session-portal/${session.id}`, 302);
+    // Return session portal redirect URL
+    console.log(`Session ready, returning redirect URL: ${session.id}`);
+    return new Response(JSON.stringify({ redirectUrl: `/session-portal/${session.id}` }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    });
 
   } catch (error) {
     console.error('Unexpected error in join-session:', error);
-    return Response.redirect('/error?code=server-error', 302);
+    return new Response(JSON.stringify({ error: 'server-error' }), {
+      status: 500,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    });
   }
 });
