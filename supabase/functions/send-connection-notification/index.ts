@@ -426,7 +426,7 @@ serve(async (req) => {
       .from('sessions')
       .select(`
         *,
-        coach:coaches(*)
+        coach:coaches!fk_sessions_coach(*)
       `)
       .eq('id', sessionId)
       .single();

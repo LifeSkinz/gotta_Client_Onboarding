@@ -107,12 +107,10 @@ serve(async (req) => {
         videoJoinUrl = roomData.videoJoinUrl;
         videoRoomId = roomData.videoRoomId;
         
-        // Update session with video details
+        // Update session state - video details are stored in session_video_details table
         await supabase
           .from('sessions')
           .update({
-            video_join_url: videoJoinUrl,
-            video_room_id: videoRoomId,
             session_state: 'ready'
           })
           .eq('id', session.id);

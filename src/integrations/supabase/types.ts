@@ -1040,13 +1040,6 @@ export type Database = {
             referencedRelation: "coaches"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "sessions_coach_id_fkey"
-            columns: ["coach_id"]
-            isOneToOne: false
-            referencedRelation: "coaches"
-            referencedColumns: ["id"]
-          },
         ]
       }
       system_capacity: {
