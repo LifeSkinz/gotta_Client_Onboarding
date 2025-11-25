@@ -1,20 +1,53 @@
 import { useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 // This component handles redirects from the join-session edge function
 export function JoinSessionRedirect() {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const { toast } = useToast();
 
   useEffect(() => {
-    const token = searchParams.get('token');
-    if (token) {
-      // Call the edge function that handles the actual join logic
-      window.location.href = `https://nqoysxjjimvihcvfpesr.supabase.co/functions/v1/join-session?token=${token}`;
-    } else {
-      // No token provided, redirect to error page
-      window.location.href = '/?error=missing-token';
-    }
-  }, [searchParams]);
+    const joinSession = async () => {
+      const token = searchParams.get('token');
+      
+      if (!token) {
+        toast({
+          title: "Missing Token",
+          description: "No session token provided.",
+          variant: "destructive",
+        });
+        navigate('/?error=missing-token');
+        return;
+      }
+
+      try {
+        // Use Supabase client to invoke the edge function
+        const { data, error } = await supabase.functions.invoke('join-session', {
+          body: { token },
+        });
+
+        if (error) throw error;
+
+        // Redirect to the session portal or video URL
+        if (data?.redirectUrl) {
+          window.location.href = data.redirectUrl;
+        }
+      } catch (error) {
+        console.error('Error joining session:', error);
+        toast({
+          title: "Error",
+          description: "Failed to join session. Please try again.",
+          variant: "destructive",
+        });
+        navigate('/?error=join-failed');
+      }
+    };
+
+    joinSession();
+  }, [searchParams, navigate, toast]);
 
   return (
     <div className="flex items-center justify-center min-h-screen">
