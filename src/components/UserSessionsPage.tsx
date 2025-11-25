@@ -53,6 +53,7 @@ export const UserSessionsPage = () => {
             title
           )
         `)
+        .eq('client_id', user!.id)
         .order('scheduled_time', { ascending: false });
 
       if (error) throw error;
