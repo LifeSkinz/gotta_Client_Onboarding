@@ -225,6 +225,93 @@ serve(async (req) => {
           </div>
         `;
       }
+      
+      if (action === 'decline') {
+        return `
+          <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <div style="text-align: center; margin-bottom: 30px;">
+              <h1 style="color: #64748b; margin: 0;">Session Declined</h1>
+              <p style="color: #6b7280; margin: 8px 0 0 0;">Your response has been recorded</p>
+            </div>
+
+            <div style="background: #f8fafc; border-radius: 8px; padding: 20px; margin: 16px 0;">
+              <p style="margin: 0; color: #374151; font-size: 14px;">
+                Thank you for your response. We've notified <strong>${clientName}</strong> that you're unable to accept this session request at this time.
+              </p>
+            </div>
+
+            <div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 16px; margin: 16px 0;">
+              <p style="margin: 0; color: #92400e; font-size: 14px;">
+                <strong>Note:</strong> The client will be automatically matched with another coach from our network who specializes in <strong>${clientGoal?.title || 'their goals'}</strong>.
+              </p>
+            </div>
+
+            <div style="background: #f1f5f9; border-radius: 8px; padding: 16px; margin: 16px 0;">
+              <h4 style="margin: 0 0 8px 0; color: #374151;">💡 Update Your Availability</h4>
+              <p style="margin: 0; color: #6b7280; font-size: 14px;">
+                To avoid future requests during unavailable times, please update your availability settings in your coach dashboard.
+              </p>
+            </div>
+
+            <div style="text-align: center; margin-top: 24px;">
+              <a href="${CONFIG.WEBSITE_URL}/coach-dashboard" style="display: inline-block; background: #3b82f6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: 600;">
+                Go to Dashboard
+              </a>
+            </div>
+
+            <div style="text-align: center; margin-top: 24px; padding-top: 24px; border-top: 1px solid #e5e7eb;">
+              <p style="margin: 0; color: #9ca3af; font-size: 12px;">
+                Session ID: ${session.id.slice(0, 8)}... • Declined on ${new Date().toLocaleDateString()}
+              </p>
+            </div>
+          </div>
+        `;
+      }
+      
+      if (action === 'reschedule') {
+        return `
+          <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <div style="text-align: center; margin-bottom: 30px;">
+              <h1 style="color: #f59e0b; margin: 0;">📅 Reschedule Request Submitted</h1>
+              <p style="color: #6b7280; margin: 8px 0 0 0;">We'll coordinate with ${clientName} for a new time</p>
+            </div>
+
+            ${goalSection}
+
+            <div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 16px; margin: 16px 0;">
+              <h4 style="margin: 0 0 8px 0; color: #92400e;">🔄 Next Steps</h4>
+              <p style="margin: 0; color: #92400e; font-size: 14px;">
+                We've notified <strong>${clientName}</strong> that you're interested but need to reschedule. They'll be able to propose alternative times, and we'll send you a follow-up email with their availability.
+              </p>
+            </div>
+
+            <div style="background: #f1f5f9; border-radius: 8px; padding: 16px; margin: 16px 0;">
+              <h4 style="margin: 0 0 8px 0; color: #374151;">📋 Client Details (For Reference)</h4>
+              <p style="margin: 4px 0; color: #6b7280; font-size: 14px;"><strong>Goal:</strong> ${clientGoal?.title || 'Not specified'}</p>
+              <p style="margin: 4px 0; color: #6b7280; font-size: 14px;"><strong>Original Request Time:</strong> ${new Date(session.scheduled_time).toLocaleString()}</p>
+            </div>
+
+            <div style="background: #e0f2fe; border-left: 4px solid #0284c7; padding: 16px; margin: 16px 0;">
+              <p style="margin: 0; color: #075985; font-size: 14px;">
+                <strong>💡 Pro Tip:</strong> Update your calendar link in your coach dashboard so clients can automatically see your available times, making scheduling faster and easier.
+              </p>
+            </div>
+
+            <div style="text-align: center; margin-top: 24px;">
+              <a href="${CONFIG.WEBSITE_URL}/coach-dashboard" style="display: inline-block; background: #3b82f6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: 600; margin: 0 8px;">
+                Update Calendar
+              </a>
+            </div>
+
+            <div style="text-align: center; margin-top: 24px; padding-top: 24px; border-top: 1px solid #e5e7eb;">
+              <p style="margin: 0; color: #9ca3af; font-size: 12px;">
+                Session ID: ${session.id.slice(0, 8)}... • Reschedule requested on ${new Date().toLocaleDateString()}
+              </p>
+            </div>
+          </div>
+        `;
+      }
+      
       return '';
     };
 
