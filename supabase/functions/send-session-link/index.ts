@@ -54,13 +54,14 @@ serve(async (req) => {
           .container { max-width: 600px; margin: 0 auto; background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
           .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px 20px; text-align: center; }
           .content { padding: 30px 20px; }
-          .video-link { background: #667eea; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; display: inline-block; margin: 20px 0; font-weight: bold; }
+          /* Responsive CTA: full-width on mobile, constrained on desktop */
+          .video-link { display: inline-block; width:100%; max-width:360px; box-sizing: border-box; background: #667eea; color: white; padding: 14px 20px; text-decoration: none; border-radius: 8px; margin: 20px auto; font-weight: bold; text-align:center; }
           .details { background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0; }
           .footer { background: #f8f9fa; padding: 20px; text-align: center; font-size: 12px; color: #666; }
           @media (max-width: 600px) {
             .container { margin: 10px; }
             .content { padding: 20px 15px; }
-            .video-link { display: block; text-align: center; margin: 20px 0; }
+            .video-link { display: block; text-align: center; margin: 20px 0; width:100%; max-width:360px; }
           }
         </style>
       </head>

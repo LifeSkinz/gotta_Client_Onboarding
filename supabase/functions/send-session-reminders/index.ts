@@ -28,7 +28,8 @@ const generateReminderEmailTemplate = (recipient: 'coach' | 'client', session: a
     .alert-box p { margin: 0; font-size: 16px; opacity: 0.95; }
     .session-card { background: #f7fafc; border-radius: 8px; padding: 25px; margin: 20px 0; }
     .session-card p { margin: 10px 0; color: #2d3748; font-size: 16px; }
-    .join-button { display: inline-block; padding: 18px 50px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; text-decoration: none; border-radius: 10px; font-weight: 700; font-size: 20px; margin: 20px 0; box-shadow: 0 4px 20px rgba(16, 185, 129, 0.4); transition: all 0.3s; }
+    /* Responsive CTA: full-width on small screens, centered and constrained on desktop */
+    .join-button { display: inline-block; width: 100%; max-width: 360px; box-sizing: border-box; padding: 14px 24px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; text-decoration: none; border-radius: 10px; font-weight: 700; font-size: 18px; margin: 12px auto; box-shadow: 0 4px 20px rgba(16, 185, 129, 0.4); transition: all 0.3s; text-align: center; }
     .join-button:hover { transform: translateY(-2px); box-shadow: 0 6px 25px rgba(16, 185, 129, 0.5); }
     .tips { background: #e6fffa; border-left: 4px solid #38b2ac; padding: 20px; border-radius: 0 8px 8px 0; margin: 20px 0; }
     .tips h3 { margin: 0 0 15px 0; color: #2c7a7b; }

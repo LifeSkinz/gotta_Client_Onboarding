@@ -28,7 +28,8 @@ const generateSessionStartedEmailTemplate = (recipient: 'coach' | 'client', sess
     .alert-box p { margin: 0; font-size: 16px; opacity: 0.95; }
     .session-card { background: #f7fafc; border-radius: 8px; padding: 25px; margin: 20px 0; }
     .session-card p { margin: 10px 0; color: #2d3748; font-size: 16px; }
-    .join-button { display: inline-block; padding: 18px 50px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; text-decoration: none; border-radius: 10px; font-weight: 700; font-size: 20px; margin: 20px 0; box-shadow: 0 4px 20px rgba(16, 185, 129, 0.4); transition: all 0.3s; }
+    /* Responsive CTA: full-width on narrow screens, centered and constrained on desktop */
+    .join-button { display: inline-block; width: 100%; max-width: 360px; box-sizing: border-box; padding: 14px 24px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; text-decoration: none; border-radius: 10px; font-weight: 700; font-size: 18px; margin: 12px auto; box-shadow: 0 4px 20px rgba(16, 185, 129, 0.4); transition: all 0.3s; text-align: center; }
     .join-button:hover { transform: translateY(-2px); box-shadow: 0 6px 25px rgba(16, 185, 129, 0.5); }
     .footer { background: #f7fafc; padding: 25px; text-align: center; font-size: 14px; color: #718096; border-top: 1px solid #e2e8f0; }
   `;

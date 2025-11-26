@@ -67,7 +67,8 @@ const generateEmailTemplate = (type: string, data: any) => {
     .session-card { background: #f7fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 24px; margin: 20px 0; }
     .coach-info { display: flex; align-items: center; gap: 15px; margin: 20px 0; }
     .coach-avatar { width: 60px; height: 60px; border-radius: 50%; object-fit: cover; border: 3px solid #667eea; }
-    .join-button { background: #667eea; color: white; padding: 16px 32px; text-decoration: none; border-radius: 8px; display: inline-block; margin: 20px 0; font-weight: 600; font-size: 16px; transition: all 0.3s; }
+    /* Responsive CTA: full-width on small screens, centered and constrained on desktop */
+    .join-button { display: inline-block; width: 100%; max-width: 360px; box-sizing: border-box; padding: 14px 22px; background: #667eea; color: white; text-decoration: none; border-radius: 8px; margin: 16px auto; font-weight: 600; font-size: 16px; transition: all 0.3s; text-align: center; }
     .join-button:hover { background: #5a6fd8; transform: translateY(-2px); }
     .goals-list { background: #edf2f7; border-radius: 8px; padding: 20px; margin: 15px 0; }
     .goal-item { padding: 10px 0; border-bottom: 1px solid #cbd5e0; }

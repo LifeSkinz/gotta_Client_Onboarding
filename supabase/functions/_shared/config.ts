@@ -1,7 +1,7 @@
 // Shared configuration for Supabase functions
 export const CONFIG = {
-  // Website URLs - Get from environment or use Lovable preview URL
-  WEBSITE_URL: Deno.env.get('WEBSITE_URL') || 'https://4b7834f2-ec53-4d7f-b416-1d71f04d1c73.lovableproject.com',
+  // Website URL - prefer explicit env var; fallback to localhost for local dev
+  WEBSITE_URL: Deno.env.get('WEBSITE_URL') || Deno.env.get('VITE_WEBSITE_URL') || 'http://localhost:5173',
   
   // Supabase URLs
   SUPABASE_URL: Deno.env.get('SUPABASE_URL')!,
@@ -24,6 +24,13 @@ export const CONFIG = {
     GRACE_WINDOW_MINUTES: 15, // Grace period after scheduled end time
   }
 };
+
+// Warn when WEBSITE_URL is using the default local fallback (helps prevent accidental redirects to preview domains)
+if ((CONFIG.WEBSITE_URL || '').includes('lovableproject.com')) {
+  console.warn('CONFIG.WEBSITE_URL is using the Lovable default. Set WEBSITE_URL in your function environment to avoid unintended redirects.');
+} else if (CONFIG.WEBSITE_URL === 'http://localhost:5173') {
+  console.warn('CONFIG.WEBSITE_URL is not set. Using http://localhost:5173 as a fallback for local development. Set WEBSITE_URL in production.');
+}
 
 // Helper function to get coach response URL
 export function getCoachResponseUrl(action: string, sessionId: string): string {

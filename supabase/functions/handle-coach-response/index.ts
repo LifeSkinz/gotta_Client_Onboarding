@@ -184,7 +184,7 @@ serve(async (req) => {
               <p style="color: rgba(255,255,255,0.95); margin: 0 0 16px 0; font-size: 14px;">
                 Client is waiting online • Session ID: ${session.id.slice(0, 8)}...
               </p>
-              <a href="${sessionUrl}" style="display: inline-block; padding: 16px 40px; background: white; color: #dc2626; text-decoration: none; border-radius: 8px; font-weight: 700; font-size: 18px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);">
+              <a href="${sessionUrl}" style="display: inline-block; width:100%; max-width:360px; box-sizing:border-box; padding: 12px 20px; background: white; color: #dc2626; text-decoration: none; border-radius: 8px; font-weight: 700; font-size: 18px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); margin: 12px auto; text-align: center;">
                 🎥 Join Session Now
               </a>
             </div>
@@ -197,7 +197,7 @@ serve(async (req) => {
               <p style="margin: 0 0 16px 0; color: #64748b; font-size: 14px;">
                 You'll receive a reminder email 10 minutes before the session
               </p>
-              <a href="${sessionUrl}" style="background: #3b82f6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; display: inline-block; font-weight: 600;">View Session Details →</a>
+              <a href="${sessionUrl}" style="display: inline-block; width:100%; max-width:360px; box-sizing:border-box; background: #3b82f6; color: white; padding: 12px 20px; text-decoration: none; border-radius: 8px; font-weight: 600; margin: 12px auto; text-align: center;">View Session Details →</a>
             </div>
             `}
 
@@ -267,7 +267,7 @@ serve(async (req) => {
           <p>${coachName} has accepted your session request and is ${timingMessage.toLowerCase()}!</p>
           <p><strong>Status:</strong> ✅ Session confirmed and ready</p>
           <p><strong>Start Time:</strong> ${newScheduledTime.toLocaleString()}</p>
-          <p><a href="${portalUrl}?token=${sessionData.join_token}" style="background-color: #3b82f6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; margin: 16px 0;">Join Session Portal</a></p>
+          <p><a href="${portalUrl}?token=${sessionData.join_token}" style="display: inline-block; width:100%; max-width:360px; box-sizing:border-box; background-color: #3b82f6; color: white; padding: 12px 20px; text-decoration: none; border-radius: 6px; margin: 12px auto; text-align:center;">Join Session Portal</a></p>
           <p style="font-size: 14px; color: #6b7280;">Click the link above to join your session at the scheduled time. The video room will be available when the session starts.</p>
         `;
 
@@ -288,7 +288,7 @@ serve(async (req) => {
           <h2>Session Request Update</h2>
           <p>Unfortunately, ${coachName} is not available for your requested session.</p>
           <p>Don't worry! We'll help you find another excellent coach who matches your needs.</p>
-          <p><a href="${CONFIG.WEBSITE_URL}/coaches" style="background-color: #667eea; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px;">Browse Other Coaches</a></p>
+          <p><a href="${CONFIG.WEBSITE_URL}/coaches" style="display: inline-block; width:100%; max-width:360px; box-sizing:border-box; background-color: #667eea; color: white; padding: 12px 20px; text-decoration: none; border-radius: 6px; margin: 12px auto; text-align:center;">Browse Other Coaches</a></p>
         `;
 
         break;
@@ -308,7 +308,7 @@ serve(async (req) => {
           <h2>Reschedule Request</h2>
           <p>${coachName} is interested in working with you but would like to propose a different time.</p>
           <p>Please check your calendar and respond with your availability.</p>
-          <p><a href="${CONFIG.WEBSITE_URL}/reschedule/${sessionId}" style="background-color: #f59e0b; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px;">View Available Times</a></p>
+          <p><a href="${CONFIG.WEBSITE_URL}/reschedule/${sessionId}" style="display: inline-block; width:100%; max-width:360px; box-sizing:border-box; background-color: #f59e0b; color: white; padding: 12px 20px; text-decoration: none; border-radius: 6px; margin: 12px auto; text-align:center;">View Available Times</a></p>
         `;
 
         break;
