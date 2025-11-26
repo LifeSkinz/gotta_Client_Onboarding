@@ -1,12 +1,38 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { Resend } from 'npm:resend@2.0.0';
 import { CONFIG } from '../_shared/config.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+// Direct Resend API helper (replaces npm SDK)
+async function sendViaResend(payload: {
+  from: string;
+  to: string[];
+  subject: string;
+  html: string;
+}) {
+  const resendApiKey = Deno.env.get('RESEND_API_KEY');
+  if (!resendApiKey) throw new Error('RESEND_API_KEY not configured');
+  
+  const response = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${resendApiKey}`,
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Resend API error ${response.status}: ${errorText}`);
+  }
+
+  return response.json();
+}
 
 const generateInvitationEmailTemplate = (email: string, invitationToken: string) => {
   const onboardingUrl = `${CONFIG.WEBSITE_URL}/coach-onboard?token=${invitationToken}`;
@@ -215,25 +241,12 @@ serve(async (req) => {
     }
 
     // Send invitation email
-    const resend = new Resend(Deno.env.get('RESEND_API_KEY'));
-    
-    const { data: emailData, error: emailError } = await resend.emails.send({
+    const emailData = await sendViaResend({
       from: CONFIG.EMAIL.FROM,
-      to: email,
+      to: [email],
       subject: 'Join Our Coaching Platform - Invitation',
       html: generateInvitationEmailTemplate(email, invitationToken)
     });
-
-    if (emailError) {
-      console.error('Error sending invitation email:', emailError);
-      return new Response(
-        JSON.stringify({ error: 'Failed to send invitation email' }),
-        { 
-          status: 500, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
-      );
-    }
 
     return new Response(
       JSON.stringify({ 

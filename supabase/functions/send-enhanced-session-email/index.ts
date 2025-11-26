@@ -1,12 +1,39 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { Resend } from 'npm:resend@2.0.0';
 import ical from 'npm:ical-generator@7.1.0';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+// Direct Resend API helper (replaces npm SDK)
+async function sendViaResend(payload: {
+  from: string;
+  to: string[];
+  subject: string;
+  html: string;
+  attachments?: any[];
+}) {
+  const resendApiKey = Deno.env.get('RESEND_API_KEY');
+  if (!resendApiKey) throw new Error('RESEND_API_KEY not configured');
+  
+  const response = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${resendApiKey}`,
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Resend API error ${response.status}: ${errorText}`);
+  }
+
+  return response.json();
+}
 
 interface SessionEmailData {
   sessionId: string;
@@ -248,7 +275,6 @@ serve(async (req) => {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
-    const resend = new Resend(Deno.env.get('RESEND_API_KEY'));
 
     // Fetch session details with coach info and video details
     const { data: session, error: sessionError } = await supabase
@@ -321,7 +347,7 @@ serve(async (req) => {
     }
 
     // Send email
-    const emailResponse = await resend.emails.send({
+    const emailResponse = await sendViaResend({
       from: 'Coaching Platform <sessions@resend.dev>',
       to: ['eyeskinz@gmail.com'],  // Test mode: send only to verified email
       subject: subjectMap[template],
@@ -335,7 +361,7 @@ serve(async (req) => {
       JSON.stringify({ 
         success: true, 
         message: 'Enhanced session email sent successfully',
-        emailId: emailResponse.data?.id,
+        emailId: emailResponse?.id,
         type: emailType
       }),
       {
