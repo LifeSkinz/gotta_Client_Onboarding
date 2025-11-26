@@ -87,6 +87,13 @@ export const VideoSessionInterface = ({
     loading: sessionManagerLoading 
   } = useSessionManager();
 
+  // Auto-start session when component mounts
+  useEffect(() => {
+    if (!sessionStarted && currentVideoUrl && !currentVideoUrl.startsWith('pending://')) {
+      startSession();
+    }
+  }, []);
+
   useEffect(() => {
     if (sessionStarted && startTime) {
       timerRef.current = setInterval(() => {
@@ -423,6 +430,8 @@ export const VideoSessionInterface = ({
                     }}
                     autoJoin={sessionStarted}
                     enableControls={true}
+                    autoStartRecording={true}
+                    autoStartTranscription={true}
                   />
                 ) : (
                   <div className="aspect-video bg-black rounded-lg flex items-center justify-center relative">
@@ -452,31 +461,12 @@ export const VideoSessionInterface = ({
               
               {/* Session Controls */}
               <div className="flex items-center justify-center gap-4">
-                <Button
-                  variant={audioEnabled ? "default" : "secondary"}
-                  size="sm"
-                  onClick={() => setAudioEnabled(!audioEnabled)}
-                >
-                  {audioEnabled ? <Mic className="h-4 w-4" /> : <MicOff className="h-4 w-4" />}
-                </Button>
-                <Button
-                  variant={videoEnabled ? "default" : "secondary"}
-                  size="sm"
-                  onClick={() => setVideoEnabled(!videoEnabled)}
-                >
-                  {videoEnabled ? <Video className="h-4 w-4" /> : <VideoOff className="h-4 w-4" />}
-                </Button>
-                
-                {!sessionStarted ? (
-                  <Button onClick={startSession} className="px-6">
-                    Start Session
-                  </Button>
-                ) : !sessionEnded ? (
+                {!sessionEnded && (
                   <Button onClick={endSession} variant="destructive" className="px-6">
                     <Phone className="h-4 w-4 mr-2" />
                     End Session
                   </Button>
-                ) : null}
+                )}
               </div>
             </CardContent>
           </Card>

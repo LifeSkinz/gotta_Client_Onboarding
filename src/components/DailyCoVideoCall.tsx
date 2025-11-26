@@ -28,6 +28,8 @@ interface DailyCoVideoCallProps {
   onParticipantLeft?: (participant: any) => void;
   enableControls?: boolean;
   autoJoin?: boolean;
+  autoStartRecording?: boolean;
+  autoStartTranscription?: boolean;
 }
 
 export const DailyCoVideoCall: React.FC<DailyCoVideoCallProps> = ({
@@ -40,6 +42,8 @@ export const DailyCoVideoCall: React.FC<DailyCoVideoCallProps> = ({
   onParticipantLeft,
   enableControls = true,
   autoJoin = false,
+  autoStartRecording = true,
+  autoStartTranscription = true,
 }) => {
   const { toast } = useToast();
   const [isVideoEnabled, setIsVideoEnabled] = useState(true);
@@ -150,6 +154,18 @@ export const DailyCoVideoCall: React.FC<DailyCoVideoCallProps> = ({
       joinRoom();
     }
   }, [autoJoin, roomUrl, isJoined, isLoading, joinRoom]);
+
+  // Auto-start recording and transcription when joined
+  useEffect(() => {
+    if (isJoined) {
+      if (autoStartRecording && !isRecording) {
+        startRecording();
+      }
+      if (autoStartTranscription && !isTranscribing) {
+        startTranscription();
+      }
+    }
+  }, [isJoined, autoStartRecording, autoStartTranscription]);
 
   const handleToggleVideo = () => {
     toggleVideo();
