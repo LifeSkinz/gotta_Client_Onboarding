@@ -85,7 +85,12 @@ Return JSON with: {"subject": "...", "personalizedContent": "..."}`;
     });
 
     const data = await response.json();
-    const aiContent = JSON.parse(data.choices[0].message.content);
+    let content = data.choices[0].message.content;
+    
+    // Strip markdown code fences if present
+    content = content.replace(/```json\n?|\n?```/g, '').trim();
+    
+    const aiContent = JSON.parse(content);
     
     return {
       subject: aiContent.subject,
@@ -532,7 +537,7 @@ serve(async (req) => {
 
       // Send WhatsApp notification if phone number is available (placeholder for future Twilio integration)
       if (coachPhone) {
-        const whatsappMessage = `New ${requestData.request_type} connection request from ${clientName} for ${goalTitle}. Check your email to respond.`;
+        const whatsappMessage = `New ${type || 'instant'} connection request from ${clientName} for ${goalTitle}. Check your email to respond.`;
         console.log('WhatsApp notification would be sent to:', coachPhone);
         console.log('WhatsApp message:', whatsappMessage);
       }
