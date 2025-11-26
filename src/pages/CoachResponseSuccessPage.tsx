@@ -25,14 +25,11 @@ export default function CoachResponseSuccessPage() {
   const action = searchParams.get('action');
 
   useEffect(() => {
-    // Auto-redirect after 10 seconds if action is provided
+    // Immediately redirect to main app (no coaching/session-id in URL)
     if (action) {
-      const timer = setTimeout(() => {
-        navigate('/');
-      }, 10000);
-      return () => clearTimeout(timer);
+      window.location.href = 'https://gotta-goal-forge.lovable.app/';
     }
-  }, [action, navigate]);
+  }, [action]);
 
   const getContent = (): PageContent => {
     switch (action) {

@@ -117,6 +117,12 @@ serve(async (req) => {
 
     // Generate comprehensive coach email content
     const generateCoachEmailContent = (action: string, session: any, sessionUrl: string) => {
+      console.log('🔍 generateCoachEmailContent called with action:', action);
+      console.log('clientInsights available:', !!clientInsights, 'Data:', {
+        goal: clientInsights?.selected_goal?.title || 'none',
+        responsesCount: clientInsights?.responses?.length || 0,
+        analysisLength: clientInsights?.ai_analysis?.analysis?.length || 0
+      });
       const scheduledTime = new Date(session.scheduled_time);
       const now = new Date();
       const minutesUntilSession = Math.floor((scheduledTime.getTime() - now.getTime()) / (1000 * 60));
@@ -357,7 +363,9 @@ serve(async (req) => {
         const sessionUrl = videoUrl || `${CONFIG.WEBSITE_URL}/coach-session/${sessionId}`;
         console.log('Coach email session URL:', sessionUrl, 'Video URL:', videoUrl);
         const coachEmailContent = generateCoachEmailContent(action, sessionData, sessionUrl);
-        if (coachEmailContent) {
+        console.log('Generated coach email content length:', coachEmailContent?.length || 0, 'Action:', action);
+        console.log('Content preview (first 200 chars):', coachEmailContent?.substring(0, 200) || 'EMPTY');
+        if (coachEmailContent && coachEmailContent.trim().length > 0) {
           const coachDedupKey = `coach_response:coach:${sessionId}:${action}:${sessionData.coach.notification_email}`;
           
           await supabase
@@ -375,7 +383,7 @@ serve(async (req) => {
             });
           console.log('✅ Coach confirmation email queued in email_outbox:', sessionData.coach.notification_email.replace(/(.{2}).*(@.*)/, '$1***$2'));
         } else {
-          console.warn('⚠️ No coach email content generated for action:', action);
+          console.warn('⚠️ No coach email content generated for action:', action, 'Content empty or whitespace-only');
         }
       } catch (emailError) {
         console.error('❌ Error queuing coach email:', emailError);

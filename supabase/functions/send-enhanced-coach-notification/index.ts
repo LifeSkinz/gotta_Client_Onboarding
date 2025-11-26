@@ -58,11 +58,12 @@ const generateCoachEmailTemplate = (session: any, client: any, coach: any, goals
     .goals-grid { display: grid; gap: 15px; margin: 15px 0; }
     .goal-card { background: #e6fffa; border-left: 4px solid #38b2ac; padding: 15px; border-radius: 0 8px 8px 0; }
     .insight-card { background: #fef5e7; border-left: 4px solid #ed8936; padding: 15px; border-radius: 0 8px 8px 0; margin: 10px 0; }
-    .action-buttons { text-align: center; margin: 30px 0; }
-    .btn { padding: 12px 24px; margin: 0 10px; text-decoration: none; border-radius: 8px; font-weight: 600; display: inline-block; transition: all 0.3s; }
+    .action-buttons { text-align: center; margin: 30px 0; display: grid; gap: 10px; }
+    .btn { padding: 12px 24px; margin: 0; text-decoration: none; border-radius: 8px; font-weight: 600; display: block; transition: all 0.3s; }
     .btn-primary { background: #38b2ac; color: white; }
     .btn-secondary { background: #4299e1; color: white; }
     .btn-danger { background: #e53e3e; color: white; }
+    .btn-full-width { grid-column: 1 / -1; }
     .highlight { color: #667eea; font-weight: 600; }
     .footer { background: #f7fafc; padding: 30px; text-align: center; font-size: 14px; color: #718096; border-top: 1px solid #e2e8f0; }
     @media (max-width: 600px) {
@@ -190,7 +191,7 @@ const generateCoachEmailTemplate = (session: any, client: any, coach: any, goals
             <a href="${CONFIG.WEBSITE_URL}/coach-response?action=reschedule&sessionId=${session.id}" class="btn btn-secondary">
               📅 Request Reschedule
             </a>
-            <a href="${CONFIG.WEBSITE_URL}/coach-response?action=decline&sessionId=${session.id}" class="btn btn-danger">
+            <a href="${CONFIG.WEBSITE_URL}/coach-response?action=decline&sessionId=${session.id}" class="btn btn-danger btn-full-width">
               ❌ Decline Session
             </a>
           </div>
