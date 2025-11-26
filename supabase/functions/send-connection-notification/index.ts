@@ -1,13 +1,39 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { Resend } from 'npm:resend@2.0.0';
 import { CONFIG } from '../_shared/config.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+// Direct Resend API helper (replaces npm SDK)
+async function sendViaResend(payload: {
+  from: string;
+  to: string[];
+  subject: string;
+  html: string;
+}) {
+  const resendApiKey = Deno.env.get('RESEND_API_KEY');
+  if (!resendApiKey) throw new Error('RESEND_API_KEY not configured');
+  
+  const response = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${resendApiKey}`,
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Resend API error ${response.status}: ${errorText}`);
+  }
+
+  return response.json();
+}
 
 async function generateAIEmail(context: any) {
   const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
@@ -454,9 +480,6 @@ serve(async (req) => {
       .single();
 
 
-    // Initialize Resend
-    const resend = new Resend(Deno.env.get('RESEND_API_KEY'));
-
     // Generate AI-powered email content
     const clientName = clientProfile?.full_name || 'A client';
     const clientBioData = clientBio || clientProfile?.bio || 'No additional information provided';
@@ -498,8 +521,8 @@ serve(async (req) => {
 
     try {
       // Send email notification using Resend
-      const emailResponse = await resend.emails.send({
-        from: 'onboarding@resend.dev',
+      const emailResponse = await sendViaResend({
+        from: 'Coaching Platform <onboarding@resend.dev>',
         to: [coachEmail],
         subject: emailSubject,
         html: emailContent,

@@ -1,11 +1,37 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { Resend } from 'npm:resend@2.0.0';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+// Direct Resend API helper (replaces npm SDK)
+async function sendViaResend(payload: {
+  from: string;
+  to: string[];
+  subject: string;
+  html: string;
+}) {
+  const resendApiKey = Deno.env.get('RESEND_API_KEY');
+  if (!resendApiKey) throw new Error('RESEND_API_KEY not configured');
+  
+  const response = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${resendApiKey}`,
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Resend API error ${response.status}: ${errorText}`);
+  }
+
+  return response.json();
+}
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -20,11 +46,10 @@ serve(async (req) => {
       throw new Error('Missing required parameters');
     }
 
-    // Initialize Supabase and Resend clients
+    // Initialize Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
-    const resend = new Resend(Deno.env.get('RESEND_API_KEY'));
 
     // Get session details
     const { data: session, error: sessionError } = await supabase
@@ -106,7 +131,7 @@ serve(async (req) => {
     `;
 
     // Send email to client
-    const emailResponse = await resend.emails.send({
+    const emailResponse = await sendViaResend({
       from: 'Coaching Platform <onboarding@resend.dev>',
       to: [clientEmail],
       subject: `Your coaching session with ${coachName} is ready - ${sessionDate}`,
@@ -119,7 +144,7 @@ serve(async (req) => {
       JSON.stringify({ 
         success: true, 
         message: 'Session link sent successfully',
-        emailId: emailResponse.data?.id
+        emailId: emailResponse?.id
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
