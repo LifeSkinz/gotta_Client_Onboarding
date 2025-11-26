@@ -33,14 +33,15 @@ Deno.serve(async (req) => {
       throw new Error('RESEND_API_KEY not configured');
     }
 
-    // Fetch pending emails (status='pending' or failed with attempts < max)
+    // Fetch pending emails (status='pending' or failed with attempts < max_attempts)
+    // Note: We fetch both pending and failed-but-retryable emails, then filter in code
     const { data: emails, error: fetchError } = await supabase
       .from('email_outbox')
       .select('*')
-      .or('status.eq.pending,and(status.eq.failed,attempts.lt.max_attempts)')
+      .or('status.eq.pending,status.eq.failed')
       .lte('scheduled_for', new Date().toISOString())
       .order('created_at', { ascending: true })
-      .limit(50);
+      .limit(100);
 
     if (fetchError) throw fetchError;
 
@@ -61,11 +62,24 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Filter to only process emails where attempts < max_attempts
+    const eligibleEmails = (emails as EmailOutboxRecord[]).filter(email => 
+      email.status === 'pending' || (email.status === 'failed' && email.attempts < email.max_attempts)
+    );
+
+    if (eligibleEmails.length === 0) {
+      console.log('No eligible emails to process after filtering');
+      return new Response(
+        JSON.stringify({ success: true, processed: 0 }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     let processedCount = 0;
     let failedCount = 0;
 
     // Process each email
-    for (const email of emails as EmailOutboxRecord[]) {
+    for (const email of eligibleEmails) {
       try {
         // Mark as sending (atomic update to prevent duplicate processing)
         const { error: updateError } = await supabase
@@ -142,7 +156,7 @@ Deno.serve(async (req) => {
         success: true, 
         processed: processedCount,
         failed: failedCount,
-        total: emails.length
+        total: eligibleEmails.length
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
