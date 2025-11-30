@@ -104,7 +104,7 @@ Deno.serve(async (req) => {
             'Authorization': `Bearer ${resendApiKey}`,
           },
           body: JSON.stringify({
-            from: email.payload.from || 'AI Life Coach <noreply@updates.aicoach.com>',
+            from: 'Coaching Platform <onboarding@resend.dev>',
             to: [email.recipient_email],
             subject: email.subject,
             html: email.payload.html,
