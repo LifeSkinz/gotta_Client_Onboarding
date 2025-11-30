@@ -348,7 +348,7 @@ serve(async (req) => {
 
     // Send email
     const emailResponse = await sendViaResend({
-      from: 'Coaching Platform <sessions@resend.dev>',
+      from: 'Coaching Platform <onboarding@resend.dev>',
       to: ['eyeskinz@gmail.com'],  // Test mode: send only to verified email
       subject: subjectMap[template],
       html: emailHtml,

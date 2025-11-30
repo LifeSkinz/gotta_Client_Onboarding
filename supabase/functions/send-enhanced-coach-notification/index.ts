@@ -289,7 +289,7 @@ serve(async (req) => {
 
     // Send email to coach
     const emailResponse = await sendViaResend({
-      from: 'Coaching Platform <coaches@resend.dev>',
+      from: 'Coaching Platform <onboarding@resend.dev>',
       to: [coachEmail],
       subject: `New Session Request: ${new Date(session.scheduled_time).toLocaleDateString()} with ${client?.full_name || 'Client'}`,
       html: emailHtml,
