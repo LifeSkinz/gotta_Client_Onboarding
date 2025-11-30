@@ -42,6 +42,18 @@ export const CoachSignupRequestPage = () => {
 
       if (error) throw error;
 
+      // Check for error in the response data (e.g., 409 duplicate)
+      if (data?.error) {
+        if (data.error.includes('already exists')) {
+          toast({
+            title: 'Application Already Exists',
+            description: 'You\'ve already submitted an application with this email address. We\'ll be in touch soon!',
+          });
+          return;
+        }
+        throw new Error(data.error);
+      }
+
       toast({
         title: 'Application Submitted!',
         description: 'We\'ll review your application and send you an invitation if you\'re a good fit.',
