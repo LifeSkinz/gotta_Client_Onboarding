@@ -62,9 +62,20 @@ export const CoachSignupRequestPage = () => {
       navigate('/');
     } catch (error: any) {
       console.error('Error submitting request:', error);
+      
+      // Check for duplicate application error (409)
+      const errorMessage = error?.message || error?.context?.json?.error || '';
+      if (errorMessage.includes('already exists') || error?.status === 409) {
+        toast({
+          title: 'Application Already Exists',
+          description: 'You\'ve already submitted an application with this email address. We\'ll be in touch soon!',
+        });
+        return;
+      }
+      
       toast({
         title: 'Error',
-        description: error.message || 'Failed to submit request. Please try again or contact us directly.',
+        description: errorMessage || 'Failed to submit request. Please try again or contact us directly.',
         variant: 'destructive',
       });
     } finally {
