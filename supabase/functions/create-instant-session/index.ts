@@ -118,7 +118,7 @@ serve(async (req) => {
         price_amount: 25.00,
         price_currency: 'GBP',
         coin_cost: 1,
-        status: 'confirmed', // Already confirmed - no waiting!
+        status: 'scheduled', // Valid status, session_state indicates readiness
         session_state: 'ready', // Ready immediately!
         join_token: joinToken,
         token_expires_at: tokenExpiration.toISOString(),
