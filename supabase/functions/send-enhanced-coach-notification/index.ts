@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { createHmac } from "https://deno.land/std@0.177.0/node/crypto.ts";
 import { CONFIG } from '../_shared/config.ts';
 
 const corsHeaders = {
@@ -7,7 +8,18 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Direct Resend API helper (replaces npm SDK)
+// Generate HMAC-signed accept URL (tamper-proof)
+function createSignedAcceptUrl(sessionId: string, acceptToken: string, action: string): string {
+  const hmacSecret = Deno.env.get('ACCEPT_LINK_SECRET') || Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!.slice(0, 32);
+  const signature = createHmac('sha256', hmacSecret)
+    .update(`${sessionId}:${acceptToken}`)
+    .digest('hex');
+  
+  const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+  return `${supabaseUrl}/functions/v1/accept-session?sessionId=${sessionId}&token=${acceptToken}&sig=${signature}&action=${action}`;
+}
+
+// Direct Resend API helper
 async function sendViaResend(payload: {
   from: string;
   to: string[];
@@ -34,7 +46,7 @@ async function sendViaResend(payload: {
   return response.json();
 }
 
-const generateCoachEmailTemplate = (session: any, client: any, coach: any, goals: any[], clientResponses: any) => {
+const generateCoachEmailTemplate = (session: any, client: any, coach: any, goals: any[], clientResponses: any, acceptToken: string) => {
   const scheduledTime = new Date(session.scheduled_time);
   const sessionDate = scheduledTime.toLocaleDateString('en-US', { 
     weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' 
@@ -42,6 +54,10 @@ const generateCoachEmailTemplate = (session: any, client: any, coach: any, goals
   const sessionTime = scheduledTime.toLocaleTimeString('en-US', { 
     hour: 'numeric', minute: '2-digit', timeZoneName: 'short' 
   });
+
+  // Generate secure, signed URLs for each action
+  const acceptUrl = createSignedAcceptUrl(session.id, acceptToken, 'accept');
+  const declineUrl = createSignedAcceptUrl(session.id, acceptToken, 'decline');
 
   const baseStyles = `
     body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; margin: 0; padding: 0; background: #f8fafc; }
@@ -59,12 +75,12 @@ const generateCoachEmailTemplate = (session: any, client: any, coach: any, goals
     .goal-card { background: #e6fffa; border-left: 4px solid #38b2ac; padding: 15px; border-radius: 0 8px 8px 0; }
     .insight-card { background: #fef5e7; border-left: 4px solid #ed8936; padding: 15px; border-radius: 0 8px 8px 0; margin: 10px 0; }
     .action-buttons { text-align: center; margin: 30px 0; display: grid; gap: 10px; }
-    .btn { padding: 12px 24px; margin: 0; text-decoration: none; border-radius: 8px; font-weight: 600; display: block; transition: all 0.3s; }
+    .btn { padding: 16px 32px; margin: 0; text-decoration: none; border-radius: 8px; font-weight: 600; display: block; transition: all 0.3s; font-size: 16px; }
     .btn-primary { background: #38b2ac; color: white; }
-    .btn-secondary { background: #4299e1; color: white; }
     .btn-danger { background: #e53e3e; color: white; }
     .btn-full-width { grid-column: 1 / -1; }
     .highlight { color: #667eea; font-weight: 600; }
+    .security-note { background: #fef3c7; border: 1px solid #f59e0b; border-radius: 8px; padding: 12px; margin: 20px 0; font-size: 13px; color: #92400e; }
     .footer { background: #f7fafc; padding: 30px; text-align: center; font-size: 14px; color: #718096; border-top: 1px solid #e2e8f0; }
     @media (max-width: 600px) {
       .container { margin: 10px; }
@@ -109,8 +125,6 @@ const generateCoachEmailTemplate = (session: any, client: any, coach: any, goals
               <p><strong>Background:</strong> ${client?.bio || 'Not provided'}</p>
               <p><strong>Coaching History:</strong> ${client?.total_sessions_count || 0} previous sessions</p>
               ${client?.average_session_rating ? `<p><strong>Average Rating:</strong> ⭐ ${client.average_session_rating}/5</p>` : ''}
-              ${client?.last_session_at ? `<p><strong>Last Session:</strong> ${new Date(client.last_session_at).toLocaleDateString()}</p>` : ''}
-              ${client?.preferred_session_times ? `<p><strong>Preferred Times:</strong> ${client.preferred_session_times.join(', ')}</p>` : ''}
             </div>
           </div>
 
@@ -121,7 +135,6 @@ const generateCoachEmailTemplate = (session: any, client: any, coach: any, goals
               ${goals.map(goal => `
                 <div class="goal-card">
                   <strong>${goal.goal_category}:</strong> ${goal.goal_description}
-                  ${goal.initial_assessment ? `<br><small>Priority Level: ${goal.initial_assessment}/10</small>` : ''}
                 </div>
               `).join('')}
             </div>
@@ -132,13 +145,6 @@ const generateCoachEmailTemplate = (session: any, client: any, coach: any, goals
           <div class="section">
             <h2>🧠 AI Client Analysis</h2>
             <div class="insight-card">
-              <h4 style="margin: 0 0 10px 0;">Key Insights:</h4>
-              ${clientResponses.ai_analysis.personality_traits ? `
-                <p><strong>Personality:</strong> ${Object.entries(clientResponses.ai_analysis.personality_traits).map(([key, value]) => `${key}: ${value}`).join(', ')}</p>
-              ` : ''}
-              ${clientResponses.ai_analysis.communication_style ? `
-                <p><strong>Communication Style:</strong> ${JSON.stringify(clientResponses.ai_analysis.communication_style)}</p>
-              ` : ''}
               ${clientResponses.ai_analysis.coaching_recommendations ? `
                 <p><strong>Coaching Approach:</strong> ${clientResponses.ai_analysis.coaching_recommendations}</p>
               ` : ''}
@@ -146,74 +152,33 @@ const generateCoachEmailTemplate = (session: any, client: any, coach: any, goals
           </div>
           ` : ''}
 
-          ${clientResponses?.responses ? `
-          <div class="section">
-            <h2>📝 Client Assessment Responses</h2>
-            <div style="background: #f7fafc; border-radius: 8px; padding: 20px;">
-              ${Object.entries(clientResponses.responses).map(([question, answer]) => `
-                <div style="margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid #e2e8f0;">
-                  <strong style="color: #2d3748;">${question}:</strong><br>
-                  <span style="color: #4a5568;">${answer}</span>
-                </div>
-              `).join('')}
-            </div>
-          </div>
-          ` : ''}
-
-          <div class="section">
-            <h2>🎯 Preparation Recommendations</h2>
-            <div style="background: #e6fffa; border-radius: 8px; padding: 20px;">
-              <ul style="margin: 0; padding-left: 20px;">
-                <li>Review the client's goals and assessment responses above</li>
-                <li>Consider how your coaching style aligns with their needs</li>
-                <li>Prepare relevant exercises or frameworks for their challenges</li>
-                <li>Think about specific questions to help them gain clarity</li>
-                <li>Have backup discussion topics ready based on their interests</li>
-              </ul>
-            </div>
-          </div>
-
-          <div style="background: #e6fffa; border-radius: 8px; padding: 20px; margin: 20px 0;">
-            <p style="margin: 0 0 10px 0; color: #2c7a7b; font-weight: 600;">📧 After You Accept:</p>
-            <p style="margin: 0; color: #2d3748;">You'll receive a confirmation email with the session link immediately. For scheduled sessions, you'll also get a reminder 10 minutes before the session starts.</p>
-          </div>
-
           <div class="action-buttons">
-            <a href="${CONFIG.WEBSITE_URL}/coach-response?action=accept&sessionId=${session.id}" class="btn btn-primary">
-              ✅ Accept - Ready Now
+            <a href="${acceptUrl}" class="btn btn-primary">
+              ✅ Accept Session - I'm Ready Now
             </a>
-            <a href="${CONFIG.WEBSITE_URL}/coach-response?action=accept_5min&sessionId=${session.id}" class="btn btn-primary" style="background: #22c55e;">
-              ✅ Accept - Ready in 5 min
-            </a>
-            <a href="${CONFIG.WEBSITE_URL}/coach-response?action=accept_10min&sessionId=${session.id}" class="btn btn-primary" style="background: #f59e0b;">
-              ✅ Accept - Ready in 10 min
-            </a>
-            <a href="${CONFIG.WEBSITE_URL}/coach-response?action=reschedule&sessionId=${session.id}" class="btn btn-secondary">
-              📅 Request Reschedule
-            </a>
-            <a href="${CONFIG.WEBSITE_URL}/coach-response?action=decline&sessionId=${session.id}" class="btn btn-danger btn-full-width">
+            <a href="${declineUrl}" class="btn btn-danger btn-full-width">
               ❌ Decline Session
             </a>
+          </div>
+
+          <div class="security-note">
+            🔒 <strong>Security Note:</strong> These links are one-time use only and expire after being clicked.
           </div>
 
           <div class="section">
             <h2>💡 Session Tips</h2>
             <div style="background: #fef5e7; border-radius: 8px; padding: 20px;">
-              <p><strong>For the best session experience:</strong></p>
-              <ul style="margin: 10px 0; padding-left: 20px;">
-                <li>Join the session 5 minutes early to test your setup</li>
+              <ul style="margin: 0; padding-left: 20px;">
+                <li>Join the session 2 minutes early to test your setup</li>
                 <li>Ensure you have a quiet, professional environment</li>
-                <li>Keep session notes for follow-up communications</li>
                 <li>End with clear action items and next steps</li>
-                <li>Follow up within 24 hours with a session summary</li>
               </ul>
             </div>
           </div>
 
         </div>
         <div class="footer">
-          <p><strong>Next Steps:</strong> Click one of the action buttons above to respond to this session request.</p>
-          <p>Need help? Contact platform support for assistance.</p>
+          <p><strong>Next Steps:</strong> Click Accept to create the video room and join immediately.</p>
           <p style="margin-top: 15px; font-size: 12px;">© 2024 Coaching Platform. All rights reserved.</p>
         </div>
       </div>
@@ -239,11 +204,12 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Fetch session details
+    // Fetch session details including accept_token
     const { data: session, error: sessionError } = await supabase
       .from('sessions')
       .select(`
         *,
+        accept_token,
         coaches (
           id, name, title, notification_email, notification_phone
         )
@@ -278,20 +244,27 @@ serve(async (req) => {
       .limit(1)
       .single();
 
-    // Generate email content
+    // Get the accept_token for this session (already generated by DB default)
+    const acceptToken = session.accept_token;
+    if (!acceptToken) {
+      throw new Error('Session missing accept_token');
+    }
+
+    // Generate email content with secure signed URLs
     const emailHtml = generateCoachEmailTemplate(
       session, 
       client, 
       session.coaches, 
       goals || [], 
-      clientResponses
+      clientResponses,
+      acceptToken
     );
 
     // Send email to coach
     const emailResponse = await sendViaResend({
       from: 'Coaching Platform <onboarding@resend.dev>',
       to: [coachEmail],
-      subject: `New Session Request: ${new Date(session.scheduled_time).toLocaleDateString()} with ${client?.full_name || 'Client'}`,
+      subject: `🔔 New Session Request: ${client?.full_name || 'Client'} is waiting!`,
       html: emailHtml,
     });
 

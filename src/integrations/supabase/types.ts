@@ -936,6 +936,8 @@ export type Database = {
       }
       sessions: {
         Row: {
+          accept_token: string | null
+          accept_token_used_at: string | null
           actual_end_time: string | null
           actual_start_time: string | null
           client_id: string
@@ -966,6 +968,8 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          accept_token?: string | null
+          accept_token_used_at?: string | null
           actual_end_time?: string | null
           actual_start_time?: string | null
           client_id: string
@@ -996,6 +1000,8 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          accept_token?: string | null
+          accept_token_used_at?: string | null
           actual_end_time?: string | null
           actual_start_time?: string | null
           client_id?: string
