@@ -60,18 +60,21 @@ serve(async (req) => {
       );
     }
 
-    // STEP 1: Create the Daily.co room IMMEDIATELY (like Google Meet)
+    // STEP 1: Generate session ID first so we can use it as room name
+    const sessionId = crypto.randomUUID();
     let videoJoinUrl = '';
     let videoRoomId = '';
 
     if (dailyApiKey) {
-      const roomName = `session-${crypto.randomUUID().slice(0, 8)}-${Date.now()}`;
+      // Use sessionId as room name for deterministic lookup
+      const roomName = sessionId;
       const roomConfig = {
         name: roomName,
         properties: {
-          exp: Math.floor(Date.now() / 1000) + (24 * 60 * 60), // 24 hours
-          max_participants: 2,
+          exp: Math.floor(Date.now() / 1000) + (7 * 24 * 60 * 60), // 7 days
+          max_participants: 10,
           enable_recording: "cloud",
+          enable_transcription: true, // Enable Daily's built-in transcription
           enable_chat: true,
           enable_screenshare: true,
           start_video_off: false,
@@ -79,7 +82,7 @@ serve(async (req) => {
         }
       };
 
-      console.log('Creating Daily.co room immediately:', roomName);
+      console.log('Creating Daily.co room with sessionId as name:', roomName);
       const dailyResponse = await fetch('https://api.daily.co/v1/rooms', {
         method: 'POST',
         headers: {
@@ -111,6 +114,7 @@ serve(async (req) => {
     const { data: session, error: sessionError } = await supabase
       .from('sessions')
       .insert({
+        id: sessionId, // Use our pre-generated sessionId
         client_id: clientId,
         coach_id: coachId,
         scheduled_time: scheduledTime.toISOString(),
@@ -137,13 +141,15 @@ serve(async (req) => {
 
     console.log('Session created:', session.id);
 
-    // STEP 3: Store video details immediately
+    // STEP 3: Store video details with daily_room_name for webhook lookups
     await supabase
       .from('session_video_details')
       .upsert({
         session_id: session.id,
         video_room_id: videoRoomId,
-        video_join_url: videoJoinUrl
+        video_join_url: videoJoinUrl,
+        daily_room_name: videoRoomId,
+        room_created_at: new Date().toISOString()
       }, { onConflict: 'session_id' });
 
     console.log('Video details stored for session:', session.id);

@@ -66,20 +66,25 @@ serve(async (req) => {
       let roomName = '';
 
       if (dailyApiKey) {
-        // Create Daily.co room with proper config
+        // Create Daily.co room with sessionId as room name for easy lookup
         console.log('Creating Daily.co room for session:', sessionId);
         
+        // Use sessionId directly as room name (deterministic mapping)
+        const dailyRoomName = sessionId;
+        
         const roomConfig = {
-          name: `session-${sessionId}-${Date.now()}`,
+          name: dailyRoomName,
           properties: {
-            exp: Math.floor(Date.now() / 1000) + (4 * 60 * 60), // 4 hours from now
+            exp: Math.floor(Date.now() / 1000) + (7 * 24 * 60 * 60), // 7 days from now
             nbf: Math.floor(Date.now() / 1000), // not before (now)
-            max_participants: 2,
+            max_participants: 10,
             enable_recording: "cloud",
+            enable_transcription: true, // Enable Daily's built-in transcription
             start_video_off: false,
             start_audio_off: false,
             enable_screenshare: true,
-            enable_chat: true
+            enable_chat: true,
+            // Recording auto-starts when owner (coach) joins with token
           }
         };
 
@@ -101,7 +106,7 @@ serve(async (req) => {
         const roomData = await dailyResponse.json();
         roomUrl = roomData.url;
         roomName = roomData.name;
-        console.log('Daily.co room created successfully:', roomName);
+        console.log('Daily.co room created successfully:', roomName, 'URL:', roomUrl);
       } else {
         // Fallback to VideoSDK URL
         console.log('No Daily API key, using VideoSDK fallback');
@@ -109,7 +114,7 @@ serve(async (req) => {
         if (!videoSdkKey) {
           throw new Error('Neither DAILY_API_KEY nor VIDEOSDK_KEY is configured');
         }
-        roomName = `session-${sessionId}`;
+        roomName = sessionId;
         roomUrl = `https://videosdk.live/room/${roomName}`;
       }
 
@@ -122,13 +127,15 @@ serve(async (req) => {
         p_metadata: { videoRoomId: roomName }
       });
 
-      // Store video details
+      // Store video details with daily_room_name for webhook lookups
       await supabase
         .from('session_video_details')
         .upsert({
           session_id: sessionId,
           video_room_id: roomName,
-          video_join_url: roomUrl
+          video_join_url: roomUrl,
+          daily_room_name: roomName,
+          room_created_at: new Date().toISOString()
         });
 
       // Initialize recording settings

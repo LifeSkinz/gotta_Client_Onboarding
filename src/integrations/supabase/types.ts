@@ -795,6 +795,53 @@ export type Database = {
         }
         Relationships: []
       }
+      session_participants: {
+        Row: {
+          created_at: string | null
+          daily_user_id: string | null
+          display_name: string
+          id: string
+          joined_at: string | null
+          left_at: string | null
+          meeting_token_issued_at: string | null
+          role: string
+          session_id: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          daily_user_id?: string | null
+          display_name: string
+          id?: string
+          joined_at?: string | null
+          left_at?: string | null
+          meeting_token_issued_at?: string | null
+          role: string
+          session_id: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          daily_user_id?: string | null
+          display_name?: string
+          id?: string
+          joined_at?: string | null
+          left_at?: string | null
+          meeting_token_issued_at?: string | null
+          role?: string
+          session_id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "session_participants_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       session_recordings: {
         Row: {
           ai_summary: string | null
@@ -899,8 +946,10 @@ export type Database = {
       session_video_details: {
         Row: {
           created_at: string
+          daily_room_name: string | null
           id: string
           recording_url: string | null
+          room_created_at: string | null
           session_id: string
           updated_at: string
           video_join_url: string | null
@@ -908,8 +957,10 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          daily_room_name?: string | null
           id?: string
           recording_url?: string | null
+          room_created_at?: string | null
           session_id: string
           updated_at?: string
           video_join_url?: string | null
@@ -917,8 +968,10 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          daily_room_name?: string | null
           id?: string
           recording_url?: string | null
+          room_created_at?: string | null
           session_id?: string
           updated_at?: string
           video_join_url?: string | null
