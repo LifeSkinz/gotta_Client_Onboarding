@@ -57,5 +57,8 @@ verify_jwt = false
 [functions.accept-session]
 verify_jwt = false
 
+[functions.generate-daily-token]
+verify_jwt = true
+
 [cron.send-emails-worker]
 schedule = "*/2 * * * *"

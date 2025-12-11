@@ -4,6 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Video, Loader2, CheckCircle, Copy, ExternalLink } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useJoinSession } from '@/hooks/useJoinSession';
 
 interface SessionWaitingProps {
   sessionId: string;
@@ -20,6 +21,7 @@ export function SessionWaiting({
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
+  const { joinSession: joinWithToken, loading: joiningSession } = useJoinSession();
 
   // Fetch video URL immediately (Google Meet style - URL is created upfront)
   const fetchVideoUrl = useCallback(async () => {
@@ -86,8 +88,11 @@ export function SessionWaiting({
     }
   };
 
-  const joinSession = () => {
-    if (videoUrl) {
+  // Use token-based join for authenticated users - sets display name automatically
+  const handleJoinSession = async () => {
+    const tokenUrl = await joinWithToken(sessionId);
+    if (!tokenUrl && videoUrl) {
+      // Fallback to direct URL if token generation fails
       window.open(videoUrl, '_blank');
     }
   };
@@ -118,13 +123,18 @@ export function SessionWaiting({
           </p>
           
           <Button 
-            onClick={joinSession}
+            onClick={handleJoinSession}
+            disabled={joiningSession}
             size="lg"
             className="w-full mb-4 gap-2"
           >
-            <Video className="h-5 w-5" />
-            Join Video Session
-            <ExternalLink className="h-4 w-4" />
+            {joiningSession ? (
+              <Loader2 className="h-5 w-5 animate-spin" />
+            ) : (
+              <Video className="h-5 w-5" />
+            )}
+            {joiningSession ? 'Preparing...' : 'Join Video Session'}
+            {!joiningSession && <ExternalLink className="h-4 w-4" />}
           </Button>
 
           <Button
