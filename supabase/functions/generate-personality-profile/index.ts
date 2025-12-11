@@ -41,7 +41,6 @@ serve(async (req) => {
         .from('sessions')
         .select(`
           *,
-          session_outcomes(*),
           session_recordings(
             sentiment_analysis,
             personality_insights,
