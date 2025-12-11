@@ -1,9 +1,9 @@
-import { useEffect, useState, useCallback } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
-import { Card, CardContent } from '@/components/ui/card';
+import React, { useEffect, useState, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
-import { Loader2, Video, XCircle, Clock } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Video, Loader2, CheckCircle, Copy, ExternalLink } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 interface SessionWaitingProps {
   sessionId: string;
@@ -11,146 +11,151 @@ interface SessionWaitingProps {
   onSessionDeclined?: () => void;
 }
 
-export function SessionWaiting({ sessionId, onSessionReady, onSessionDeclined }: SessionWaitingProps) {
-  const [status, setStatus] = useState<'pending' | 'ready' | 'declined'>('pending');
-  const [elapsedTime, setElapsedTime] = useState(0);
-  const { user } = useAuth();
+export function SessionWaiting({ 
+  sessionId, 
+  onSessionReady, 
+  onSessionDeclined 
+}: SessionWaitingProps) {
+  const { toast } = useToast();
+  const [videoUrl, setVideoUrl] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [copied, setCopied] = useState(false);
 
-  // Fetch video URL when session becomes ready
+  // Fetch video URL immediately (Google Meet style - URL is created upfront)
   const fetchVideoUrl = useCallback(async () => {
-    const { data: videoDetails } = await supabase
-      .from('session_video_details')
-      .select('video_join_url')
-      .eq('session_id', sessionId)
-      .single();
-    
-    if (videoDetails?.video_join_url) {
-      setStatus('ready');
-      onSessionReady(videoDetails.video_join_url);
+    try {
+      const { data, error } = await supabase
+        .from('session_video_details')
+        .select('video_join_url')
+        .eq('session_id', sessionId)
+        .single();
+
+      if (error) {
+        console.error('Error fetching video URL:', error);
+        return;
+      }
+
+      if (data?.video_join_url) {
+        setVideoUrl(data.video_join_url);
+        onSessionReady(data.video_join_url);
+      }
+    } catch (err) {
+      console.error('Failed to fetch video URL:', err);
+    } finally {
+      setLoading(false);
     }
   }, [sessionId, onSessionReady]);
 
   useEffect(() => {
-    if (!sessionId || !user) return;
+    fetchVideoUrl();
 
-    // Check initial session status
-    const checkInitialStatus = async () => {
-      const { data: session } = await supabase
-        .from('sessions')
-        .select('session_state')
-        .eq('id', sessionId)
-        .single();
-      
-      if (session?.session_state === 'ready') {
-        await fetchVideoUrl();
-      } else if (session?.session_state === 'declined') {
-        setStatus('declined');
-        onSessionDeclined?.();
-      }
-    };
-    
-    checkInitialStatus();
-
-    // Subscribe to realtime updates for THIS session only (RLS enforced)
+    // Also subscribe to updates in case URL is added later
     const channel = supabase
-      .channel(`session-${sessionId}`)
+      .channel(`session-video-${sessionId}`)
       .on(
         'postgres_changes',
         {
-          event: 'UPDATE',
+          event: '*',
           schema: 'public',
-          table: 'sessions',
-          filter: `id=eq.${sessionId}`
+          table: 'session_video_details',
+          filter: `session_id=eq.${sessionId}`
         },
-        async (payload) => {
-          console.log('Session update received:', payload.new);
-          const session = payload.new as { session_state: string };
-          
-          if (session.session_state === 'ready') {
-            await fetchVideoUrl();
-          } else if (session.session_state === 'declined') {
-            setStatus('declined');
-            onSessionDeclined?.();
+        (payload: any) => {
+          if (payload.new?.video_join_url) {
+            setVideoUrl(payload.new.video_join_url);
+            onSessionReady(payload.new.video_join_url);
           }
         }
       )
-      .subscribe((status) => {
-        console.log('Realtime subscription status:', status);
-      });
-
-    // Timer to show elapsed waiting time
-    const timer = setInterval(() => {
-      setElapsedTime(prev => prev + 1);
-    }, 1000);
+      .subscribe();
 
     return () => {
       supabase.removeChannel(channel);
-      clearInterval(timer);
     };
-  }, [sessionId, user, fetchVideoUrl, onSessionDeclined]);
+  }, [sessionId, onSessionReady, fetchVideoUrl]);
 
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  const copyToClipboard = async () => {
+    if (videoUrl) {
+      await navigator.clipboard.writeText(videoUrl);
+      setCopied(true);
+      toast({
+        title: "Link copied!",
+        description: "Share this link with anyone who needs to join."
+      });
+      setTimeout(() => setCopied(false), 2000);
+    }
   };
 
-  if (status === 'declined') {
+  const joinSession = () => {
+    if (videoUrl) {
+      window.open(videoUrl, '_blank');
+    }
+  };
+
+  if (loading) {
     return (
-      <Card className="max-w-md mx-auto">
-        <CardContent className="pt-6 text-center">
-          <XCircle className="w-16 h-16 text-destructive mx-auto mb-4" />
-          <h2 className="text-xl font-semibold mb-2">Session Declined</h2>
-          <p className="text-muted-foreground mb-4">
-            The coach was unable to accept this session. We'll help you find another coach.
-          </p>
-          <Button onClick={() => window.location.href = '/coaches'}>
-            Find Another Coach
-          </Button>
+      <Card className="w-full max-w-md mx-auto">
+        <CardContent className="p-8 text-center">
+          <Loader2 className="h-12 w-12 mx-auto animate-spin text-primary mb-4" />
+          <h2 className="text-lg font-semibold mb-2">Setting up your session...</h2>
+          <p className="text-muted-foreground">This will only take a moment</p>
         </CardContent>
       </Card>
     );
   }
 
-  if (status === 'ready') {
+  if (videoUrl) {
     return (
-      <Card className="max-w-md mx-auto">
-        <CardContent className="pt-6 text-center">
-          <Video className="w-16 h-16 text-primary mx-auto mb-4 animate-pulse" />
-          <h2 className="text-xl font-semibold mb-2">Session Ready!</h2>
-          <p className="text-muted-foreground">
-            Connecting you to the video session...
-          </p>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  return (
-    <Card className="max-w-md mx-auto">
-      <CardContent className="pt-6 text-center">
-        <div className="relative w-20 h-20 mx-auto mb-6">
-          <div className="absolute inset-0 rounded-full bg-primary/20 animate-ping" />
-          <div className="absolute inset-2 rounded-full bg-primary/30 animate-pulse" />
-          <div className="absolute inset-4 rounded-full bg-primary/40 flex items-center justify-center">
-            <Loader2 className="w-8 h-8 text-primary animate-spin" />
+      <Card className="w-full max-w-md mx-auto">
+        <CardContent className="p-8 text-center">
+          <div className="w-16 h-16 rounded-full bg-green-100 dark:bg-green-900/30 mx-auto mb-4 flex items-center justify-center">
+            <CheckCircle className="h-10 w-10 text-green-600 dark:text-green-400" />
           </div>
-        </div>
-        
-        <h2 className="text-xl font-semibold mb-2">Waiting for Coach</h2>
-        <p className="text-muted-foreground mb-4">
-          We've notified the coach. You'll be connected as soon as they accept.
-        </p>
-        
-        <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-          <Clock className="w-4 h-4" />
-          <span>Waiting: {formatTime(elapsedTime)}</span>
-        </div>
-        
-        <p className="text-xs text-muted-foreground mt-4">
-          This page updates automatically - no need to refresh
+          
+          <h2 className="text-2xl font-bold mb-2">Session Ready!</h2>
+          <p className="text-muted-foreground mb-6">
+            Your video session is ready. Click below to join.
+          </p>
+          
+          <Button 
+            onClick={joinSession}
+            size="lg"
+            className="w-full mb-4 gap-2"
+          >
+            <Video className="h-5 w-5" />
+            Join Video Session
+            <ExternalLink className="h-4 w-4" />
+          </Button>
+
+          <Button
+            variant="outline"
+            onClick={copyToClipboard}
+            className="w-full gap-2"
+          >
+            <Copy className="h-4 w-4" />
+            {copied ? 'Copied!' : 'Copy Link to Share'}
+          </Button>
+
+          <p className="text-xs text-muted-foreground mt-4">
+            Share this link with your coach if needed. It works like Google Meet - anyone with the link can join.
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Fallback - should rarely happen with new flow
+  return (
+    <Card className="w-full max-w-md mx-auto">
+      <CardContent className="p-8 text-center">
+        <Loader2 className="h-12 w-12 mx-auto animate-spin text-muted-foreground mb-4" />
+        <h2 className="text-lg font-semibold mb-2">Preparing Session</h2>
+        <p className="text-muted-foreground">
+          Your video room is being created...
         </p>
       </CardContent>
     </Card>
   );
 }
+
+export default SessionWaiting;
