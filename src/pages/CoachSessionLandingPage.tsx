@@ -198,20 +198,26 @@ export default function CoachSessionLandingPage() {
     }
   };
 
-  const startSession = () => {
-    if (session?.session_video_details?.[0]?.video_join_url) {
-      // Update session state to in_progress
-      supabase
-        .from('sessions')
-        .update({
-          session_state: 'in_progress',
-          status: 'in_progress',
-          actual_start_time: new Date().toISOString()
-        })
-        .eq('id', sessionId);
+  const startSession = async () => {
+    const videoUrl = session?.session_video_details?.[0]?.video_join_url;
+    
+    if (videoUrl) {
+      // Update session state (non-blocking)
+      try {
+        await supabase
+          .from('sessions')
+          .update({
+            session_state: 'in_progress',
+            status: 'in_progress',
+            actual_start_time: new Date().toISOString()
+          })
+          .eq('id', sessionId);
+      } catch (err) {
+        console.error('Failed to update session state:', err);
+      }
 
-      // Navigate to video session
-      window.open(session.session_video_details[0].video_join_url, '_blank');
+      // Open video directly - simple like WhatsApp/Google
+      window.open(videoUrl, '_blank');
     } else {
       toast({
         title: "Session Not Ready",
@@ -239,15 +245,9 @@ export default function CoachSessionLandingPage() {
   };
 
   const canStartSession = () => {
-    if (!session) return false;
-    const now = new Date();
-    const sessionTime = new Date(session.scheduled_time);
-    const fiveMinutesBefore = new Date(sessionTime.getTime() - 5 * 60 * 1000);
-    
-    return now >= fiveMinutesBefore && 
-           session.status === 'scheduled' && 
-           session.session_state === 'ready' &&
-           session.session_video_details?.[0]?.video_join_url;
+    // Simplified: If we have a video URL, the coach can start
+    // This is how simple apps like WhatsApp work - if you have the link, you can join
+    return !!session?.session_video_details?.[0]?.video_join_url;
   };
 
   if (loading) {
